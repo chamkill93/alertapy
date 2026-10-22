@@ -2,6 +2,17 @@
 
 Revisado el 22 de octubre de 2026. El proyecto usa Laravel 12, PHP 8.2+ y MySQL/MariaDB en producción. El código se actualiza al desplegar; las noticias se actualizan mediante cron contra la base persistente. Recibir una noticia no debe crear un commit ni provocar un redeploy.
 
+## Destino confirmado
+
+- Repositorio: [chamkill93/alertapy](https://github.com/chamkill93/alertapy), rama `main`.
+- Dominio de producción: `https://www.alertaparaguay.com`.
+- Primer commit publicado: `ceab031`; los tres jobs de CI aprobaron ese commit. Los cambios posteriores requieren su propia corrida aprobada.
+- Configuración revisable: [`deploy/hostinger/production.env.example`](../deploy/hostinger/production.env.example). Contiene el dominio y valores de producción, con credenciales vacías.
+
+El dominio confirmado no determina el servidor ni demuestra que DNS o SSL estén configurados. Confirmar en hPanel el plan, IP de destino, rutas y acceso antes de cambiar registros. Configurar el dominio raíz `alertaparaguay.com` y su redirección al host `www` después de verificar el destino y los certificados de ambos nombres.
+
+La consulta DNS del 22/10/2026 mostró los nameservers `dns1.registrar-servers.com` y `dns2.registrar-servers.com`, y `www` como CNAME hacia `parkingpage.namecheap.com`, seguido por `parking.d.parity.domains`. Es un destino de parking de Namecheap; no usar su dirección como IP del hosting. Antes de modificar A/CNAME o nameservers, obtener el destino real desde la cuenta de Hostinger y revisar los registros de correo existentes. Después de la propagación, verificar HTTPS para `alertaparaguay.com` y `www.alertaparaguay.com` y aplicar la redirección al dominio canónico.
+
 ## Opciones del hosting
 
 Hostinger documenta integración GitHub/GitLab mediante OAuth en **Websites → Dashboard → Advanced → Git**, para sitios PHP/HTML en hosting Web/Cloud. Permite elegir repositorio, rama y directorio, redeploy manual y despliegue automático. Tutoriales antiguos muestran otro flujo con webhooks. [Guía oficial actual de Git](https://www.hostinger.com/support/1583302-how-to-deploy-a-git-repository-in-hostinger/).
@@ -14,8 +25,7 @@ SSH está disponible en Premium Web y superiores; Composer 2 se invoca como `com
 
 | Dato o decisión | Uso |
 | --- | --- |
-| Repositorio GitHub, dueño y primer commit | CI y origen del código |
-| Plan Hostinger, dominio y subdominio de staging | Verificar capacidades y ensayar |
+| Plan Hostinger, IP de destino y subdominio de staging | Verificar capacidades, DNS y ensayo |
 | Host, puerto SSH, usuario y huella del servidor | Transporte verificado |
 | Ruta absoluta de aplicación y document root | Separar código privado de `public/` |
 | Credenciales MySQL/MariaDB | `.env` privado en el servidor |
@@ -28,9 +38,9 @@ La CI incluida no requiere secretos del hosting. Para un futuro workflow SSH, us
 ## 1. Preparar GitHub
 
 1. Revisar `git status` y qué se publicará; excluir `.env`, SQLite, dumps, evidencia privada, logs y `vendor`.
-2. Configurar identidad real del autor y crear el primer commit. El checkout local de partida todavía no tenía commits ni remoto configurado.
-3. Crear o elegir repositorio y subir `main` con `composer.lock`.
-4. Dejar que `.github/workflows/ci.yml` valide PHP 8.2/8.3, tests, Bash y migraciones/seeders MySQL 8.0. Las contraseñas del servicio MySQL del YAML son solo de una base efímera de CI.
+2. Usar el remoto confirmado `https://github.com/chamkill93/alertapy.git` y conservar la identidad real del autor.
+3. Mantener `composer.lock` versionado en `main`; el primer commit y su CI ya están publicados.
+4. Dejar que `.github/workflows/ci.yml` valide cada cambio en PHP 8.2/8.3, tests, Bash y migraciones/seeders MySQL 8.0. Las contraseñas del servicio MySQL del YAML son solo de una base efímera de CI.
 5. Exigir los tres jobs en la protección de `main` y revisar PRs. Dependabot propone actualizaciones; no las fusiona ni despliega.
 
 La CI también admite ejecución manual cuando el workflow existe en la rama predeterminada. No realiza scraping real ni publica en Hostinger. [Ejecución manual de Actions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
@@ -54,26 +64,33 @@ No publicar `.git`, `.env`, `storage`, `database`, `vendor`, `scripts` ni backup
 
 Crear DB y usuario exclusivos, con `utf8mb4`. Clonar `main` en la ruta acordada; usar deploy key de lectura si es privado. Mantener desactivado auto-deploy nativo cuando se elige este procedimiento SSH.
 
+En una instalación nueva, copiar la plantilla de producción. No sobrescribir el `.env` de un sitio existente ni copiar el `.env` del preview local.
+
 ```bash
 cd /RUTA/ABSOLUTA/DEL/PROYECTO
-cp .env.example .env
+umask 077
+cp deploy/hostinger/production.env.example .env
 ```
 
-Editar `.env` privado:
+Completar `DB_HOST`, `DB_DATABASE`, `DB_USERNAME` y `DB_PASSWORD` con los datos reales de hPanel. La plantilla deja `APP_KEY` vacío para generarlo una única vez durante la instalación. Las contraseñas y claves permanecen en ese `.env` privado; no se suben al repositorio. Valores principales ya preparados:
 
 ```dotenv
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://DOMINIO
+APP_URL=https://www.alertaparaguay.com
 APP_TIMEZONE=America/Asuncion
 DB_CONNECTION=mysql
-DB_HOST=HOST_INFORMADO_POR_HPANEL
+DB_HOST=
 DB_PORT=3306
-DB_DATABASE=BASE
-DB_USERNAME=USUARIO
-DB_PASSWORD=CLAVE_PRIVADA
+DB_DATABASE=
+DB_USERNAME=
+DB_PASSWORD=
 SESSION_DRIVER=database
+SESSION_ENCRYPT=true
+SESSION_DOMAIN=null
 SESSION_SECURE_COOKIE=true
+SESSION_HTTP_ONLY=true
+SESSION_SAME_SITE=lax
 CACHE_STORE=database
 QUEUE_CONNECTION=sync
 LOG_STACK=daily
@@ -82,10 +99,12 @@ LOG_LEVEL=info
 ALERTAPY_LOCAL_RULES_PUBLISH=true
 ALERTAPY_OFFICIAL_SOURCES_PUBLISH=true
 ALERTAPY_SCHEDULER_STALE_MINUTES=15
-ALERTAPY_SOURCE_USER_AGENT="AlertaPY/1.0 (contacto: https://DOMINIO/contacto)"
+ALERTAPY_SOURCE_USER_AGENT="AlertaPY/1.0 (+https://www.alertaparaguay.com)"
 ```
 
-Configurar `ALERTAPY_ADMIN_TOKEN` aleatorio. Activar fuentes con credenciales solo cuando existan claves válidas. El descubrimiento social produce candidatos para verificación, no confirmaciones automáticas. Respetar reglas de cada fuente, frecuencia y uso de geocodificación.
+`SESSION_DOMAIN=null` limita la cookie al host de acceso; iniciar sesión en el dominio canónico `www`. El correo saliente queda sin proveedor, con `MAIL_MAILER=log`, hasta disponer de un remitente verificado. Revisar un contacto operativo real para los User-Agent antes de habilitar consultas externas.
+
+El backoffice requiere un usuario administrador; `ALERTAPY_ADMIN_TOKEN` solo sirve a integraciones administrativas anteriores y puede quedar vacío si no se usan. El cron por CLI tampoco necesita `ALERTAPY_CRON_SECRET`. Activar fuentes con credenciales solo cuando existan claves válidas. El descubrimiento social produce candidatos para verificación, no confirmaciones automáticas. Respetar reglas de cada fuente, frecuencia y uso de geocodificación.
 
 ```bash
 composer2 install --no-dev --prefer-dist --no-interaction --optimize-autoloader
@@ -99,6 +118,10 @@ php artisan alertapy:status
 ```
 
 Los seeders cargan catálogos; las incidencias se obtienen por ingesta. No llevar SQLite mediante Git. Para preservar datos locales reales, planificar exportación/importación compatible por separado. Dar al usuario PHP escritura en `storage` y `bootstrap/cache`, sin `777`. Activar SSL antes de operar con cookies seguras y credenciales.
+
+Crear la cuenta administrativa por SSH contra la base de producción con `php artisan alertapy:admin CORREO_REAL --name="NOMBRE_REAL"`. El comando pide la contraseña de forma oculta y no admite `--no-interaction`; no hay cuenta ni contraseña predeterminadas. `/admin/setup` está deshabilitado en producción. Consultar [acceso al backoffice](BACKOFFICE_ACCESS.md).
+
+Verificar `https://www.alertaparaguay.com/up`, el mapa público y `/admin/login`; iniciar sesión para revisar `/admin/connections`. Los endpoints de diagnóstico `/api/sources` y `/api/sources/status` requieren la misma sesión administrativa, por lo que una respuesta sin autenticar no demuestra una caída de la ingesta.
 
 ## 4. Noticias automáticas con cron
 

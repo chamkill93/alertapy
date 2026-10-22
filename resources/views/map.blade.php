@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="AlertaPY: información territorial verificable de Paraguay en un mapa interactivo.">
-    <meta name="theme-color" content="#102A2A">
+    <meta name="theme-color" content="#102a35">
     <title>AlertaPY — Paraguay en tiempo casi real</title>
 
     <link rel="preconnect" href="https://unpkg.com">
@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ asset('css/alertapy.css') }}?v={{ filemtime(public_path('css/alertapy.css')) }}">
     <link rel="stylesheet" href="{{ asset('assets/alertapy-ui/css/alertapy-ui-kit.css') }}?v={{ filemtime(public_path('assets/alertapy-ui/css/alertapy-ui-kit.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/alertapy-responsive.css') }}?v={{ filemtime(public_path('css/alertapy-responsive.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/alertapy-theme.css') }}?v={{ filemtime(public_path('css/alertapy-theme.css')) }}">
 </head>
 <body>
     <a class="skip-link" href="#map">Saltar al mapa</a>
@@ -80,6 +81,7 @@
                 <div>
                     <span class="eyebrow">Explorá el territorio</span>
                     <h1>Paraguay ahora</h1>
+                    <p class="sidebar-intro">Incidencias y contexto para explorar tu territorio.</p>
                 </div>
                 <button class="filters-close" id="filters-close" type="button" aria-label="Cerrar filtros"><span data-app-icon="close" aria-hidden="true"></span></button>
             </div>

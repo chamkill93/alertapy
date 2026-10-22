@@ -92,6 +92,56 @@ class PressUtilityScheduleIngestionTest extends TestCase
         $this->assertSame(3, Incident::query()->where('status', IncidentStatus::Reported)->count());
     }
 
+    public function test_a_joint_press_notice_can_create_two_service_incidents_without_duplicate_imports(): void
+    {
+        $source = $this->source('joint-services');
+        $title = 'Cortes programados de energía y agua afectarán a usuarios de Asunción';
+        $url = 'https://press.test/joint-services';
+        $publishedAt = CarbonImmutable::parse('2026-10-20 09:00:00 America/Asuncion');
+        $shared = [
+            'sourceSlug' => $source->slug,
+            'sourceType' => SourceType::Press,
+            'title' => $title,
+            'originalUrl' => $url,
+            'content' => 'ANDE y ESSAP anuncian interrupciones en Asunción.',
+            'publishedAt' => $publishedAt,
+            'detectedLocation' => 'Asunción',
+            'latitude' => -25.2867,
+            'longitude' => -57.6333,
+        ];
+        $electricity = new CandidateDTO(
+            ...$shared,
+            externalIdentifier: 'joint-services-electricity',
+            metadata: ['category_slug' => 'electricity', 'city' => 'Asunción', 'department' => 'Capital', 'location_text' => 'Asunción', 'location_accuracy' => 'city'],
+        );
+        $water = new CandidateDTO(
+            ...$shared,
+            externalIdentifier: 'joint-services-water',
+            metadata: ['category_slug' => 'water', 'category_variant' => true, 'city' => 'Asunción', 'department' => 'Capital', 'location_text' => 'Asunción', 'location_accuracy' => 'city'],
+        );
+        $collector = new class($electricity, $water) implements CollectorInterface
+        {
+            public function __construct(private readonly CandidateDTO $electricity, private readonly CandidateDTO $water) {}
+
+            public function collect(Source $source): Collection
+            {
+                return collect([$this->electricity, $this->water]);
+            }
+        };
+
+        $first = app(ScrapedIncidentIngestor::class)->ingest($source, $collector);
+        $second = app(ScrapedIncidentIngestor::class)->ingest($source, $collector);
+
+        $this->assertSame(2, $first['published']);
+        $this->assertSame(2, $second['unchanged']);
+        $this->assertDatabaseCount('raw_items', 2);
+        $this->assertDatabaseCount('incidents', 2);
+        $this->assertEqualsCanonicalizing(
+            ['electricity', 'water'],
+            Incident::query()->with('category')->get()->pluck('category.slug')->all(),
+        );
+    }
+
     private function source(string $category): Source
     {
         return Source::query()->create([

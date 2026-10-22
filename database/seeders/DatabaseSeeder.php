@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class,
             SourceSeeder::class,
+            AdditionalPressSourceSeeder::class,
             LocationSeeder::class,
         ]);
     }

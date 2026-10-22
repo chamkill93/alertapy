@@ -108,6 +108,8 @@ El backoffice requiere un usuario administrador; `ALERTAPY_ADMIN_TOKEN` solo sir
 
 Antes de activar el primer ciclo sobre una base existente, ejecutar `php artisan alertapy:prune-data --dry-run` y guardar el respaldo previsto. Cada ciclo aplica automáticamente la [retención de siete días](DATA_RETENTION.md) a noticias, incidencias y registros operativos.
 
+Al actualizar una instalación que ya tenía el scheduler, registrar los cinco nuevos medios con el seeder aditivo `php artisan db:seed --class=AdditionalPressSourceSeeder --force --no-interaction`. Sin esta operación la CI puede pasar, pero la base existente aún no tendrá esas fuentes. Una instalación nueva las recibe mediante `migrate --seed`.
+
 ```bash
 composer2 install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 composer2 check-platform-reqs --no-dev

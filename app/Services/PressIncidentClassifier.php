@@ -11,18 +11,24 @@ class PressIncidentClassifier
     /** @var array<string, string> */
     private const CATEGORY_PATTERNS = [
         'electricity' => '/\b(cortes? (?:programados? )?(?:de|del) (?:energia|luz|servicio electrico|suministro electrico)|apagon(?:es)? (?:en|afecta|deja|golpea|provoca)|interrupcion(?:es)? (?:programadas? )?(?:de|del) (?:servicio electrico|suministro electrico|energia)|(?:linea|alimentador|subestacion)\w*.{0,55}fuera de servicio|(?:dej(?:a|an|o|aron)|qued(?:a|an|o|aron|ara|aran)) sin (?:luz|energia electrica|electricidad)|sin (?:energia electrica|electricidad)|barrios? sin luz)\b/u',
-        'water' => '/\b((?:cortes?|interrupcion(?:es)?|suspension(?:es)?) (?:programad[oa]s? )?(?:de|del) (?:agua(?: potable)?|servicio de agua|suministro de agua)|falta de agua|sin agua|baja presion (?:de|del) agua|rotura (?:de|en) (?:una? )?(?:tuberia|caneria|acueducto)|(?:obras?|trabajos?|reparacion|mantenimiento).{0,100}(?:provision de agua|servicio de agua|suministro de agua|red de agua|tuberias?|canerias?))\b/u',
+        'water' => '/\b((?:cortes?|interrupcion(?:es)?|suspension(?:es)?) (?:programad[oa]s? )?(?:de|del) (?:agua(?: potable)?|servicio de agua|suministro de agua)|cortes? (?:programados? )?(?:de|del) [^.!?]{0,80}?\bagua\b|falta de agua|sin agua|baja presion (?:de|del) agua|rotura (?:de|en) (?:una? )?(?:tuberia|caneria|acueducto)|(?:obras?|trabajos?|reparacion|mantenimiento).{0,100}(?:provision de agua|servicio de agua|suministro de agua|red de agua|tuberias?|canerias?))\b/u',
         'traffic_accident' => '/\b(accidente|choque|colision|vuelco|atropell|embestid|siniestro vial)\w*/u',
         'fire' => '/\b(incendio|incendia|fuego fuera de control)\w*/u',
         'weather_flood' => '/\b(inundacion|inundad|tormenta|temporal|granizo|desborde)\w*/u',
         'roads' => '/\b(bloqueo|cierres? de (?:calles?|rutas?)|cierre vial|desvios? (?:vehiculares?|de transito|por obras?)|protesta|manifest|manifies|congestion|bacheo|intervencion vial|ruta cerrada|camino\w* intransitable|(?:obra|rehabilitacion|mantenimiento|pavimentacion|reparacion|desague)\w*.{0,55}(?:ruta|avenida|camino|puente|calle|barrio))\w*/u',
-        'security' => '/\b(asalto|robo|robamotos|balacera|operativo(?: policial| antidrogas)?|allanamiento|incaut|decomis|procedimiento antidrogas|homicid|asesin|feminic|secuestro|captur|detienen|detenido|imputan|imputado|acusacion|procesan)\w*/u',
+        'security' => '/\b(asalto|robo|robamotos|balacera|operativos? (?:policial(?:es)?|antidrogas|de seguridad|de control (?:policial|antidrogas))|allanamiento|incaut|decomis|procedimiento antidrogas|homicid|asesin|feminic|secuestro|captur|detienen|detenido|imputan|imputado|procesan)\w*/u',
         'health_vector' => '/\b(hantavirus|dengue|chikungunya|zika|brote epidemiologico|minga ambiental|control vectorial|eliminacion de criaderos|fumigacion)\b/u',
         'emergency' => '/\b(derrumbe|arbol caido|colapso estructural|evacuacion)\w*/u',
         'territorial_news' => '/\b(deforestacion|tala ilegal|contaminacion|fiscalizacion ambiental|intervencion ambiental|incumplimiento ambiental)\w*/u',
     ];
 
     public function classify(string $title, string $content): ?string
+    {
+        return $this->classifyAll($title, $content)[0] ?? null;
+    }
+
+    /** @return list<string> */
+    public function classifyAll(string $title, string $content): array
     {
         // La mención en el cuerpo no basta: puede ser contexto histórico o lateral.
         // Exigirla en el título reduce publicaciones territoriales falsas.
@@ -52,13 +58,15 @@ class PressIncidentClassifier
         if (preg_match('/\b(?:rio|arroyo)\b/u', $evidence) === 1
             && preg_match('/\b(?:crecida|desborde|bajante|sube)\b/u', $evidence) === 1) {
             if (preg_match('/\b(?:no|sin)\b.{0,45}\b(?:afecta\w*|inunda\w*|anega\w*|aisla\w*|danos?|riesgo|evacu\w*)\b/u', $evidence) === 1) {
-                return null;
+                return [];
             }
 
             if (preg_match('/\b(?:arrasa|afecta|inunda|anega|aisla|evacuan|evacuacion|cierran? compuertas|cierre de compuertas)\b/u', $evidence) === 1) {
-                return 'hydrology';
+                return ['hydrology'];
             }
         }
+
+        $matches = [];
 
         foreach (self::CATEGORY_PATTERNS as $category => $pattern) {
             $restoredService = $restoration && match ($category) {
@@ -70,10 +78,16 @@ class PressIncidentClassifier
                 ? (preg_replace('/\b(?:obras?|trabajos?|reparacion|mantenimiento)\b/u', '', $evidence) ?? $evidence)
                 : $evidence;
             if ($restoredService || preg_match($pattern, $categoryEvidence) === 1) {
-                return $category;
+                if (in_array($category, ['electricity', 'water'], true)) {
+                    $matches[] = $category;
+
+                    continue;
+                }
+
+                return $matches === [] ? [$category] : $matches;
             }
         }
 
-        return null;
+        return array_values(array_unique($matches));
     }
 }

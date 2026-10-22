@@ -79,6 +79,29 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('territorial_news', $classifier->classify('Fiscalización ambiental detecta tala ilegal en Caaguazú', ''));
     }
 
+    public function test_it_avoids_generic_budget_and_foreign_accusation_headlines_as_security_incidents(): void
+    {
+        $classifier = new PressIncidentClassifier;
+
+        $this->assertNull($classifier->classify('El MEF achica su presupuesto global, pero eleva su gasto operativo', ''));
+        $this->assertNull($classifier->classify('Cuba rechaza las falsas acusaciones de EEUU por la guerra en Ucrania', ''));
+        $this->assertSame('security', $classifier->classify('Operativo policial con detenidos en Pedro Juan Caballero', ''));
+    }
+
+    public function test_it_returns_both_utility_categories_when_a_headline_reports_both_services(): void
+    {
+        $classifier = new PressIncidentClassifier;
+
+        $this->assertSame(
+            ['electricity', 'water'],
+            $classifier->classifyAll('Cortes programados de energía y agua afectarán a Asunción este viernes', ''),
+        );
+        $this->assertSame(
+            ['electricity'],
+            $classifier->classifyAll('No habrá cortes de agua, pero habrá un corte de luz en Luque', ''),
+        );
+    }
+
     public function test_river_events_require_concrete_impact_and_ignore_normal_or_negated_reports(): void
     {
         $classifier = new PressIncidentClassifier;

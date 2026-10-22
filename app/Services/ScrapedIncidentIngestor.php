@@ -386,7 +386,10 @@ class ScrapedIncidentIngestor
     {
         $externalIdentifier = $candidate->externalIdentifier
             ?? hash('sha256', $candidate->originalUrl.'|'.$candidate->title);
-        $contentHash = hash('sha256', $candidate->title."\n".$candidate->content."\n".$candidate->originalUrl);
+        $contentHash = hash('sha256', $candidate->title."\n".$candidate->content."\n".$candidate->originalUrl
+            .((bool) ($candidate->metadata['category_variant'] ?? false)
+                ? "\n".(string) ($candidate->metadata['category_slug'] ?? '')
+                : ''));
         $rawItem = RawItem::query()
             ->where('source_id', $source->id)
             ->where(function ($query) use ($externalIdentifier, $contentHash): void {

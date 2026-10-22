@@ -37,7 +37,7 @@ return [
     'cycle' => [
         // Refresh services and live monitoring before slower general news sites.
         // Each source still obeys its own polling interval and error handling.
-        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', '1000noticias', 'nanduti', 'abc'],
+        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', '1000noticias', 'nanduti', 'abc', 'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay'],
         'max_seconds' => (int) env('ALERTAPY_CYCLE_MAX_SECONDS', 180),
         'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 20),
         'max_candidates' => (int) env('ALERTAPY_MAX_CANDIDATES_PER_CYCLE', 100),

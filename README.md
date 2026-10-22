@@ -134,7 +134,7 @@ node --test tests/Frontend/*Test.cjs
 ```
 
 La suite PHP usa SQLite en memoria y no accede a internet. Las pruebas JavaScript usan Node y respuestas controladas, sin navegador ni red. Los datos simulados existen únicamente dentro de las pruebas.
-Verificación del 22/10/2026: **324 pruebas PHP (1660 aserciones) y 35 pruebas JavaScript**, todas aprobadas.
+Verificación del 22/10/2026 después de añadir las cinco fuentes y afinar la clasificación: **330 pruebas PHP (1681 aserciones) y 35 pruebas JavaScript**, todas aprobadas.
 
 La integración visual RC1 se documenta en [docs/UI_UX_RC1.md](docs/UI_UX_RC1.md). Ejecutar la aplicación no requiere Node, npm ni compilación de assets; Node se usa para las pruebas de interacciones.
 
@@ -241,7 +241,7 @@ Los filtros tienen desplazamiento propio y se abren como panel hasta 760 px. El 
 
 Las noticias detectadas y el estado de las conexiones están en el **backoffice privado `/admin`**. La página pública no muestra ni consulta el feed de novedades o los diagnósticos internos. Un cero en el mapa corresponde a incidencias publicadas con los filtros actuales.
 
-La cobertura de electricidad y agua incorpora búsquedas de prensa independientes: 1000 Noticias y Ñandutí mediante sus APIs públicas, y canales temáticos de Última Hora y La Nación. Los medios nuevos se consultan cada 15 minutos cuando les corresponde en el ciclo, conservan la fecha y el enlace originales y no necesitan claves. Para incorporar solo esas fuentes en una instalación existente, ejecutar `php artisan db:seed --class=UtilityNewsSourceSeeder --force`; respeta las preferencias de fuentes ya creadas. Ver [cobertura y límites](docs/DATA_SOURCES.md).
+La cobertura periodística suma cinco medios regionales y nacionales: Asunción Actual, Ahora Paraguay, El Nacional, Diario La Clave y Ratio Paraguay. Se ejecutan por el ciclo maestro cada 15 minutos, conservan su URL original y exigen que el lugar figure en el titular o en la descripción editorial para reducir asignaciones incidentales. Los avisos conjuntos de electricidad y agua se separan en candidatos por servicio. Para incorporarlos o actualizar su configuración en una instalación existente, ejecutar `php artisan db:seed --class=AdditionalPressSourceSeeder --force`. También hay APIs públicas separadas para 1000 Noticias y Ñandutí. Ver [fuentes, automatización y límites](docs/DATA_SOURCES.md).
 
 ## Backoffice
 

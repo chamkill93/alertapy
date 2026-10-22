@@ -90,14 +90,12 @@ class PressHomepageCollector implements CollectorInterface
                 continue;
             }
 
-            $candidate = $this->articleCandidate($source, $link, $response->body(), $cutoff);
-
-            if ($candidate !== null) {
+            foreach ($this->articleCandidates($source, $link, $response->body(), $cutoff) as $candidate) {
                 $candidates->push($candidate);
-            }
 
-            if ($candidates->count() >= $maximumCandidates) {
-                break;
+                if ($candidates->count() >= $maximumCandidates) {
+                    break 2;
+                }
             }
         }
 
@@ -168,12 +166,12 @@ class PressHomepageCollector implements CollectorInterface
     }
 
     /** @param array{title: string, url: string, published_at: ?string} $link */
-    private function articleCandidate(
+    private function articleCandidates(
         Source $source,
         array $link,
         string $html,
         CarbonImmutable $cutoff,
-    ): ?CandidateDTO {
+    ): Collection {
         $settings = array_replace_recursive(
             (array) config("alertapy.sources.{$source->slug}", []),
             (array) ($source->configuration_json ?? []),
@@ -199,10 +197,11 @@ class PressHomepageCollector implements CollectorInterface
         $title = $this->plainText((string) ($metadata['og:title'] ?? $link['title']));
         $title = preg_replace('/^(?:La Nación|Última Hora)\s*[\/|—-]\s*/u', '', $title) ?: $title;
         $articleText = $this->articleText($xpath);
-        $description = $this->plainText((string) ($metadata['og:description'] ?? $metadata['description'] ?? $articleText));
+        $description = $this->plainText((string) ($metadata['og:description'] ?? $metadata['description'] ?? ''));
+        $contextDescription = $description !== '' ? $description : $articleText;
         $content = (bool) ($settings['summary_title_only'] ?? false)
             ? $title
-            : ($description !== '' ? $description : $title);
+            : ($contextDescription !== '' ? $contextDescription : $title);
         $publishedValue = (string) ($metadata['article:published_time'] ?? $this->jsonLdValue($xpath, 'datePublished') ?? '');
         $publishedAt = $this->date(
             $publishedValue,
@@ -211,30 +210,40 @@ class PressHomepageCollector implements CollectorInterface
             ?? $this->dateFromText($articleText);
 
         if ($publishedAt === null || $publishedAt->lt($cutoff) || $publishedAt->isFuture()) {
-            return null;
+            return collect();
         }
 
         $locationEvidence = $description;
         $location = $this->locationExtractor->extract($title, $description);
-        if ($location === null && $articleText !== '') {
+        if ($location === null && (bool) ($settings['location_search_article_body'] ?? true) && $articleText !== '') {
             $locationEvidence = mb_substr($articleText, 0, 5000);
             $location = $this->locationExtractor->extract($title, $locationEvidence);
         }
         $hasConfiguredCategory = is_string($settings['forced_category_slug'] ?? null);
-        $category = $location === null
-            ? null
-            : ($hasConfiguredCategory
-                ? $this->configuredCategory($settings, $title, $description)
-                : $this->category($title, $description, $location));
+        $categories = [];
 
-        if ($location === null || $category === null) {
-            return null;
+        if ($location !== null && $hasConfiguredCategory) {
+            $configured = $this->configuredCategory($settings, $title, $contextDescription);
+            $categories = $configured === null ? [] : [$configured];
+        } elseif ($location !== null) {
+            $categories = $this->classifier->classifyAll($title, $contextDescription);
+
+            if ($categories === []) {
+                $category = $this->category($title, $contextDescription, $location);
+                $categories = $category === null ? [] : [$category];
+            }
         }
 
-        return new CandidateDTO(
+        if ($location === null || $categories === []) {
+            return collect();
+        }
+
+        return collect($categories)->map(fn (string $category, int $index): CandidateDTO => new CandidateDTO(
             sourceSlug: $source->slug,
             sourceType: $source->type,
-            externalIdentifier: hash('sha256', $link['url']),
+            externalIdentifier: $index === 0
+                ? hash('sha256', $link['url'])
+                : hash('sha256', $link['url'].'|'.$category),
             title: $title,
             originalUrl: $link['url'],
             content: $content,
@@ -242,6 +251,7 @@ class PressHomepageCollector implements CollectorInterface
             detectedLocation: $location['query'],
             metadata: [
                 'category_slug' => $category,
+                'category_variant' => $index > 0,
                 'location_text' => $location['text'],
                 'city' => $location['city'],
                 'department' => $location['department'],
@@ -254,9 +264,9 @@ class PressHomepageCollector implements CollectorInterface
                 'force_multi_location_department' => (bool) ($settings['force_multi_location_department'] ?? false),
                 'dedup_window_hours' => (int) ($settings['dedup_window_hours'] ?? 12),
                 'dedup_source_only' => (bool) ($settings['dedup_source_only'] ?? false),
-                ...$this->schedules->extract($title."\n".$description."\n".$articleText, $category, $publishedAt),
+                ...$this->schedules->extract($title."\n".$contextDescription."\n".$articleText, $category, $publishedAt),
             ],
-        );
+        ));
     }
 
     /** @param array{text: string, query: string, city: ?string, department: ?string, accuracy: string} $location */

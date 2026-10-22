@@ -224,6 +224,53 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertStringContainsString('Luque', $candidates[0]->metadata['location_evidence']);
     }
 
+    public function test_it_creates_separate_linked_candidates_for_a_joint_electricity_and_water_notice(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-22 15:00:00 America/Asuncion');
+        $source = new Source([
+            'name' => 'Ahora Paraguay', 'slug' => 'ahora-paraguay', 'type' => SourceType::Press,
+            'base_url' => 'https://ahoraparaguay.com/', 'domain' => 'ahoraparaguay.com',
+            'configuration_json' => [
+                'listing_urls' => ['https://ahoraparaguay.com/'],
+                'prefilter_requires_location' => true,
+                'location_search_article_body' => false,
+            ],
+        ]);
+        $title = 'Cortes programados de energía y agua afectarán a Asunción este viernes';
+        $url = 'https://ahoraparaguay.com/cortes-de-energia-y-agua/';
+        $description = 'Los trabajos de ANDE y ESSAP afectarán a usuarios de Asunción.';
+        Http::fake([
+            'ahoraparaguay.com/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="'.$description.'"><meta property="article:published_time" content="2026-10-22T12:00:00-03:00"><article><p>'.$description.'</p></article>'),
+        ]);
+
+        $candidates = app(PressHomepageCollector::class)->collect($source);
+
+        $this->assertSame(['electricity', 'water'], $candidates->map(fn ($candidate) => $candidate->metadata['category_slug'])->all());
+        $this->assertSame([$url, $url], $candidates->pluck('originalUrl')->all());
+        $this->assertNotSame($candidates[0]->externalIdentifier, $candidates[1]->externalIdentifier);
+    }
+
+    public function test_new_sources_do_not_geolocate_a_weather_headline_from_an_incidental_body_mention(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-22 15:00:00 America/Asuncion');
+        $source = new Source([
+            'name' => 'El Nacional', 'slug' => 'elnacional', 'type' => SourceType::Press,
+            'base_url' => 'https://elnacional.com.py/', 'domain' => 'elnacional.com.py',
+            'configuration_json' => [
+                'listing_urls' => ['https://elnacional.com.py/'],
+                'prefilter_requires_location' => true,
+                'location_search_article_body' => false,
+            ],
+        ]);
+        Http::fake([
+            'elnacional.com.py/' => Http::response('<h2><a href="https://elnacional.com.py/editorial/">Navegando en tormenta a ciegas</a></h2>'),
+            'elnacional.com.py/editorial/' => Http::response('<meta property="og:title" content="Navegando en tormenta a ciegas"><meta property="article:published_time" content="2026-10-22T12:00:00-03:00"><article><p>Columna de opinión. La autora reside en Pilar.</p></article>'),
+        ]);
+
+        $this->assertCount(0, app(PressHomepageCollector::class)->collect($source));
+    }
+
     public function test_press_does_not_publish_future_dated_articles(): void
     {
         CarbonImmutable::setTestNow('2026-08-18 21:00:00 America/Asuncion');

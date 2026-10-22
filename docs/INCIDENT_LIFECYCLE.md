@@ -13,7 +13,7 @@ RC1 conserva los valores históricos de `status` por compatibilidad y expone un 
 | `expired` | Vigencia terminada por política temporal |
 | `discarded` | No válido para el mapa activo |
 
-Flujos normales: `detected → active → monitoring → resolved` y `active → expired`. Ninguno elimina evidencia ni historial.
+Flujos normales: `detected → active → monitoring → resolved` y `active → expired`. Los cambios de estado no eliminan la evidencia; la limpieza automática la conserva únicamente durante la ventana de 7 días.
 
 | Valor persistido | Presentación | Uso |
 | --- | --- | --- |
@@ -38,7 +38,9 @@ Una incidencia pública necesita como mínimo:
 - evidencia compatible con su procedencia;
 - guardrails técnicos aprobados en fases posteriores.
 
-La consulta “Ahora” incluye estados vigentes y excluye `expires_at` vencido. La interfaz abre en “7 días” para que el backfill reciente sea visible; “Ahora” sigue disponible como filtro. Histórico conserva eventos finalizados sin reactivarlos y la evidencia cruda nunca se elimina por expiración.
+La interfaz abre en “Ahora”: solo incluye estados vigentes que ya comenzaron y no tienen cierre, resolución, descarte ni `ends_at`/`expires_at` vencidos. Un anuncio futuro aparece en los periodos recientes, pero no en “Ahora”. Si no existe ninguna fecha de fin, se aplica la vigencia de su categoría (rutas: 8 horas; clima: 12 horas; accidentes, incendios y emergencias: 18 horas; demás categorías: 24 horas). La antigüedad se basa en `occurred_at`, luego `starts_at`, `published_at`, `detected_at` o `created_at`; volver a recolectar o editar una fila no la rejuvenece.
+
+Los periodos de 1 hora, 6 horas, 24 horas y 7 días filtran por fecha de publicación e incluyen eventos finalizados. La API pública además limita la antigüedad real del evento a 7 días, incluso antes de que se ejecute la limpieza automática. El periodo “Histórico” se eliminó; solicitarlo devuelve 422.
 
 ## Precisión
 
@@ -52,4 +54,4 @@ Los trabajos oficiales de ANDE se agrupan por categoría, municipio o departamen
 
 ## Cierre y expiración
 
-Los campos `starts_at`, `ends_at`, `expires_at`, `occurred_at`, `resolved_at`, `expired_at` y `finalized_at` son independientes. `IncidentExpirationService` revisa vencimientos por lotes durante `alertapy:cycle`; el fallo de esa revisión nunca publica contenido nuevo y el histórico se conserva.
+Los campos `starts_at`, `ends_at`, `expires_at`, `occurred_at`, `resolved_at`, `expired_at` y `finalized_at` son independientes. `IncidentExpirationService` revisa vencimientos por lotes durante `alertapy:cycle`; el fallo de esa revisión nunca publica contenido nuevo. Las consultas de “Ahora” aplican los límites temporales directamente, aunque el proceso de cierre todavía no se haya ejecutado. La limpieza por antigüedad se ejecuta por separado y retira los registros fuera de los 7 días.

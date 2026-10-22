@@ -42,11 +42,11 @@ Adaptá la versión y ruta según hPanel.
 
 ## El mapa está vacío
 
-Es correcto si todavía no existen incidencias reales publicadas. Consultá `/api/incidents?period=historical`. Si `data` sigue vacío, no agregues filas ficticias: verificá collectors, decisiones y `published_at` cuando esas fases estén implementadas.
+Es correcto si todavía no existen incidencias reales vigentes. Consultá `/api/incidents?period=7d` para revisar los últimos 7 días, incluidos los eventos finalizados. Si `data` sigue vacío, no agregues filas ficticias: verificá collectors, decisiones, fechas del evento y `published_at`.
 
 ## La API devuelve 422
 
-Revisá filtros. `bbox` usa `south,west,north,east`, con sur menor que norte y oeste menor que este. `period` solo admite `now`, `1h`, `6h`, `24h`, `7d` o `historical`.
+Revisá filtros. `bbox` usa `south,west,north,east`, con sur menor que norte y oeste menor que este. `period` solo admite `now`, `1h`, `6h`, `24h` o `7d`. El periodo histórico ya no está disponible.
 
 ## Cambié `.env` y no se refleja
 

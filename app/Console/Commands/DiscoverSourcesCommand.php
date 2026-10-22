@@ -57,12 +57,13 @@ class DiscoverSourcesCommand extends Command
                 try {
                     $stats = $ingestor->ingest($source, $provider);
                     $this->info(sprintf(
-                        '%s: %d hallazgos, %d pendientes de decisión, %d sin ubicación y %d sin cambios. Ninguno fue publicado automáticamente.',
+                        '%s: %d hallazgos, %d pendientes de decisión, %d sin ubicación, %d sin cambios y %d omitidos por fecha. Ninguno fue publicado automáticamente.',
                         $source->name,
                         $stats['discovered'],
                         $stats['queued'],
                         $stats['waiting_location'],
                         $stats['unchanged'],
+                        $stats['ignored_date'],
                     ));
                 } catch (Throwable $exception) {
                     $failures++;

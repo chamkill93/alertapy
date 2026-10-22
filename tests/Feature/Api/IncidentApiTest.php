@@ -83,14 +83,14 @@ class IncidentApiTest extends TestCase
         $second = $this->createIncident(['published_at' => $publishedAt]);
         $third = $this->createIncident(['published_at' => $publishedAt]);
 
-        $page = $this->getJson('/api/incidents?period=historical&city=Asunci%C3%B3n&per_page=2')
+        $page = $this->getJson('/api/incidents?period=7d&city=Asunci%C3%B3n&per_page=2')
             ->assertOk()
             ->assertJsonPath('meta.total', 3)
             ->assertJsonPath('data.0.id', $third->public_id)
             ->assertJsonPath('data.1.id', $second->public_id);
 
         $next = $page->json('links.next');
-        $this->assertStringContainsString('period=historical', $next);
+        $this->assertStringContainsString('period=7d', $next);
         $this->assertStringContainsString('city=Asunci', $next);
         $this->getJson($next)
             ->assertOk()

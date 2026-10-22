@@ -55,7 +55,11 @@ class BackofficePageTest extends TestCase
                 ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
         }
         $this->get('/admin/news/'.$raw->id)->assertSee('La tubería será reparada.')->assertDontSee('<script>', false);
-        $this->get('/admin/connections/'.$source->id)->assertSee('Historial de consultas')->assertSee('503');
+        $this->get('/admin/connections/'.$source->id)->assertSee('Consultas de los últimos 7 días')->assertSee('503');
+        foreach (['/admin', '/admin/news', '/admin/news/'.$raw->id, '/admin/connections/'.$source->id] as $url) {
+            $this->get($url)->assertSee('Ver publicación original')->assertSee('https://diario.test/corte', false)
+                ->assertDontSee('SECRET-URL')->assertSee('rel="noopener noreferrer"', false);
+        }
         Http::assertNothingSent();
     }
 

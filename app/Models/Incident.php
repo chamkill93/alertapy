@@ -12,6 +12,8 @@ use App\Enums\LocationQuality;
 use App\Enums\Severity;
 use App\Enums\SourceType;
 use App\Enums\TemporalAccuracy;
+use App\Services\DataRetentionService;
+use App\Services\IncidentValidityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -136,14 +138,64 @@ class Incident extends Model
 
     public function scopeCurrent(Builder $query): Builder
     {
+        $currentTime = now();
+
         return $query
             ->whereIn('status', array_map(
                 static fn (IncidentStatus $status): string => $status->value,
                 array_filter(IncidentStatus::cases(), static fn (IncidentStatus $status): bool => $status->isCurrent()),
             ))
+            ->whereNull('resolved_at')
+            ->whereNull('expired_at')
+            ->whereNull('finalized_at')
             ->where(function (Builder $query): void {
-                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                $query->whereNull('lifecycle_status')->orWhereNotIn('lifecycle_status', [
+                    LifecycleStatus::Resolved->value,
+                    LifecycleStatus::Expired->value,
+                    LifecycleStatus::Discarded->value,
+                ]);
+            })
+            ->where(function (Builder $query) use ($currentTime): void {
+                $query->whereNull('starts_at')->orWhere('starts_at', '<=', $currentTime);
+            })
+            ->where(function (Builder $query) use ($currentTime): void {
+                $query->whereNull('occurred_at')->orWhere('occurred_at', '<=', $currentTime);
+            })
+            ->where(function (Builder $query) use ($currentTime): void {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>', $currentTime);
+            })
+            ->where(function (Builder $query) use ($currentTime): void {
+                $query->whereNull('expires_at')->orWhere('expires_at', '>', $currentTime);
+            })
+            ->where(function (Builder $query) use ($currentTime): void {
+                // A known validity interval is authoritative. Legacy items without
+                // an end must still age out; a scrape or technical edit is not new evidence.
+                $query->whereNotNull('expires_at')->orWhereNotNull('ends_at')
+                    ->orWhere(function (Builder $query) use ($currentTime): void {
+                        $windows = [];
+                        foreach (IncidentValidityService::CATEGORY_HOURS as $category => $hours) {
+                            $windows[$hours][] = $category;
+                        }
+                        foreach ($windows as $hours => $categories) {
+                            $query->orWhere(function (Builder $query) use ($currentTime, $hours, $categories): void {
+                                $query->whereHas('category', fn (Builder $category) => $category->whereIn('slug', $categories))
+                                    ->whereRaw('COALESCE(occurred_at, starts_at, published_at, detected_at, created_at) > ?', [$currentTime->copy()->subHours($hours)]);
+                            });
+                        }
+                        $query->orWhere(function (Builder $query) use ($currentTime, $windows): void {
+                            $query->whereDoesntHave('category', fn (Builder $category) => $category->whereIn('slug', array_merge(...array_values($windows))))
+                                ->whereRaw('COALESCE(occurred_at, starts_at, published_at, detected_at, created_at) > ?', [$currentTime->copy()->subHours(IncidentValidityService::hoursForCategory('default'))]);
+                        });
+                    });
             });
+    }
+
+    public function scopeWithinRetention(Builder $query): Builder
+    {
+        $cutoff = app(DataRetentionService::class)->cutoff();
+
+        return $query->whereRaw('COALESCE(occurred_at, starts_at, published_at, detected_at, created_at) >= ?', [$cutoff])
+            ->whereRaw('COALESCE(published_at, detected_at, created_at) >= ?', [$cutoff]);
     }
 
     public function category(): BelongsTo

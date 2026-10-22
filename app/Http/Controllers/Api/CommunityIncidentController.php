@@ -14,6 +14,7 @@ use App\Enums\Severity;
 use App\Enums\SourceType;
 use App\Enums\TemporalAccuracy;
 use App\Services\IncidentSubcategoryClassifier;
+use App\Services\IncidentValidityService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCommunityIncidentRequest;
 use App\Http\Requests\VoteCommunityIncidentRequest;
@@ -100,7 +101,7 @@ class CommunityIncidentController extends Controller
                 'detected_at' => $observedAt,
                 'first_seen_at' => $observedAt,
                 'last_seen_at' => $observedAt,
-                'expires_at' => $observedAt->copy()->addDays(7),
+                'expires_at' => IncidentValidityService::expiresAt($observedAt, $category->slug),
                 'published_at' => $observedAt,
             ]);
             IncidentUpdate::query()->create([
@@ -129,6 +130,7 @@ class CommunityIncidentController extends Controller
     {
         $incident = Incident::query()
             ->published()
+            ->withinRetention()
             ->where('public_id', $publicId)
             ->where('source_type', SourceType::Community)
             ->firstOrFail();
@@ -149,6 +151,7 @@ class CommunityIncidentController extends Controller
         $result = DB::transaction(function () use ($validated, $publicId): array {
             $incident = Incident::query()
                 ->published()
+                ->withinRetention()
                 ->where('public_id', $publicId)
                 ->where('source_type', SourceType::Community)
                 ->lockForUpdate()

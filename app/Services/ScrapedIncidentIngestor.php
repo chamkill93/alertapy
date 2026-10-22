@@ -45,7 +45,7 @@ class ScrapedIncidentIngestor
         private readonly IncidentDataQualityService $dataQuality,
     ) {}
 
-    /** @return array{discovered: int, published: int, merged: int, waiting_location: int, pending_decision: int, unchanged: int} */
+    /** @return array{discovered: int, published: int, merged: int, waiting_location: int, pending_decision: int, unchanged: int, ignored_date: int} */
     public function ingest(Source $source, CollectorInterface $collector): array
     {
         $startedAt = now();
@@ -55,7 +55,7 @@ class ScrapedIncidentIngestor
             'status' => 'running',
         ]);
         $source->forceFill(['last_run_at' => $startedAt])->save();
-        $stats = ['discovered' => 0, 'published' => 0, 'merged' => 0, 'waiting_location' => 0, 'pending_decision' => 0, 'unchanged' => 0];
+        $stats = ['discovered' => 0, 'published' => 0, 'merged' => 0, 'waiting_location' => 0, 'pending_decision' => 0, 'unchanged' => 0, 'ignored_date' => 0];
 
         try {
             $candidates = $collector->collect($source);
@@ -122,6 +122,18 @@ class ScrapedIncidentIngestor
 
         if (! $this->isAllowedSourceUrl($source, $candidate->originalUrl)) {
             throw new InvalidArgumentException("La URL no pertenece al dominio permitido de {$source->name}.");
+        }
+
+        $explicitStartsAt = $this->date($candidate->metadata['starts_at'] ?? null);
+        $temporal = $this->temporal->resolve($candidate->title.' '.$candidate->content, $candidate->publishedAt, $candidate->metadata);
+        $eventAt = $temporal['occurred_at'] ?? $explicitStartsAt ?? $candidate->publishedAt;
+        $cutoff = app(DataRetentionService::class)->cutoff();
+        // A fresh scrape is not a fresh publication. Undated news cannot be
+        // safely retained/reimported; dated official schedules remain valid.
+        if ($eventAt === null || $eventAt->lt($cutoff)
+            || $candidate->publishedAt?->lt($cutoff)
+            || $candidate->publishedAt?->isFuture()) {
+            return 'ignored_date';
         }
 
         [$rawItem, $rawChanged] = $this->storeRawItem($source, $candidate);
@@ -195,12 +207,11 @@ class ScrapedIncidentIngestor
             return 'pending_decision';
         }
 
-        return DB::transaction(function () use ($source, $candidate, $rawItem, $rawChanged, $contentCandidate, $category, $location, $roadResolution, $decision): string {
-            $explicitStartsAt = $this->date($candidate->metadata['starts_at'] ?? null);
+        return DB::transaction(function () use ($source, $candidate, $rawItem, $rawChanged, $contentCandidate, $category, $location, $roadResolution, $decision, $explicitStartsAt, $temporal): string {
             $startsAt = $explicitStartsAt
+                ?? $temporal['occurred_at']
                 ?? $candidate->publishedAt
                 ?? CarbonImmutable::now();
-            $temporal = $this->temporal->resolve($candidate->title.' '.$candidate->content, $candidate->publishedAt, $candidate->metadata);
             $endsAt = $this->date($candidate->metadata['ends_at'] ?? null);
             $locationText = trim((string) ($candidate->metadata['location_text'] ?? $candidate->detectedLocation));
             $city = $this->nullableString($candidate->metadata['city'] ?? null);
@@ -287,7 +298,7 @@ class ScrapedIncidentIngestor
                     'incident_scope' => $this->scope($candidate, $roadResolution?->roadId, $city, $department),
                     'starts_at' => $startsAt,
                     'ends_at' => $endsAt,
-                    'expires_at' => $endsAt ?? $this->expiration($startsAt, $category->slug),
+                    'expires_at' => $endsAt ?? IncidentValidityService::expiresAt($startsAt, $category->slug),
                     'occurred_at' => $temporal['occurred_at'],
                     'occurred_at_accuracy' => $temporal['accuracy'],
                     'temporal_evidence_json' => $temporal['evidence'],
@@ -594,16 +605,6 @@ class ScrapedIncidentIngestor
         return preg_match('/\b(fatal|muerte|muere|fallec|granizo|rafagas intensas)\w*/u', $evidence) === 1
             ? Severity::High
             : Severity::Medium;
-    }
-
-    private function expiration(CarbonImmutable $startsAt, string $category): CarbonImmutable
-    {
-        return match ($category) {
-            'roads' => $startsAt->addHours(8),
-            'weather_flood' => $startsAt->addHours(12),
-            'traffic_accident', 'fire', 'emergency' => $startsAt->addHours(18),
-            default => $startsAt->addDay(),
-        };
     }
 
     private function date(mixed $value): ?CarbonImmutable

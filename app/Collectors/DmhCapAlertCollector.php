@@ -3,6 +3,7 @@
 namespace App\Collectors;
 
 use App\Models\WeatherAlert;
+use App\Services\DataRetentionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 
@@ -27,13 +28,17 @@ class DmhCapAlertCollector
             if ($identifier === '' || $event === '') continue;
             $expiresAt = $this->date($this->tag($xml, 'expires'));
             if ($expiresAt?->isPast()) continue;
+            $sentAt = $this->date($this->tag($xml, 'sent'));
+            $startsAt = $this->date($this->tag($xml, 'onset'));
+            $contentDate = $sentAt ?? $startsAt;
+            if ($contentDate === null || $contentDate->lt(app(DataRetentionService::class)->cutoff()) || $sentAt?->isFuture()) continue;
             WeatherAlert::query()->updateOrCreate(
                 ['external_id' => $identifier],
                 [
                     'event' => $event, 'headline' => $headline, 'description' => $this->tag($xml, 'description'),
                     'severity' => $this->tag($xml, 'severity'), 'urgency' => $this->tag($xml, 'urgency'), 'certainty' => $this->tag($xml, 'certainty'),
                     'area_description' => $this->tag($xml, 'areaDesc'), 'geometry_geojson' => $this->polygon($this->tag($xml, 'polygon')),
-                    'sent_at' => $this->date($this->tag($xml, 'sent')), 'starts_at' => $this->date($this->tag($xml, 'onset')), 'expires_at' => $expiresAt,
+                    'sent_at' => $sentAt, 'starts_at' => $startsAt, 'expires_at' => $expiresAt,
                     'source_url' => (string) config('alertapy.sources.dmh-cap.source_url'), 'synced_at' => now(),
                 ],
             );

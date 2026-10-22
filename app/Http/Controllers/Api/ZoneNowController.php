@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Incident;
 use App\Models\WeatherAlert;
 use App\Services\ClimateContextService;
+use App\Services\DataRetentionService;
 use App\Services\GeoDistanceService;
 use App\Services\IncidentQueryService;
+use App\Services\IncidentValidityService;
 use App\Services\NearbyInfrastructureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,7 +30,11 @@ class ZoneNowController extends Controller
             'count' => $items->count(), 'nearest_distance_km' => round((float) $items->min('distance_km'), 1),
         ])->sortByDesc('count')->values();
         $alerts = WeatherAlert::query()->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))->get()
+            ->where(fn ($q) => $q->whereNull('sent_at')->orWhere('sent_at', '<=', now()))
+            ->whereRaw('COALESCE(sent_at, starts_at, created_at) >= ?', [app(DataRetentionService::class)->cutoff()])
+            ->where(fn ($q) => $q->where('expires_at', '>', now())->orWhere(fn ($q) => $q->whereNull('expires_at')
+                ->whereRaw('COALESCE(starts_at, sent_at, created_at) > ?', [now()->subHours(IncidentValidityService::hoursForCategory('weather_flood'))])))
+            ->get()
             ->filter(fn (WeatherAlert $alert): bool => $this->contains($alert->geometry_geojson, $lat, $lng))->map(fn (WeatherAlert $alert): array => [
                 'event' => $alert->event, 'headline' => $alert->headline, 'severity' => $alert->severity, 'expires_at' => $alert->expires_at?->toIso8601String(),
             ])->values();

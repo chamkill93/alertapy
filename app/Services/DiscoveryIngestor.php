@@ -18,13 +18,13 @@ class DiscoveryIngestor
         private readonly GeocodingService $geocoding,
     ) {}
 
-    /** @return array{discovered: int, queued: int, waiting_location: int, unchanged: int} */
+    /** @return array{discovered: int, queued: int, waiting_location: int, unchanged: int, ignored_date: int} */
     public function ingest(Source $source, DiscoveryProviderInterface $provider): array
     {
         $startedAt = now();
         $run = SourceRun::query()->create(['source_id' => $source->id, 'started_at' => $startedAt, 'status' => 'running']);
         $source->forceFill(['last_run_at' => $startedAt])->save();
-        $stats = ['discovered' => 0, 'queued' => 0, 'waiting_location' => 0, 'unchanged' => 0];
+        $stats = ['discovered' => 0, 'queued' => 0, 'waiting_location' => 0, 'unchanged' => 0, 'ignored_date' => 0];
 
         try {
             $items = $provider->discover($source);
@@ -62,6 +62,10 @@ class DiscoveryIngestor
 
     private function store(Source $source, DiscoveryItemDTO $item): string
     {
+        if ($item->publishedAt === null || $item->publishedAt->lt(app(DataRetentionService::class)->cutoff()) || $item->publishedAt->isFuture()) {
+            return 'ignored_date';
+        }
+
         $contentHash = hash('sha256', $item->title."\n".$item->content."\n".$item->originalUrl);
         $raw = RawItem::query()->where('source_id', $source->id)
             ->where(fn ($query) => $query->where('external_identifier', $item->externalIdentifier)->orWhere('content_hash', $contentHash))

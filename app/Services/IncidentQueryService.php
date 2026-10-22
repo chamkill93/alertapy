@@ -11,7 +11,7 @@ class IncidentQueryService
     /** @param array<string, mixed> $filters */
     public function apply(Builder $query, array $filters): Builder
     {
-        $query->published();
+        $query->published()->withinRetention();
 
         if (! empty($filters['categories'])) {
             $query->whereHas('category', function (Builder $query) use ($filters): void {
@@ -79,9 +79,7 @@ class IncidentQueryService
 
     private function applyPeriod(Builder $query, string $period): void
     {
-        if ($period !== 'historical') {
-            $query->where('status', '!=', IncidentStatus::Cancelled);
-        }
+        $query->where('status', '!=', IncidentStatus::Cancelled);
 
         match ($period) {
             'now' => $query->current(),
@@ -89,7 +87,7 @@ class IncidentQueryService
             '6h' => $query->where('published_at', '>=', now()->subHours(6)),
             '24h' => $query->where('published_at', '>=', now()->subDay()),
             '7d' => $query->where('published_at', '>=', now()->subDays(7)),
-            'historical' => null,
+            default => $query->current(),
         };
     }
 }

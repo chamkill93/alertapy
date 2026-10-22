@@ -5,6 +5,7 @@ namespace App\Collectors;
 use App\Models\MonitoringStation;
 use App\Models\Source;
 use App\Models\StationMeasurement;
+use App\Services\DataRetentionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 
@@ -27,7 +28,7 @@ class DmhAutomaticStationCollector
             if (! is_numeric($latitude) || ! is_numeric($longitude)) continue;
 
             $observedAt = isset($observation['fecha']['utc']) ? CarbonImmutable::parse($observation['fecha']['utc']) : null;
-            $fresh = $observedAt?->gte(now()->subHours(6)) ?? false;
+            $fresh = $observedAt !== null && ! $observedAt->isFuture() && $observedAt->gte(now()->subHours(6));
             $station = MonitoringStation::query()->updateOrCreate(
                 ['source_id' => $source->id, 'external_id' => (string) $externalId],
                 [
@@ -42,7 +43,7 @@ class DmhAutomaticStationCollector
                 ],
             );
             $stationCount++;
-            if ($observedAt === null) continue;
+            if ($observedAt === null || $observedAt->lt(app(DataRetentionService::class)->cutoff()) || $observedAt->isFuture()) continue;
 
             $parameters = [
                 'temperature' => 'temperatura_aire', 'humidity' => 'humedad_relativa', 'pressure_qnh' => 'presion_qnh',

@@ -8,7 +8,7 @@
     <label>Correo electrónico<input type="email" name="email" value="{{ old('email') }}" autocomplete="username" required maxlength="254"></label>
     <label>Contraseña<input type="password" name="password" autocomplete="new-password" required minlength="12"><small>Usá al menos 12 caracteres.</small></label>
     <label>Confirmar contraseña<input type="password" name="password_confirmation" autocomplete="new-password" required minlength="12"></label>
-    <button class="button button-primary" type="submit">Crear administrador <span aria-hidden="true">→</span></button>
+    <button class="button button-primary" type="submit">Crear administrador <span data-app-icon="arrow_right" aria-hidden="true"></span></button>
 </form>
 <p class="auth-help">Esta configuración inicial se cierra al crear la primera cuenta.</p>
 @endsection

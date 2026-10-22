@@ -69,7 +69,7 @@
     };
 
     const state = {
-        period: '7d',
+        period: 'now',
         city: '',
         source: '',
         roadCode: '',

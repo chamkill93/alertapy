@@ -30,7 +30,7 @@ class IncidentIndexRequest extends FormRequest
         return [
             'categories' => ['sometimes', 'array', 'max:20'],
             'categories.*' => ['string', 'max:80', 'distinct'],
-            'period' => ['sometimes', Rule::in(['now', '1h', '6h', '24h', '7d', 'historical'])],
+            'period' => ['sometimes', Rule::in(['now', '1h', '6h', '24h', '7d'])],
             'bbox' => ['sometimes', 'string', 'max:100'],
             'city' => ['sometimes', 'string', 'max:120'],
             'status' => ['sometimes', 'array', 'max:10'],

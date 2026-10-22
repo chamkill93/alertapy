@@ -9,6 +9,7 @@ use App\Models\SchedulerCycle;
 use App\Models\Source;
 use App\Models\SourceRun;
 use App\Services\IncidentExpirationService;
+use App\Services\DataRetentionService;
 use App\Services\SourceCommandRegistry;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
@@ -21,7 +22,7 @@ class RunCycleCommand extends Command
 
     protected $description = 'Ejecuta fuentes vencidas con presupuesto entre fuentes y checkpoint para el próximo cron.';
 
-    public function handle(IncidentExpirationService $expiration, SourceCommandRegistry $registry): int
+    public function handle(IncidentExpirationService $expiration, SourceCommandRegistry $registry, DataRetentionService $retention): int
     {
         $lock = Cache::lock('alertapy:general-cycle', SourceCommandRegistry::lockSeconds());
 
@@ -36,6 +37,19 @@ class RunCycleCommand extends Command
 
         try {
             $cycle = SchedulerCycle::query()->create(['started_at' => now(), 'status' => 'running']);
+            // Retention precedes counters so deletions do not mask new items.
+            // It also runs when there are no due sources or collection fails.
+            $retentionLock = Cache::lock('alertapy:data-retention', 300);
+            if ($retentionLock->get()) {
+                try {
+                    $retentionResult = $retention->prune();
+                    $this->line('Retención de 7 días: '.array_sum($retentionResult['records']).' registros y '.$retentionResult['photos'].' fotos eliminados.');
+                } finally {
+                    $retentionLock->release();
+                }
+            } else {
+                $this->line('Otra purga de retención está en ejecución.');
+            }
             $incidentCount = Incident::query()->count();
             $updateCount = IncidentUpdate::query()->count();
             $candidateCount = ContentCandidate::query()->count();

@@ -64,6 +64,7 @@ class CommunityIncidentApiTest extends TestCase
         $incident = Incident::query()->firstOrFail();
         $this->assertSame(SourceType::Community, $incident->source_type);
         $this->assertNotNull($incident->published_at);
+        $this->assertTrue($incident->expires_at->equalTo($incident->occurred_at->copy()->addHours(18)));
         $this->assertSame('unconfirmed', $incident->verification_level);
         Storage::disk('local')->assertExists($incident->community_photo_path);
 
@@ -161,8 +162,8 @@ class CommunityIncidentApiTest extends TestCase
             ->assertOk()
             ->assertJsonMissing(['id' => $publicId]);
         $this->getJson('/api/incidents?period=historical')
-            ->assertOk()
-            ->assertJsonFragment(['id' => $publicId]);
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('period');
         $this->getJson("/api/incidents/{$publicId}")
             ->assertOk()
             ->assertJsonPath('data.community_validation.positive', 0)

@@ -76,7 +76,7 @@ class IntegrationPhaseTest extends TestCase
         $this->incident($category, 'Cerca', -25.2867, -57.3333);
         $this->incident($category, 'Lejos', -25.45, -57.55);
 
-        $this->getJson('/api/incidents?period=historical&near_lat=-25.2867&near_lng=-57.3333&radius_km=5')
+        $this->getJson('/api/incidents?period=7d&near_lat=-25.2867&near_lng=-57.3333&radius_km=5')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.title', 'Cerca')

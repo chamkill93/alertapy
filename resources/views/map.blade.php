@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="AlertaPY: información territorial verificable de Paraguay en un mapa interactivo.">
     <meta name="theme-color" content="#102a35">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <title>AlertaPY — Paraguay en tiempo casi real</title>
 
     <link rel="preconnect" href="https://unpkg.com">
@@ -16,6 +17,7 @@
     <link rel="stylesheet" href="{{ asset('assets/alertapy-ui/css/alertapy-ui-kit.css') }}?v={{ filemtime(public_path('assets/alertapy-ui/css/alertapy-ui-kit.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/alertapy-responsive.css') }}?v={{ filemtime(public_path('css/alertapy-responsive.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/alertapy-theme.css') }}?v={{ filemtime(public_path('css/alertapy-theme.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/alertapy-brand.css') }}?v={{ filemtime(public_path('css/alertapy-brand.css')) }}">
 </head>
 <body>
     <a class="skip-link" href="#map">Saltar al mapa</a>
@@ -23,14 +25,7 @@
     <header class="topbar">
         <div class="brand">
             <a class="brand-home" href="{{ route('map') }}" aria-label="AlertaPY, inicio">
-                <span class="brand-logo" aria-hidden="true">
-                    <img src="{{ asset('images/alertapy-header-logo.png') }}"
-                         width="390"
-                         height="112"
-                         alt=""
-                         decoding="async"
-                         fetchpriority="high">
-                </span>
+                @include('components.brand')
             </a>
             <a class="developer-credit"
                href="https://www.linkedin.com/in/diego-laconich-chamorro-244775180/"
@@ -91,13 +86,13 @@
                     <h2 id="period-heading">Periodo</h2>
                 </div>
                 <div class="period-grid" id="period-filter">
-                    <button type="button" data-period="now" aria-pressed="false"><span data-app-icon="verified"></span>Ahora</button>
-                    <button type="button" data-period="1h" aria-pressed="false"><span data-app-icon="clock"></span>1 hora</button>
-                    <button type="button" data-period="6h" aria-pressed="false"><span data-app-icon="clock"></span>6 horas</button>
-                    <button type="button" data-period="24h" aria-pressed="false"><span data-app-icon="calendar"></span>24 horas</button>
-                    <button type="button" class="active" data-period="7d" aria-pressed="true"><span data-app-icon="calendar"></span>7 días</button>
-                    <button type="button" class="period-history" data-period="historical" aria-pressed="false"><span data-app-icon="infinity"></span>Histórico</button>
+                    <button type="button" class="active" data-period="now" aria-pressed="true"><span data-app-icon="verified"></span>Ahora</button>
+                    <button type="button" data-period="1h" aria-label="Última hora" aria-pressed="false"><span data-app-icon="clock"></span>1 h</button>
+                    <button type="button" data-period="6h" aria-label="Últimas 6 horas" aria-pressed="false"><span data-app-icon="clock"></span>6 h</button>
+                    <button type="button" data-period="24h" aria-label="Últimas 24 horas" aria-pressed="false"><span data-app-icon="calendar"></span>24 h</button>
+                    <button type="button" data-period="7d" aria-label="Últimos 7 días" aria-pressed="false"><span data-app-icon="calendar"></span>7 días</button>
                 </div>
+                <p class="filter-help">Ahora muestra incidencias iniciadas y vigentes. Los demás periodos incluyen eventos finalizados de los últimos 7 días.</p>
             </section>
 
             <section aria-labelledby="layers-heading">
@@ -140,7 +135,7 @@
                 <div class="infrastructure-layer-list monitoring-layer-list" id="monitoring-filter">
                     <label>
                         <input type="checkbox" value="dmh">
-                        <span class="monitoring-option-icon"><img src="{{ asset('assets/alertapy-ui/icons/monitoring/estacion-meteorologica-dmh.svg') }}" alt=""></span>
+                        <span data-app-icon="sensor" aria-hidden="true"></span>
                         <span>Estaciones DMH</span>
                         <span class="layer-toggle" aria-hidden="true"></span>
                     </label>

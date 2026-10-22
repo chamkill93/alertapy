@@ -90,7 +90,7 @@ class ScrapeSourcesCommand extends Command
                 try {
                     $stats = $ingestor->ingest($source, $collector);
                     $this->info(sprintf(
-                        '%s: %d detectados, %d publicados, %d fusionados, %d sin ubicación, %d pendientes de decisión, %d sin cambios.',
+                        '%s: %d detectados, %d publicados, %d fusionados, %d sin ubicación, %d pendientes de decisión, %d sin cambios, %d omitidos por fecha.',
                         $source->name,
                         $stats['discovered'],
                         $stats['published'],
@@ -98,6 +98,7 @@ class ScrapeSourcesCommand extends Command
                         $stats['waiting_location'],
                         $stats['pending_decision'],
                         $stats['unchanged'],
+                        $stats['ignored_date'],
                     ));
                 } catch (Throwable $exception) {
                     $failures++;

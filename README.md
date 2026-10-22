@@ -57,7 +57,7 @@ php artisan alertapy:scrape ultimahora --force --days=7
 php artisan alertapy:scrape lanacion --force --days=7
 ```
 
-Cada publicación aceptada se conserva en `raw_items` con su contenido original, URL, fechas y hash. La tabla `incidents` contiene la representación territorial para el mapa. Vencer en “Ahora” no elimina ninguna de las dos filas: el acontecimiento sigue disponible en “7 días” e “Histórico”.
+Cada publicación aceptada se conserva en `raw_items` con su contenido original, URL, fechas y hash. La tabla `incidents` contiene la representación territorial para el mapa. Vencer en “Ahora” retira el marcador de los eventos vigentes; la publicación sigue disponible en los periodos recientes hasta salir de la ventana de 7 días. No existe un periodo histórico. El ciclo automático elimina el contenido vencido y evita reimportar noticias antiguas. Ver [política de retención](docs/DATA_RETENTION.md).
 
 La ubicación no está fijada dentro de cada collector. El texto se compara con `location_aliases`; el registro relacionado en `locations` aporta el nombre canónico, ciudad, departamento, precisión y consulta geográfica. Si todavía no tiene coordenadas, el geocoder permitido las resuelve una vez, las guarda en `locations` y reutiliza `geocoding_cache` en las siguientes publicaciones.
 
@@ -159,7 +159,7 @@ Las categorías muestran cuántas incidencias hay en la zona, período y tipo de
 Filtros de `/api/incidents`:
 
 - `categories=electricity,water`
-- `period=now|1h|6h|24h|7d|historical`
+- `period=now|1h|6h|24h|7d`
 - `bbox=south,west,north,east`
 - `city=Asunción`
 - `status=active,confirmed`

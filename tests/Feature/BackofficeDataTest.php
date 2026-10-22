@@ -137,6 +137,45 @@ class BackofficeDataTest extends TestCase
         $this->assertSame(1, $connections['connections']->total());
     }
 
+    public function test_news_references_follow_the_original_article_on_every_listing_and_reject_unsafe_links(): void
+    {
+        $source = $this->source('references');
+        $article = $this->raw($source, 'Referencia verificable', [
+            'original_url' => 'https://press.test/noticia.php?id=73&api_key=hidden-reference#section',
+        ]);
+        $unsafe = $this->raw($source, 'Referencia insegura', ['original_url' => 'javascript:alert(1)']);
+        $service = app(BackofficeDataService::class);
+
+        $pages = [
+            $service->newsIndex(Request::create('/admin/news'))['news']->items(),
+            $service->dashboard()['latestNews'],
+            $service->connectionDetail($source, Request::create('/admin/connections/'.$source->id))['latestNews'],
+        ];
+        foreach ($pages as $rows) {
+            $references = collect($rows)->keyBy('id');
+            $this->assertSame('https://press.test/noticia.php?id=73', $references[$article->id]['original_url']);
+            $this->assertNull($references[$unsafe->id]['original_url']);
+            $this->assertStringNotContainsString('hidden-reference', json_encode($rows));
+        }
+        Http::assertNothingSent();
+    }
+
+    public function test_reference_links_preserve_article_identifiers_and_cms_routing_without_tracking_or_credentials(): void
+    {
+        $source = $this->source('permalinks');
+        $urls = [
+            'https://www.ande.gov.py/interna.php?id=15471',
+            'https://www.essap.com.py/?p=123',
+            'https://press.test/noticias.php?id_noticia=731&tipo_nota=agua',
+            'https://press.test/leer.php?not_id=415&cod=abc',
+            'https://press.test/index.php?option=com_content&view=article&id=42&Itemid=4',
+        ];
+        foreach ($urls as $index => $url) {
+            $raw = $this->raw($source, 'Artículo '.$index, ['original_url' => $url.'&token=private&utm_source=tracking&redirect=https://private.test']);
+            $this->assertSame($url, app(BackofficeDataService::class)->newsDetail($raw)['original_url']);
+        }
+    }
+
     public function test_connection_catalog_includes_disabled_sources_and_safe_health_and_filters(): void
     {
         $this->source('healthy');

@@ -32,17 +32,23 @@ class HealthSourcesIngestionTest extends TestCase
             ['query' => 'Departamento de Canindeyú', 'normalized_query' => 'departamento de canindeyu', 'latitude' => -24.25, 'longitude' => -55.25, 'precision' => LocationAccuracy::Department->value, 'provider' => 'test', 'hit_count' => 0, 'created_at' => now(), 'updated_at' => now()],
             ['query' => 'Departamento de Concepción', 'normalized_query' => 'departamento de concepcion', 'latitude' => -23.40, 'longitude' => -57.43, 'precision' => LocationAccuracy::Department->value, 'provider' => 'test', 'hit_count' => 0, 'created_at' => now(), 'updated_at' => now()],
         ]);
-        $cards = collect([12, 13, 14])->map(fn (int $day): string => "<article><h2><a href=\"https://erssan.gov.py/control-{$day}/\">Supervisión de calidad del agua en Canindeyú y Concepción</a></h2><time>Publicado el {$day} de agosto de 2026</time></article>")->implode('');
+        // At Aug 19, 23:00, a date-only Aug 12 article is already 7 days
+        // and 23 hours old. Keep it as a negative case; Aug 13–15 provide
+        // three valid updates for each of the two departments.
+        $cards = collect([12, 13, 14, 15])->map(fn (int $day): string => "<article><h2><a href=\"https://erssan.gov.py/control-{$day}/\">Supervisión de calidad del agua en Canindeyú y Concepción</a></h2><time>Publicado el {$day} de agosto de 2026</time></article>")->implode('');
         Http::fake([
             'erssan.gov.py/noticias/' => Http::response("<main>{$cards}</main>"),
             'erssan.gov.py/control-*' => Http::response('<main><p>ERSSAN realiza la supervisión oficial en los departamentos de Canindeyú y Concepción.</p></main>'),
         ]);
 
-        $this->artisan('alertapy:scrape erssan --force --days=7')->assertSuccessful();
+        $this->artisan('alertapy:scrape erssan --force --days=7')
+            ->expectsOutputToContain('2 omitidos por fecha')
+            ->assertSuccessful();
 
         $this->assertDatabaseCount('incidents', 2);
         $this->assertDatabaseCount('incident_sources', 6);
         $this->assertDatabaseCount('incident_updates', 6);
+        $this->assertDatabaseMissing('raw_items', ['original_url' => 'https://erssan.gov.py/control-12/']);
         $this->assertSame(2, \App\Models\IncidentUpdate::query()->where('event_type', 'detected')->count());
         $this->assertSame(4, \App\Models\IncidentUpdate::query()->where('event_type', 'updated')->count());
         $this->assertDatabaseHas('incidents', ['department' => 'Canindeyú', 'city' => null, 'location_accuracy' => 'department']);

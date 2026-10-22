@@ -41,7 +41,7 @@ class MonitoringSourcesTest extends TestCase
                 'parameter_name' => 'PM2.5',
                 'parameter_value' => 13.4,
                 'unit' => 'µg/m³',
-                'date_time' => '2026-08-19T22:30:00-03:00',
+                'date_time' => now()->subHour()->toIso8601String(),
             ]]]),
         ]);
 

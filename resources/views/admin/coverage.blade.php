@@ -7,10 +7,11 @@
     <style>
         :root{font-family:Inter,system-ui,sans-serif;color:#102d2a;background:#f2f6f5}body{margin:0;padding:2rem}main{max-width:1200px;margin:auto}h1{margin-bottom:.25rem}p{color:#536865}section{background:white;border:1px solid #d9e4e1;border-radius:16px;padding:1rem;margin:1rem 0;overflow:auto}table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{text-align:left;padding:.65rem;border-bottom:1px solid #e7eeec}th{color:#46615d}.pill{display:inline-block;padding:.18rem .5rem;border-radius:999px;font-weight:800}.high,.HEALTHY{background:#d9f5e9;color:#08745e}.medium,.DEGRADED,.STALE{background:#fff1ca;color:#8a5b00}.low,.FAILING,.FAILED,.MISSING{background:#ffe0e0;color:#a31d2f}.DISABLED{background:#e9edec;color:#56615f}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem}.metric{background:#f5f9f8;border-radius:12px;padding:.8rem}.metric strong{display:block;font-size:1.45rem}.notice{border-left:4px solid #0877e8;padding-left:.75rem}
     </style>
+@include('admin.partials.legacy-head')
 </head>
-<body><main>
+<body class="legacy-admin"><main>@include('admin.partials.legacy-brand')
     <h1>Cobertura territorial</h1>
-    <p><a href="{{ route('admin.roads.index') }}">Administración → Cartografía → Red vial</a></p>
+    <p><a href="{{ route('admin.roads.index') }}">Cartografía <span data-app-icon="arrow_right" aria-hidden="true"></span> Red vial</a></p>
     <p class="notice">Índice de capacidad de monitoreo. No representa el porcentaje de todos los acontecimientos reales detectados.</p>
     <section><h2>Estado operativo</h2><div class="metrics"><div class="metric">Incidencias activas<strong>{{ $dashboard['active_incidents'] }}</strong></div><div class="metric">Scheduler<strong><span class="pill {{ $scheduler['status'] }}">{{ $scheduler['status'] }}</span></strong><small>{{ $scheduler['last_cycle']?->finished_at?->diffForHumans() ?? 'Sin ciclos registrados' }}</small></div><div class="metric">Ubicaciones de baja calidad<strong>{{ $dashboard['low_quality_locations'] }}</strong></div><div class="metric">Sin hora de ocurrencia<strong>{{ $dashboard['missing_occurred_at'] }}</strong></div><div class="metric">Resueltas/vencidas<strong>{{ $dashboard['stale_incidents'] }}</strong></div></div></section>
     <section><table><thead><tr><th>Departamento</th><th>Oficiales</th><th>Prensa nacional</th><th>Prensa regional</th><th>Municipalidad</th><th>Sensores</th><th>Capacidad</th><th>Nivel</th></tr></thead><tbody>

@@ -88,6 +88,7 @@ class IncidentController extends Controller
     {
         $incident = Incident::query()
             ->published()
+            ->withinRetention()
             ->with([
                 'category:id,slug,name,icon,color',
                 'sources.source:id,name,type',
@@ -114,7 +115,7 @@ class IncidentController extends Controller
         $since = $validated['since'] ?? null;
 
         $updates = IncidentUpdate::query()
-            ->whereHas('incident', fn ($query) => $query->published())
+            ->whereHas('incident', fn ($query) => $query->published()->withinRetention())
             ->where('event_type', '!=', IncidentEventType::Expired)
             ->when($since, fn ($query, $value) => $query->where('created_at', '>', $value))
             ->with([
@@ -143,6 +144,7 @@ class IncidentController extends Controller
 
         $incidents = Incident::query()
             ->published()
+            ->withinRetention()
             ->when($since, fn ($query, $value) => $query->where('created_at', '>', $value))
             ->with([
                 'category:id,slug,name,icon,color',

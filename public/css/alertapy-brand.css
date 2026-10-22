@@ -1,0 +1,9 @@
+/* Shared vector identity: the same mark on the map and in the backoffice. */
+.alertapy-brand { --brand-word: #e6f0ee; --brand-accent: #b7eac8; display: inline-flex; align-items: center; gap: .4em; color: var(--brand-word); font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 22px; line-height: 1; white-space: nowrap; }
+.alertapy-brand[data-tone="dark"] { --brand-word: #17362f; --brand-accent: #2d775c; }
+.alertapy-brand-symbol { display: block; flex: none; width: 1.65em; height: 1.82em; }
+.alertapy-brand-word { font-size: 1em; font-weight: 800; letter-spacing: -.055em; }
+.alertapy-brand-py { color: var(--brand-accent); letter-spacing: -.045em; }
+.topbar .alertapy-brand { font-size: 25px; }
+@media (max-width: 760px) { .topbar .alertapy-brand { font-size: 20px; } }
+@media (max-width: 359px) { .topbar .alertapy-brand { font-size: 18px; } }

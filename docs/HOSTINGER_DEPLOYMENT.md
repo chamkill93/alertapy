@@ -106,6 +106,8 @@ ALERTAPY_SOURCE_USER_AGENT="AlertaPY/1.0 (+https://www.alertaparaguay.com)"
 
 El backoffice requiere un usuario administrador; `ALERTAPY_ADMIN_TOKEN` solo sirve a integraciones administrativas anteriores y puede quedar vacío si no se usan. El cron por CLI tampoco necesita `ALERTAPY_CRON_SECRET`. Activar fuentes con credenciales solo cuando existan claves válidas. El descubrimiento social produce candidatos para verificación, no confirmaciones automáticas. Respetar reglas de cada fuente, frecuencia y uso de geocodificación.
 
+Antes de activar el primer ciclo sobre una base existente, ejecutar `php artisan alertapy:prune-data --dry-run` y guardar el respaldo previsto. Cada ciclo aplica automáticamente la [retención de siete días](DATA_RETENTION.md) a noticias, incidencias y registros operativos.
+
 ```bash
 composer2 install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 composer2 check-platform-reqs --no-dev

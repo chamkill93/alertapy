@@ -89,7 +89,6 @@ class BackofficeDataService
 
         return [
             ...$row,
-            'original_url' => $this->safeUrl($rawItem->original_url),
             'content' => $this->plainText($rawItem->raw_content),
             'decisions' => $rawItem->candidates->map(fn (ContentCandidate $candidate): array => [
                 'status' => $candidate->status,
@@ -163,7 +162,7 @@ class BackofficeDataService
 
     private function newsQuery(): Builder
     {
-        return RawItem::query()->select(['id', 'source_id', 'title', 'published_at', 'detected_at', 'processed_at'])
+        return RawItem::query()->select(['id', 'source_id', 'title', 'original_url', 'published_at', 'detected_at', 'processed_at'])
             ->with(['source:id,name,slug', 'candidates' => fn ($query) => $query->select(['id', 'raw_item_id', 'status', 'ai_decision'])->orderByDesc('id')]);
     }
 
@@ -208,6 +207,7 @@ class BackofficeDataService
 
             return [
                 'id' => $raw->id, 'title' => $this->plainText($raw->title),
+                'original_url' => $this->safeUrl($raw->original_url),
                 'source' => ['id' => $raw->source->id, 'name' => $raw->source->name, 'slug' => $raw->source->slug],
                 'published_at' => $raw->published_at?->toIso8601String(),
                 'detected_at' => $raw->detected_at?->toIso8601String(),
@@ -376,8 +376,14 @@ class BackofficeDataService
         }
         $url = strtolower($parts['scheme']).'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '').($parts['path'] ?? '/');
         parse_str($parts['query'] ?? '', $query);
-        // Preserve common public article identifiers; never forward credentials.
-        $query = array_filter($query, fn ($value, $key) => in_array(strtolower($key), ['id', 'nid', 'p', 'post', 'article', 'noticia', 'cat', 'page'], true) && is_scalar($value), ARRAY_FILTER_USE_BOTH);
+        // Preserve public article identifiers and CMS routing; never forward credentials or redirects.
+        $publicParameters = [
+            'id', 'nid', 'p', 'post', 'article', 'noticia', 'nota', 'cat', 'page',
+            'id_noticia', 'noticia_id', 'id_nota', 'nota_id', 'not_id', 'news_id',
+            'id_news', 'article_id', 'story', 'story_id', 'cod', 'codigo', 'slug',
+            'tipo_nota', 'option', 'view', 'itemid',
+        ];
+        $query = array_filter($query, fn ($value, $key) => in_array(strtolower($key), $publicParameters, true) && is_scalar($value), ARRAY_FILTER_USE_BOTH);
 
         return $url.($query === [] ? '' : '?'.http_build_query($query));
     }

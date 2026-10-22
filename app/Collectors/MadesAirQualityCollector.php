@@ -5,6 +5,7 @@ namespace App\Collectors;
 use App\Models\MonitoringStation;
 use App\Models\Source;
 use App\Models\StationMeasurement;
+use App\Services\DataRetentionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
@@ -81,6 +82,9 @@ class MadesAirQualityCollector
                 try {
                     $measuredAt = CarbonImmutable::parse($reading['date_time']);
                 } catch (\Throwable) {
+                    continue;
+                }
+                if ($measuredAt->lt(app(DataRetentionService::class)->cutoff()) || $measuredAt->isFuture()) {
                     continue;
                 }
                 $measurement = StationMeasurement::query()->firstOrCreate(

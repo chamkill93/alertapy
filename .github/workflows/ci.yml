@@ -52,6 +52,7 @@ jobs:
         run: composer test
       - name: Test map interactions
         run: |
+          node --check public/js/alertapy-icons.js
           node --check public/js/alertapy-map.js
           node --test tests/Frontend/*Test.cjs
       - name: Validate deployment scripts

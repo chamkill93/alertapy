@@ -6,9 +6,9 @@ Revisión operativa: 22 de octubre de 2026, zona `America/Asuncion`.
 
 La instancia local usa la base real `storage/framework/alertapy-local.sqlite`, con respaldos privados previos a la actualización. La recolección de noticias se ejecuta mediante `alertapy:cycle`; el navegador consulta la base cada minuto mientras está activo. Desplegar código desde GitHub no actualiza noticias por sí solo.
 
-El catálogo contiene 59 fuentes, de las que 39 están habilitadas. Una fuente habilitada puede responder sin novedades, estar bloqueada o necesitar reparación. El backoffice privado `/admin/connections` distingue estado, última consulta, último éxito y salud del ciclo. `/api/sources/status` requiere sesión administrativa; el mapa público ya no consulta ni muestra estos diagnósticos. Los errores internos completos quedan fuera de esa API.
+El catálogo contiene **64 fuentes, 44 habilitadas**. Una auditoría de solo lectura comparó las 44 habilitadas con el registro de comandos y encontró un collector para cada una. El ciclo maestro elige las fuentes vencidas, respeta la frecuencia de cada una y avanza el resto mediante checkpoint; el 22/10 un ciclo completó 19 fuentes en 119 segundos. Una fuente puede responder sin novedades, estar bloqueada o necesitar reparación. El backoffice privado `/admin/connections` distingue estado, última consulta, último éxito y salud del ciclo. `/api/sources/status` requiere sesión administrativa; el mapa público ya no consulta ni muestra estos diagnósticos.
 
-La verificación de las 14:10 encontró 299 incidencias publicadas en el histórico, 98 de los últimos siete días, 34 vigentes y 99 estaciones activas en la API. Son un corte de una base que continúa cambiando, no cuotas ni datos simulados. Se recorrieron dos páginas con 299 identificadores únicos, sin páginas pendientes, por encima del límite anterior de 200.
+En la lectura local de las 18:12 del 22/10, la capa de electricidad tenía dos señales vigentes de los últimos siete días, agua una e hidrología una; el resto de las capas también se consulta, aunque no todas tenían una incidencia vigente. Son conteos de ese momento, no cuotas ni datos simulados. La lista de capas y fuentes activas se detalla abajo.
 
 ## Cambios comprobados
 
@@ -39,6 +39,29 @@ La verificación de las 14:10 encontró 299 incidencias publicadas en el histór
 | NASA FIRMS y MADES aire | Detecciones térmicas y calidad del aire | Requieren claves; actualmente deshabilitados. Una detección térmica no confirma un incendio |
 | GDELT y redes sociales | Descubrimiento de posibles evidencias | Opcionales/deshabilitados; requieren configuración y, en varios casos, claves o canales autorizados |
 
+## Seguimiento automático por capa
+
+Estas fuentes forman parte del mismo `alertapy:cycle`; las habilitadas se consultan automáticamente al vencer su intervalo. Un contador en cero quiere decir que no hay una incidencia publicable vigente, no que se haya simulado un evento.
+
+| Capa | Fuentes automáticas | Estado o límite verificado |
+| --- | --- | --- |
+| Electricidad | ANDE; Última Hora, La Nación, ABC, 1000 Noticias, Ñandutí y cinco medios incorporados | ANDE sigue bloqueada. El ciclo automático importó desde Ahora Paraguay un aviso programado conjunto de electricidad y agua, lo separó por capa y lo venció cuando pasó su fecha. Las notas conservan su URL de origen. |
+| Agua | ESSAP, ERSSAN, SIAGUAPY y medios de prensa | La API de ESSAP puede responder correctamente con cero avisos. El mapa usa noticias de servicio con fecha y zona verificables como respaldo. |
+| Seguridad | Ministerio Público, SENAD y prensa | Titular y ubicación pasan filtros territoriales; los falsos positivos de expresiones figuradas están cubiertos por pruebas. |
+| Accidentes y tránsito | MOPC, municipalidades y prensa | Cierres, desvíos y accidentes se clasifican con reglas distintas para evitar mezclar obras con siniestros. |
+| Incendios | INFONA y prensa; NASA FIRMS opcional | NASA FIRMS está desactivado hasta configurar su clave. Una detección térmica sola no se publica como incendio confirmado. |
+| Inundaciones y clima | Meteorología/DMH, alertas CAP, estaciones DMH, SEN, SIAGUAPY y prensa | Las estaciones se guardan como observaciones; solo alertas o hechos territoriales forman incidencias. |
+| Calles, rutas y obras | MOPC, fuentes municipales y prensa | La red vial y su cartografía son datos de referencia versionados; los incidentes viales se recolectan por separado. |
+| Fronteras y pasos | Migraciones y prensa | Los cambios, restricciones y cierres operativos usan el collector de Migraciones. |
+| Salud y SENEPA | SENEPA, MSPBS, DGVS y prensa | Se filtran brotes y operaciones territoriales; no se convierten estadísticas nacionales en puntos. |
+| Salud animal | SENACSA | Fuente oficial habilitada con categoría propia. |
+| Ríos e hidrología | SIAGUAPY, estaciones DMH y prensa | Los trazos de ríos son cartografía estable; lecturas y noticias son datos separados. El feed de niveles de ríos de DMH y los de embalses están deshabilitados porque su última publicación no era actual. |
+| Calidad del aire | API de estaciones del MADES | Sin clave API la conexión permanece deshabilitada. El MADES exige clave para los endpoints de datos y publica límites de uso; no se evade ese acceso. Se puede solicitar una clave en [Acceso a la API de MADES](https://calidadaire.mades.gov.py/acceso-api). |
+| Emergencias | SEN, fuentes municipales y prensa | Se admiten hechos localizados como evacuaciones y derrumbes, no comunicados generales sin lugar. |
+| Novedades territoriales | MADES, INFONA, DINAC y prensa | Solo hechos publicados con fecha, categoría y localización reconocibles. |
+
+En esa misma lectura, las incidencias vigentes de electricidad, agua e hidrología tenían fuentes originales enlazadas. Otras capas no tenían un evento publicable en la ventana consultada. La cobertura de cada fuente y su estado se puede inspeccionar en el backoffice autenticado.
+
 El listado anterior de Unicanal devuelve 404. Su [portada oficial](https://www.unicanal.com.py/) enlaza noticias de [La Tribuna](https://www.latribuna.com.py/); se añadió La Tribuna con atribución propia y Unicanal quedó deshabilitado por defecto hasta disponer de un canal directo adecuado. Se conserva su historial.
 
 “Todos los resultados” significa todas las incidencias publicadas que satisfacen los filtros, no todas las noticias existentes en internet. Artículos sin lugar, fecha, pertinencia o autorización técnica de acceso no se convierten en puntos inventados.
@@ -59,7 +82,7 @@ El listado anterior de Unicanal devuelve 404. Su [portada oficial](https://www.u
 
 `php artisan alertapy:status` muestra base, scheduler y fuentes. En Windows, los comandos sobre la base local deben usar el INI y variables de conexión del runner; el `.env` conserva la configuración MySQL del proyecto. Para comprobaciones automatizadas se usa SQLite **en memoria**; nunca la base real.
 
-La última corrida completa del 22/10/2026 aprobó **231 pruebas PHP (1123 aserciones) y 33 pruebas JavaScript**. Las guardas finales de horarios se verificaron además en la suite dirigida del extractor y la prensa: **33 pruebas y 64 aserciones**. Se verificó previamente el rechazo de una segunda instancia del runner mientras la primera mantiene el lock.
+La última corrida completa registrada aprobó **330 pruebas PHP (1681 aserciones) y 35 pruebas JavaScript**. También se verificó el rechazo de una segunda instancia del runner mientras la primera mantiene el lock.
 
 Las capas ignoran respuestas obsoletas después de cambiar la selección. La infraestructura reparte su límite global sin perder colegios al activar salud o policía: en el área de prueba devuelve 2471 de 2471 lugares. Las vistas fuera de cobertura devuelven una colección vacía. Los conteos junto a cada categoría explican cuándo no hay datos; el radio permite elegir un centro y quitar el filtro desde móvil. Las regresiones incluyen cargas tardías, errores de peticiones anteriores, selección manual y permisos de ubicación que llegan después de cancelar.
 

@@ -1,6 +1,6 @@
 # Operación y despliegue de producción
 
-Complementa [HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md). No hay destino remoto ni auto-deploy activo incluido. El flujo preparado es CI → SHA aprobado → backup → script por SSH → verificación, con ingesta independiente cada cinco minutos.
+Complementa [HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md). No hay destino remoto ni auto-deploy activo incluido. El flujo preparado es CI → SHA aprobado → backup → script por SSH → verificación, con ingesta independiente mediante un cron propuesto cada minuto. Falta configurar y probar ese cron en la cuenta real de Hostinger.
 
 ## Antes de cada cambio
 
@@ -58,10 +58,11 @@ No ejecuta scraping durante el deploy ni modifica secretos. Las migraciones modi
 ## Validación posterior
 
 - Probar HTTPS y respuestas de `/up`, `/`, `/api/categories`, `/api/incidents` y `/api/sources/status`; comprobar el contenido además del status HTTP.
-- Abrir mapa y filtros: actual/histórico, fechas y zonas; verificar fuente y ubicación coherente de registros nuevos.
+- Abrir mapa y filtros: «Ahora», periodos dentro de los últimos siete días, capas y zonas; verificar fuente y ubicación coherente de registros nuevos. No existe periodo histórico fuera de esa retención.
 - Comprobar que `.env`, `.git/config`, archivos privados y backups no se descargan desde el dominio.
 - Probar autenticación de `/admin/coverage`, reportes comunitarios y privacidad de fotos.
 - Observar el próximo cron, ejecutar `php artisan alertapy:status` y revisar logs rotados. Cero publicaciones no implica falla: revisar candidatos y filtros.
+- Completar la [verificación de conexiones](PRE_HOSTINGER_SOURCE_CHECKS.md) desde el servidor: los bloqueos de ANDE y otros proveedores pueden variar según IP. Comprobar al menos tres ciclos sin `--force`, incluidas las conexiones prioritarias vencidas y el avance del checkpoint general.
 - Comparar conteos antes/después para detectar pérdidas; revisar disco, CPU, duración del ciclo y acumulación de datos/logs.
 
 ## Fallo y recuperación

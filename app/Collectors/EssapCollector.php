@@ -35,12 +35,13 @@ class EssapCollector implements CollectorInterface
 
         for ($page = 1; $page <= $maximumPages; $page++) {
             $query = [
-                'after' => $cutoff->setTimezone('UTC')->format('Y-m-d\TH:i:s\Z'),
+                // WordPress compares `after` with local post_date, not date_gmt.
+                'after' => $cutoff->format('Y-m-d\TH:i:s'),
                 'orderby' => 'date',
                 'order' => 'desc',
                 'page' => $page,
                 'per_page' => $pageSize,
-                '_fields' => 'id,date,modified,link,slug,title,excerpt,content,categories',
+                '_fields' => 'id,date,date_gmt,modified,link,slug,title,excerpt,content,categories',
             ];
 
             if ($categoryIds !== []) {
@@ -59,13 +60,13 @@ class EssapCollector implements CollectorInterface
 
             $posts = $response->json();
 
-            if (! is_array($posts)) {
+            if (! is_array(json_decode($response->body())) || ! is_array($posts) || ! array_is_list($posts)) {
                 throw new RuntimeException('La API oficial de ESSAP no devolvió una lista válida de publicaciones.');
             }
 
             foreach ($posts as $post) {
                 if (! is_array($post)) {
-                    continue;
+                    throw new RuntimeException('La API oficial de ESSAP devolvió una publicación no válida.');
                 }
 
                 $candidate = $this->candidate($source, $post, $cutoff);
@@ -97,9 +98,14 @@ class EssapCollector implements CollectorInterface
         $title = $this->plainText((string) data_get($post, 'title.rendered', ''));
         $excerpt = $this->plainText((string) data_get($post, 'excerpt.rendered', ''));
         $content = $this->plainText((string) data_get($post, 'content.rendered', ''));
-        $publishedAt = $this->date((string) ($post['date'] ?? ''));
+        $gmt = trim((string) ($post['date_gmt'] ?? ''));
+        $publishedAt = $this->date($gmt !== '' ? $gmt : (string) ($post['date'] ?? ''), $gmt !== '' ? 'UTC' : (string) config('app.timezone'));
 
-        if ($id === null || $url === '' || $title === '' || $publishedAt === null || $publishedAt->lt($cutoff) || $publishedAt->isFuture()) {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        if (! is_numeric($id) || (int) $id < 1
+            || ! in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)
+            || ! ($host === 'essap.com.py' || str_ends_with($host, '.essap.com.py'))
+            || $title === '' || $publishedAt === null || $publishedAt->lt($cutoff) || $publishedAt->isFuture()) {
             return null;
         }
 
@@ -149,21 +155,21 @@ class EssapCollector implements CollectorInterface
 
     private function plainText(string $html): string
     {
+        $html = preg_replace('~<(script|style)\b[^>]*>.*?</\1>~is', '', $html) ?? $html;
+        $html = preg_replace('~</?(?:p|div|br|li|h[1-6]|section|article)\b[^>]*>~i', ' ', $html) ?? $html;
         $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         return trim(preg_replace('/\s+/u', ' ', $text) ?: $text);
     }
 
-    private function date(string $value): ?CarbonImmutable
+    private function date(string $value, string $timezone): ?CarbonImmutable
     {
-        if (trim($value) === '') {
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z?$/D', trim($value), $parts) !== 1
+            || ! checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])
+            || (int) $parts[4] > 23 || (int) $parts[5] > 59 || (int) $parts[6] > 59) {
             return null;
         }
 
-        try {
-            return CarbonImmutable::parse($value, (string) config('app.timezone'));
-        } catch (\Throwable) {
-            return null;
-        }
+        return CarbonImmutable::parse($value, $timezone)->setTimezone((string) config('app.timezone'));
     }
 }

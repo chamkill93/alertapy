@@ -104,6 +104,60 @@ class AutomaticCycleTest extends TestCase
         $this->assertDatabaseHas('scheduler_cycles', ['sources_processed' => 1, 'candidates_created' => 1]);
     }
 
+    public function test_due_service_sources_run_first_without_skipping_the_regular_checkpoint(): void
+    {
+        config()->set('alertapy.cycle.priority_sources', ['essap', 'siaguapy']);
+        config()->set('alertapy.cycle.max_sources', 2);
+        $first = $this->source('abc');
+        $this->source('essap');
+        $next = $this->source('meteorologia');
+        $this->source('siaguapy', ['last_run_at' => now()]);
+        Cache::forever('alertapy:cycle:source-cursor', $first->id);
+        Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'essap'])->andReturn(0);
+        Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'meteorologia'])->andReturn(0);
+        Artisan::shouldReceive('output')->twice()->andReturn('ok');
+
+        $this->assertSame(0, $this->runCycle());
+        $this->assertSame($next->id, Cache::get('alertapy:cycle:source-cursor'));
+        $this->assertDatabaseHas('scheduler_cycles', ['sources_processed' => 2]);
+    }
+
+    public function test_a_priority_only_batch_does_not_rewind_the_general_queue(): void
+    {
+        config()->set('alertapy.cycle.priority_sources', ['essap']);
+        config()->set('alertapy.cycle.max_sources', 1);
+        $first = $this->source('abc');
+        $priority = $this->source('essap');
+        $next = $this->source('meteorologia');
+        Cache::forever('alertapy:cycle:source-cursor', $first->id);
+        Artisan::shouldReceive('call')->once()->with('alertapy:scrape', ['source' => 'essap'])->andReturn(0);
+        Artisan::shouldReceive('output')->once()->andReturn('ok');
+
+        $this->assertSame(0, $this->runCycle());
+        $this->assertSame($first->id, Cache::get('alertapy:cycle:source-cursor'));
+
+        $priority->update(['last_run_at' => now()]);
+        Artisan::shouldReceive('call')->once()->with('alertapy:scrape', ['source' => 'meteorologia'])->andReturn(0);
+        Artisan::shouldReceive('output')->once()->andReturn('ok');
+        $this->assertSame(0, $this->runCycle());
+        $this->assertSame($next->id, Cache::get('alertapy:cycle:source-cursor'));
+    }
+
+    public function test_priority_sources_run_in_due_order_and_keep_failures_visible(): void
+    {
+        config()->set('alertapy.cycle.priority_sources', ['essap', 'siaguapy']);
+        $this->source('abc');
+        $this->source('essap', ['last_run_at' => now()->subMinutes(20)]);
+        $this->source('siaguapy', ['last_run_at' => now()->subHour()]);
+        Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'siaguapy'])->andReturn(1);
+        Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'essap'])->andReturn(0);
+        Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'abc'])->andReturn(0);
+        Artisan::shouldReceive('output')->times(3)->andReturn('ok');
+
+        $this->assertSame(1, $this->runCycle());
+        $this->assertDatabaseHas('scheduler_cycles', ['sources_processed' => 3, 'error_summary' => 'Fuentes con error: siaguapy']);
+    }
+
     public function test_a_running_cycle_holds_the_lock_and_does_not_create_a_duplicate_cycle(): void
     {
         $lock = Cache::lock('alertapy:general-cycle', SourceCommandRegistry::lockSeconds());

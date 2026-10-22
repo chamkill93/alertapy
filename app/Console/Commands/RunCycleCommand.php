@@ -8,8 +8,8 @@ use App\Models\IncidentUpdate;
 use App\Models\SchedulerCycle;
 use App\Models\Source;
 use App\Models\SourceRun;
-use App\Services\IncidentExpirationService;
 use App\Services\DataRetentionService;
+use App\Services\IncidentExpirationService;
 use App\Services\SourceCommandRegistry;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
@@ -89,12 +89,19 @@ class RunCycleCommand extends Command
         $maximumCandidates = max(1, (int) config('alertapy.cycle.max_candidates', 100));
         $maximumSeconds = max(1, (int) config('alertapy.cycle.max_seconds', 180));
         $cursor = (int) Cache::get('alertapy:cycle:source-cursor', 0);
+        $prioritySlugs = array_values(array_filter((array) config('alertapy.cycle.priority_sources', []), 'is_string'));
         $commands = $registry->commands();
         $sources = Source::query()->where('enabled', true)->whereIn('slug', array_keys($commands))
             ->orderBy('id')->get()
             ->filter(fn (Source $source): bool => $source->last_run_at === null || $source->last_run_at->copy()->addMinutes($source->polling_minutes)->lte(now()));
-        // Wrap within the same batch so a high cursor never starves earlier sources.
-        $sources = $sources->where('id', '>', $cursor)->concat($sources->where('id', '<=', $cursor))->take($maximum);
+        $priority = $sources->whereIn('slug', $prioritySlugs)->sortBy(
+            fn (Source $source): int => $source->last_run_at?->copy()->addMinutes($source->polling_minutes)->getTimestamp() ?? PHP_INT_MIN,
+        );
+        $regular = $sources->whereNotIn('slug', $prioritySlugs);
+        // Critical sources run when due, oldest due first. Keep the general
+        // queue's checkpoint independent so this priority cannot rewind it.
+        $sources = $priority->concat($regular->where('id', '>', $cursor))
+            ->concat($regular->where('id', '<=', $cursor))->take($maximum);
         $failures = [];
         $processed = 0;
 
@@ -133,7 +140,9 @@ class RunCycleCommand extends Command
                 }
             } finally {
                 $processed++;
-                Cache::forever('alertapy:cycle:source-cursor', $source->id);
+                if (! in_array($source->slug, $prioritySlugs, true)) {
+                    Cache::forever('alertapy:cycle:source-cursor', $source->id);
+                }
                 $cycle->forceFill(['sources_processed' => $processed])->save();
             }
         }

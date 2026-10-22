@@ -51,13 +51,15 @@ Endpoints complementarios:
 
 ## Ciclo general
 
-Hostinger puede ejecutar cada cinco minutos:
+El cron propuesto para Hostinger despierta el ciclo cada minuto, una vez confirmadas las rutas y capacidades del plan. La configuración del servidor real sigue pendiente. Para una ejecución manual de diagnóstico:
 
 ```bash
 php artisan alertapy:cycle
 ```
 
-El comando procesa únicamente fuentes vencidas, limita fuentes y duración por ciclo, usa bloqueo de archivo/base compatible con hosting compartido y conserva el último `source_id` como checkpoint. Variables:
+Para el cron de producción usar el wrapper y el lock compartido con despliegues descritos en [HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md), sin programarlo simultáneamente con `schedule:run`.
+
+El comando procesa únicamente fuentes vencidas, con prioridad para las conexiones de servicios, hidrología, DMH y ABC definidas en `alertapy.cycle.priority_sources`. Dentro de ese grupo atiende primero la ejecución más atrasada; después retoma la cola general. Conserva el último `source_id` **general** como checkpoint, por lo que las prioritarias no reinician la cola restante. Los límites de tiempo y candidatos se comprueban entre fuentes: no interrumpen un collector en marcha ni garantizan una frecuencia exacta. Usa bloqueo de archivo/base compatible con hosting compartido. Variables:
 
 - `ALERTAPY_CYCLE_MAX_SECONDS`.
 - `ALERTAPY_MAX_SOURCES_PER_CYCLE`.

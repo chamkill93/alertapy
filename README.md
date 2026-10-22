@@ -72,7 +72,7 @@ php artisan alertapy:scrape essap --force
 php artisan alertapy:scrape essap --force --days=7
 ```
 
-El scheduler ejecuta ESSAP cada diez minutos. Cada corrida queda auditada en `source_runs`; publicaciones originales en `raw_items`; decisiones normalizadas en `content_candidates`; marcadores en `incidents`; y el vínculo a cada evidencia en `incident_sources`. Si ESSAP no publicó una incidencia territorial durante el período, la corrida termina correctamente con cero resultados y no crea datos ficticios.
+ESSAP queda disponible para consulta cada diez minutos. El ciclo atiende primero las fuentes de servicios y monitoreo que ya estén vencidas; una consulta en marcha puede demorar la siguiente. Cada corrida queda auditada en `source_runs`; publicaciones originales en `raw_items`; decisiones normalizadas en `content_candidates`; marcadores en `incidents`; y el vínculo a cada evidencia en `incident_sources`. Si ESSAP no publicó una incidencia territorial durante el período, la corrida termina correctamente con cero resultados y no crea datos ficticios. 1000 Noticias y Ñandutí complementan electricidad y agua con búsquedas paginadas de la última semana, hasta 300 coincidencias por consulta.
 
 ANDE actualmente entrega una verificación Radware a clientes HTTP simples, aunque la página pública carga normalmente en un navegador. AlertaPY detecta el bloqueo y no intenta evadirlo. Para una recuperación asistida se puede exportar el texto público visible a un JSON dentro de `storage/app/private` e importarlo de forma idempotente:
 
@@ -112,7 +112,7 @@ Abrí la URL configurada por `artisan serve`; la instancia de desarrollo actual 
 
 ### Actualización automática
 
-El despliegue del código y la actualización de noticias son procesos separados. `alertapy:cycle` consulta las fuentes habilitadas según su frecuencia, actualiza estaciones y alertas meteorológicas, vence incidencias y registra su estado. Conserva un checkpoint entre lotes; una fuente con error no detiene las demás.
+El despliegue del código y la actualización de noticias son procesos separados. `alertapy:cycle` consulta las fuentes habilitadas según su frecuencia, actualiza estaciones y alertas meteorológicas, vence incidencias y registra su estado. Las conexiones prioritarias vencidas se atienden primero y la cola general conserva su propio checkpoint entre lotes; una fuente con error no detiene las demás.
 
 En esta PC existe una base de referencia real en `storage/framework/alertapy-local.sqlite`. Para mantenerla actualizada mientras la PC está encendida, el runner local configura PHP y esa conexión únicamente para su proceso:
 
@@ -122,9 +122,9 @@ pwsh -NoProfile -File scripts/local-scheduler.ps1
 pwsh -NoProfile -File scripts/local-scheduler.ps1 -Stop
 ```
 
-El intervalo inicial es de cinco minutos; el estado y log quedan en `work/local-scheduler.json` y `work/local-scheduler.log`. El runner se inicia de nuevo después de reiniciar la PC; no instala una tarea del sistema. La base local no se envía a GitHub y producción utiliza MySQL/MariaDB.
+El intervalo inicial es de 60 segundos; el estado y log quedan en `work/local-scheduler.json` y `work/local-scheduler.log`. Si un ciclo tarda más, el siguiente comienza cuando termina y no se superponen. El runner se inicia de nuevo después de reiniciar la PC; no instala una tarea del sistema. La base local no se envía a GitHub y producción utiliza MySQL/MariaDB.
 
-Para Hostinger usar el cron de [la guía de despliegue](docs/HOSTINGER_DEPLOYMENT.md). La [cobertura y condiciones pendientes](docs/AUTOMATION_COVERAGE.md) distingue fuentes activas, bloqueadas, opcionales y límites de geolocalización. El mapa recorre todas las páginas mediante cursor y consulta la base cada minuto cuando está visible; el indicador de fuentes refleja la salud del proceso de recolección.
+Para Hostinger usar el cron de [la guía de despliegue](docs/HOSTINGER_DEPLOYMENT.md). La [revisión previa al despliegue](docs/PRE_HOSTINGER_SOURCE_CHECKS.md) registra las respuestas reales y los límites de electricidad, agua y ríos. La [cobertura y condiciones pendientes](docs/AUTOMATION_COVERAGE.md) distingue fuentes activas, bloqueadas, opcionales y límites de geolocalización. El mapa recorre todas las páginas mediante cursor y consulta la base cada minuto cuando está visible; el estado de conexiones se consulta en el backoffice privado.
 
 ## Tests
 
@@ -134,11 +134,11 @@ node --test tests/Frontend/*Test.cjs
 ```
 
 La suite PHP usa SQLite en memoria y no accede a internet. Las pruebas JavaScript usan Node y respuestas controladas, sin navegador ni red. Los datos simulados existen únicamente dentro de las pruebas.
-Verificación del 22/10/2026: **177 pruebas PHP (941 aserciones) y 33 pruebas JavaScript**, todas aprobadas.
+Verificación del 22/10/2026: **324 pruebas PHP (1660 aserciones) y 35 pruebas JavaScript**, todas aprobadas.
 
 La integración visual RC1 se documenta en [docs/UI_UX_RC1.md](docs/UI_UX_RC1.md). Ejecutar la aplicación no requiere Node, npm ni compilación de assets; Node se usa para las pruebas de interacciones.
 
-Las categorías muestran cuántas incidencias hay en la zona, período y tipo de fuente elegidos, independientemente de las casillas activadas. Infraestructura, estaciones y cartografía tienen interruptores separados. El filtro por radio se activa con “Usar centro del mapa” o “Usar mi ubicación”, también en móvil, y se elimina con “Quitar radio”.
+Un toque en una categoría muestra esa capa y «Todas» recupera todas las categorías. Electricidad, Agua, Ríos y Clima aparecen primero. Los períodos principales son Ahora, 24 h y 7 días; «Más opciones» contiene combinación de categorías, 1 h/6 h, tipo de fuente y radio, e indica sus filtros activos incluso cerrado. Los contadores corresponden a la zona, período y tipo de fuente elegidos, independientemente de la categoría seleccionada. «Capas del mapa» agrupa infraestructura, estaciones y cartografía, con interruptores independientes. El radio se activa con “Usar centro del mapa” o “Usar mi ubicación”, también en móvil, y se elimina con “Quitar radio”.
 
 ## API pública
 

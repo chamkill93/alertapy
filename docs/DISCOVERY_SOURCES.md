@@ -2,7 +2,7 @@
 
 > **Discovery no es verificación.** Ningún resultado de esta capa se publica automáticamente como incidencia confirmada.
 
-Los proveedores guardan la URL original, título, contenido disponible, autor/canal, fecha y evidencia de ubicación. Si la ubicación puede resolverse, el candidato queda como `pending_ai`; si no, queda como `waiting_location`. Ambos estados requieren una decisión posterior. El comando común es `php artisan alertapy:discover {proveedor}` y es seguro ejecutarlo por cron: respeta frecuencia, bloqueo e idempotencia.
+Los proveedores guardan la URL original, título, contenido disponible, autor/canal, fecha y evidencia de ubicación. Si la ubicación puede resolverse, el candidato queda como `pending_ai`; si no, queda como `waiting_location`. Ambos estados requieren una decisión posterior. El comando manual común es `php artisan alertapy:discover {proveedor}`: respeta frecuencia, bloqueo e idempotencia. La automatización programada usa el ciclo general y no duplica esos comandos en otro cron.
 
 | Proveedor | URL investigada | Tipo | Método | Frecuencia | Estado inicial | Limitaciones |
 | --- | --- | --- | --- | ---: | --- | --- |
@@ -24,7 +24,7 @@ Todas las integraciones están apagadas por defecto. Las variables están docume
 - `TELEGRAM_DISCOVERY_ENABLED`, `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHANNELS`.
 - `YOUTUBE_DISCOVERY_ENABLED`, `YOUTUBE_API_KEY` y `YOUTUBE_CHANNEL_IDS`.
 
-El programador ejecuta `alertapy:discover all` cada cinco minutos. Cada proveedor conserva su frecuencia interna y los desactivados solo muestran su estado; la falta de token no rompe el ciclo general.
+El programador está preparado para despertar `alertapy:cycle` cada minuto; el cron del servidor real todavía debe configurarse y comprobarse. El ciclo incluye discovery habilitado en la cola general y conserva el checkpoint después de atender las conexiones prioritarias. Cada proveedor conserva su frecuencia interna y los desactivados no se consultan; la falta de token no rompe las demás fuentes. No programar `alertapy:discover all` en paralelo con el ciclo general.
 
 ## Reglas de seguridad editorial
 

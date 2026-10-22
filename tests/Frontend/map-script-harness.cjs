@@ -31,6 +31,9 @@ function filter(values) {
     const inputs = values.map(value => ({ value, checked: false, disabled: false }));
     return eventTarget({
         inputs,
+        attrs: {},
+        setAttribute(name, value) { this.attrs[name] = value; },
+        classList: { toggle() {} },
         querySelectorAll(selector) {
             if (selector === 'input:checked') return inputs.filter(input => input.checked);
             if (selector === 'input:not(:disabled)') return inputs.filter(input => !input.disabled);
@@ -46,14 +49,22 @@ function node() {
 }
 
 function createMapHarness() {
-    const status = () => ({ textContent: '', dataset: {} });
+    const status = () => ({ textContent: '', dataset: {}, attrs: {}, setAttribute(name, value) { this.attrs[name] = value; } });
+    const periodButtons = ['now', '24h', '7d', '1h', '6h'].map(period => ({
+        ...status(), dataset: { period }, classList: { toggle() {} }, closest() { return this; },
+    }));
     const elements = {
         monitoringFilter: filter(['dmh']), monitoringStatus: status(),
         roadFilter: filter(['roads', 'rivers']), roadStatus: status(),
         infrastructureFilter: filter(['health', 'education', 'police']), infrastructureStatus: status(),
         categoryFilter: filter(['traffic', 'weather', 'works']), toggleCategories: eventTarget(status()),
+        combineCategories: eventTarget({ checked: false }), categorySelectionHelp: status(),
+        periodFilter: { querySelectorAll: () => periodButtons.slice(0, 3) },
+        precisePeriodFilter: { querySelectorAll: () => periodButtons.slice(3) },
+        precisePeriodStatus: status(),
+        advancedFilterIndicator: status(),
     };
-    const state = { mapLayerPromises: new Map(), categoriesVisible: true };
+    const state = { mapLayerPromises: new Map(), categoriesVisible: true, allCategories: true };
     const activeLayers = new Set();
     const map = {
         hasLayer: layer => activeLayers.has(layer),
@@ -105,13 +116,15 @@ function createMapHarness() {
             return pending.promise;
         },
     };
-    const code = sourceSection('    async function loadWeatherStations()', '    function prefetchNationalInfrastructure()')
+    const code = sourceSection('    function selectedCategories()', '    function buildIncidentUrl()')
+        + sourceSection('    function syncAdvancedFilterIndicator()', '    function syncCategoryToggle()')
+        + sourceSection('    async function loadWeatherStations()', '    function prefetchNationalInfrastructure()')
         + sourceSection('    function syncCategoryToggle()', "    elements.periodFilter.addEventListener(")
         + sourceSection("    elements.toggleCategories.addEventListener('click'", '    elements.layersToggle?.addEventListener(')
-        + '\nreturn {loadWeatherStations, loadCartographyLayers, loadInfrastructureLayers, syncInfrastructureSelection, syncCategoryToggle};';
+        + '\nreturn {loadWeatherStations, loadCartographyLayers, loadInfrastructureLayers, syncInfrastructureSelection, syncCategoryToggle, selectedCategories, selectPeriod};';
     const functions = new Function(...Object.keys(context), code)(...Object.values(context));
     return {
-        ...context, ...functions, requests, timers, activeLayers,
+        ...context, ...functions, requests, timers, activeLayers, periodButtons,
         get incidentLoads() { return incidentLoads; },
         runTimers() { const pending = [...timers.values()]; timers.clear(); return Promise.all(pending.map(callback => callback())); },
     };

@@ -76,7 +76,7 @@
                 <div>
                     <span class="eyebrow">Explorá el territorio</span>
                     <h1>Paraguay ahora</h1>
-                    <p class="sidebar-intro">Incidencias y contexto para explorar tu territorio.</p>
+                    <p class="sidebar-intro">Elegí una capa y explorá el mapa.</p>
                 </div>
                 <button class="filters-close" id="filters-close" type="button" aria-label="Cerrar filtros"><span data-app-icon="close" aria-hidden="true"></span></button>
             </div>
@@ -84,117 +84,143 @@
             <section aria-labelledby="period-heading">
                 <div class="section-heading">
                     <h2 id="period-heading">Periodo</h2>
+                    <span class="precise-period-status" id="precise-period-status" hidden></span>
                 </div>
                 <div class="period-grid" id="period-filter">
                     <button type="button" class="active" data-period="now" aria-pressed="true"><span data-app-icon="verified"></span>Ahora</button>
-                    <button type="button" data-period="1h" aria-label="Última hora" aria-pressed="false"><span data-app-icon="clock"></span>1 h</button>
-                    <button type="button" data-period="6h" aria-label="Últimas 6 horas" aria-pressed="false"><span data-app-icon="clock"></span>6 h</button>
                     <button type="button" data-period="24h" aria-label="Últimas 24 horas" aria-pressed="false"><span data-app-icon="calendar"></span>24 h</button>
                     <button type="button" data-period="7d" aria-label="Últimos 7 días" aria-pressed="false"><span data-app-icon="calendar"></span>7 días</button>
                 </div>
-                <p class="filter-help">Ahora muestra incidencias iniciadas y vigentes. Los demás periodos incluyen eventos finalizados de los últimos 7 días.</p>
+                <p class="filter-help">Ahora: incidencias vigentes. 24 h y 7 días: eventos recientes.</p>
             </section>
 
             <section aria-labelledby="layers-heading">
                 <div class="section-heading">
                     <h2 id="layers-heading" class="section-title-icon"><span data-app-icon="report" aria-hidden="true"></span>Eventos</h2>
-                    <button type="button" class="text-button" id="toggle-categories">Ocultar todas</button>
+                    <button type="button" class="all-categories-button" id="toggle-categories" aria-pressed="true">Todas</button>
                 </div>
-                <div class="category-list" id="category-filter">
-                    @forelse ($categories as $category)
-                        <label class="category-option" style="--category-color: {{ $category->color }}">
-                            <input type="checkbox" value="{{ $category->slug }}" checked>
+                <div class="category-list" id="category-filter" role="radiogroup" aria-labelledby="layers-heading" aria-describedby="category-selection-help">
+                    @forelse ($categories->sortBy(fn ($category) => match ($category->slug) {
+                        'electricity' => 0, 'water' => 1, 'hydrology' => 2, 'weather_flood' => 3, default => 4,
+                    }) as $category)
+                        <label class="category-option" style="--category-color: {{ $category->color }}" title="{{ $category->name }}">
+                            <input type="radio" name="event-category" value="{{ $category->slug }}" aria-label="{{ $category->name }}">
                             <span class="category-icon category-icon--{{ $category->slug }}" data-app-icon="{{ $category->slug }}" aria-hidden="true"></span>
-                            <span class="category-name">{{ $category->name }}</span>
+                            <span class="category-name">{{ match($category->slug) {
+                                'traffic_accident' => 'Tránsito', 'weather_flood' => 'Clima',
+                                'roads' => 'Rutas y obras', 'borders' => 'Fronteras',
+                                'health_vector' => 'Salud', 'hydrology' => 'Ríos', 'air_quality' => 'Aire',
+                                'territorial_news' => 'Territorio', default => $category->name,
+                            } }}</span>
                             <small class="category-count" data-category-count="{{ $category->slug }}" aria-hidden="true">—</small>
-                            <span class="layer-toggle" aria-hidden="true"></span>
+                            <span class="category-selection-mark" aria-hidden="true">✓</span>
                         </label>
                     @empty
                         <p class="muted">Ejecutá las migraciones y seeders para cargar el catálogo.</p>
                     @endforelse
                 </div>
-                <p class="filter-help">Incidencias publicadas en la zona, período y fuente elegidos. Un cero indica que no hay publicaciones para esta selección.</p>
+                <p class="filter-help" id="category-selection-help">Un toque muestra solo esa capa. «Todas» vuelve a mostrar todo. 0 indica que no hay incidencias para esta selección.</p>
             </section>
 
-            <section aria-labelledby="infrastructure-layers-heading">
-                <div class="section-heading">
-                    <h2 id="infrastructure-layers-heading" class="section-title-icon"><span data-app-icon="layers" aria-hidden="true"></span>Infraestructura</h2>
-                </div>
-                <div class="infrastructure-layer-list" id="infrastructure-filter">
-                    <label><input type="checkbox" value="health"><span data-app-icon="health_facility"></span><span>Salud</span><span class="layer-toggle" aria-hidden="true"></span></label>
-                    <label><input type="checkbox" value="education"><span data-app-icon="education"></span><span>Educación</span><span class="layer-toggle" aria-hidden="true"></span></label>
-                    <label><input type="checkbox" value="police"><span data-app-icon="police_station"></span><span>Policía</span><span class="layer-toggle" aria-hidden="true"></span></label>
-                </div>
-                <p class="infrastructure-layer-status" id="infrastructure-layer-status" role="status" aria-live="polite">Capas apagadas.</p>
-            </section>
+            <details class="filter-disclosure" id="map-layer-options">
+                <summary><span data-app-icon="layers" aria-hidden="true"></span>Capas del mapa<span class="disclosure-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="filter-disclosure-content">
+                    <section aria-labelledby="infrastructure-layers-heading">
+                        <div class="section-heading">
+                            <h2 id="infrastructure-layers-heading" class="section-title-icon"><span data-app-icon="layers" aria-hidden="true"></span>Infraestructura</h2>
+                        </div>
+                        <div class="infrastructure-layer-list" id="infrastructure-filter">
+                            <label><input type="checkbox" value="health"><span data-app-icon="health_facility"></span><span>Salud</span><span class="layer-toggle" aria-hidden="true"></span></label>
+                            <label><input type="checkbox" value="education"><span data-app-icon="education"></span><span>Educación</span><span class="layer-toggle" aria-hidden="true"></span></label>
+                            <label><input type="checkbox" value="police"><span data-app-icon="police_station"></span><span>Policía</span><span class="layer-toggle" aria-hidden="true"></span></label>
+                        </div>
+                        <p class="infrastructure-layer-status" id="infrastructure-layer-status" role="status" aria-live="polite">Capas apagadas.</p>
+                    </section>
 
-            <section aria-labelledby="monitoring-layers-heading">
-                <div class="section-heading">
-                    <h2 id="monitoring-layers-heading" class="section-title-icon"><span data-app-icon="sensor" aria-hidden="true"></span>Estaciones</h2>
-                </div>
-                <div class="infrastructure-layer-list monitoring-layer-list" id="monitoring-filter">
-                    <label>
-                        <input type="checkbox" value="dmh">
-                        <span data-app-icon="sensor" aria-hidden="true"></span>
-                        <span>Estaciones DMH</span>
-                        <span class="layer-toggle" aria-hidden="true"></span>
-                    </label>
-                </div>
-                <p class="infrastructure-layer-status" id="monitoring-layer-status" role="status" aria-live="polite">Capa apagada.</p>
-            </section>
+                    <section aria-labelledby="monitoring-layers-heading">
+                        <div class="section-heading">
+                            <h2 id="monitoring-layers-heading" class="section-title-icon"><span data-app-icon="sensor" aria-hidden="true"></span>Estaciones</h2>
+                        </div>
+                        <div class="infrastructure-layer-list monitoring-layer-list" id="monitoring-filter">
+                            <label>
+                                <input type="checkbox" value="dmh">
+                                <span data-app-icon="sensor" aria-hidden="true"></span>
+                                <span>Estaciones DMH</span>
+                                <span class="layer-toggle" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                        <p class="infrastructure-layer-status" id="monitoring-layer-status" role="status" aria-live="polite">Capa apagada.</p>
+                    </section>
 
-            <section aria-labelledby="cartography-layers-heading">
-                <div class="section-heading"><h2 id="cartography-layers-heading" class="section-title-icon"><span data-app-icon="map" aria-hidden="true"></span>Mapa</h2></div>
-                <div class="infrastructure-layer-list monitoring-layer-list" id="road-filter">
-                    <label><input type="checkbox" value="roads"><span data-app-icon="roads"></span><span>Red vial</span><span class="layer-toggle" aria-hidden="true"></span></label>
-                    <label><input type="checkbox" value="rivers"><span data-app-icon="hydrology"></span><span>Ríos y cauces</span><span class="layer-toggle" aria-hidden="true"></span></label>
-                </div>
-                <div class="cartography-key" aria-label="Leyenda de cartografía">
-                    <span><i class="cartography-key__line cartography-key__line--national"></i>Nacional</span>
-                    <span><i class="cartography-key__line cartography-key__line--departmental"></i>Departamental</span>
-                    <span><i class="cartography-key__line cartography-key__line--river"></i>Río</span>
-                </div>
-                <p class="infrastructure-layer-status" id="road-layer-status" role="status" aria-live="polite">Capas apagadas.</p>
-            </section>
+                    <section aria-labelledby="cartography-layers-heading">
+                        <div class="section-heading"><h2 id="cartography-layers-heading" class="section-title-icon"><span data-app-icon="map" aria-hidden="true"></span>Mapa</h2></div>
+                        <div class="infrastructure-layer-list monitoring-layer-list" id="road-filter">
+                            <label><input type="checkbox" value="roads"><span data-app-icon="roads"></span><span>Red vial</span><span class="layer-toggle" aria-hidden="true"></span></label>
+                            <label><input type="checkbox" value="rivers"><span data-app-icon="hydrology"></span><span>Ríos y cauces</span><span class="layer-toggle" aria-hidden="true"></span></label>
+                        </div>
+                        <div class="cartography-key" aria-label="Leyenda de cartografía">
+                            <span><i class="cartography-key__line cartography-key__line--national"></i>Nacional</span>
+                            <span><i class="cartography-key__line cartography-key__line--departmental"></i>Departamental</span>
+                            <span><i class="cartography-key__line cartography-key__line--river"></i>Río</span>
+                        </div>
+                        <p class="infrastructure-layer-status" id="road-layer-status" role="status" aria-live="polite">Capas apagadas.</p>
+                    </section>
 
-            <section aria-labelledby="source-filter-heading">
-                <div class="section-heading"><h2 id="source-filter-heading">Fuente</h2></div>
-                <select id="source-filter" class="compact-select" aria-label="Filtrar por tipo de fuente">
-                    <option value="">Todos</option>
-                    <option value="official">Oficial</option>
-                    <option value="press">Prensa</option>
-                    <option value="sensor">Sensor</option>
-                    <option value="community">Comunidad</option>
-                </select>
-                <p class="filter-help">Filtra los eventos. Las capas de infraestructura, estaciones y cartografía se controlan por separado.</p>
-            </section>
-
-            <section aria-labelledby="near-radius-heading">
-                <div class="section-heading"><h2 id="near-radius-heading">Radio</h2></div>
-                <select id="near-radius" class="compact-select" aria-label="Radio de búsqueda" aria-describedby="radius-status" disabled>
-                    <option value="1">1 km</option><option value="3">3 km</option><option value="5" selected>5 km</option><option value="10">10 km</option><option value="25">25 km</option>
-                </select>
-                <div class="radius-actions">
-                    <button type="button" class="text-button" id="near-map-center">Usar centro del mapa</button>
-                    <button type="button" class="text-button" id="near-me-filter">Usar mi ubicación</button>
-                    <button type="button" class="text-button" id="clear-radius" hidden>Quitar radio</button>
                 </div>
-                <p class="filter-help" id="radius-status" role="status">Sin filtro por radio. Elegí un centro para activarlo.</p>
-            </section>
+            </details>
 
-            <section class="zone-now" id="zone-now" aria-labelledby="zone-now-heading" hidden>
-                <div class="section-heading"><h2 id="zone-now-heading">Tu zona ahora</h2><span class="zone-now-live">En vivo</span></div>
-                <div id="zone-now-content"><p class="muted">Seleccioná “Cerca de mí” para consultar tu zona.</p></div>
-            </section>
+            <details class="filter-disclosure" id="advanced-filter-options">
+                <summary><span data-app-icon="filters" aria-hidden="true"></span><span class="filter-disclosure-label">Más opciones<small id="advanced-filter-indicator" aria-live="polite" hidden></small></span><span class="disclosure-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="filter-disclosure-content">
+                    <label class="combine-categories-option"><input type="checkbox" id="combine-categories">Combinar varias categorías</label>
+                    <section aria-labelledby="precise-period-heading">
+                        <div class="section-heading"><h2 id="precise-period-heading">Últimas horas</h2></div>
+                        <div class="precise-period-options" id="precise-period-filter">
+                            <button type="button" data-period="1h" aria-label="Última hora" aria-pressed="false">1 h</button>
+                            <button type="button" data-period="6h" aria-label="Últimas 6 horas" aria-pressed="false">6 h</button>
+                        </div>
+                    </section>
+                    <section aria-labelledby="source-filter-heading">
+                        <div class="section-heading"><h2 id="source-filter-heading">Fuente</h2></div>
+                        <select id="source-filter" class="compact-select" aria-label="Filtrar por tipo de fuente">
+                            <option value="">Todos</option>
+                            <option value="official">Oficial</option>
+                            <option value="press">Prensa</option>
+                            <option value="sensor">Sensor</option>
+                            <option value="community">Comunidad</option>
+                        </select>
+                        <p class="filter-help">Filtra los eventos. Las capas de infraestructura, estaciones y cartografía se controlan por separado.</p>
+                    </section>
 
-            <section aria-labelledby="summary-heading">
-                <div class="section-heading">
-                    <h2 id="summary-heading">Resumen</h2>
+                    <section aria-labelledby="near-radius-heading">
+                        <div class="section-heading"><h2 id="near-radius-heading">Radio</h2></div>
+                        <select id="near-radius" class="compact-select" aria-label="Radio de búsqueda" aria-describedby="radius-status" disabled>
+                            <option value="1">1 km</option><option value="3">3 km</option><option value="5" selected>5 km</option><option value="10">10 km</option><option value="25">25 km</option>
+                        </select>
+                        <div class="radius-actions">
+                            <button type="button" class="text-button" id="near-map-center">Usar centro del mapa</button>
+                            <button type="button" class="text-button" id="near-me-filter">Usar mi ubicación</button>
+                            <button type="button" class="text-button" id="clear-radius" hidden>Quitar radio</button>
+                        </div>
+                        <p class="filter-help" id="radius-status" role="status">Sin filtro por radio. Elegí un centro para activarlo.</p>
+                    </section>
+
+                    <section class="zone-now" id="zone-now" aria-labelledby="zone-now-heading" hidden>
+                        <div class="section-heading"><h2 id="zone-now-heading">Tu zona ahora</h2><span class="zone-now-live">En vivo</span></div>
+                        <div id="zone-now-content"><p class="muted">Seleccioná “Cerca de mí” para consultar tu zona.</p></div>
+                    </section>
+
+                    <section aria-labelledby="summary-heading">
+                        <div class="section-heading">
+                            <h2 id="summary-heading">Resumen</h2>
+                        </div>
+                        <div class="summary-list" id="summary-list">
+                            <p class="muted">Consultando datos publicados…</p>
+                        </div>
+                    </section>
+
                 </div>
-                <div class="summary-list" id="summary-list">
-                    <p class="muted">Consultando datos publicados…</p>
-                </div>
-            </section>
+            </details>
 
             <footer class="sidebar-footer">
                 <span id="last-refresh">Sin actualizar</span>

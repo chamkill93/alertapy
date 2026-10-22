@@ -8,7 +8,7 @@ AlertaPY es un monolito Laravel 12. PHP atiende HTML y JSON; MariaDB conserva ca
 flowchart LR
     Browser["Navegador: Blade + Leaflet"] --> Web["Laravel web/API"]
     Web --> DB["MariaDB / MySQL"]
-    Cron["Cron cada 5 min"] --> Cycle["alertapy:cycle"]
+    Cron["Cron propuesto cada minuto"] --> Cycle["alertapy:cycle"]
     Cycle --> Collectors["Collectors y discovery"]
     Cycle --> Arbiter["Endpoint OpenCode opcional"]
     Collectors --> DB
@@ -62,7 +62,7 @@ Los collectors activos guardan evidencia y los proveedores discovery nunca publi
 - Cache y sesiones en base de datos.
 - Cola síncrona; sin worker.
 - Activos estáticos; sin npm o Vite.
-- Automatización mediante `alertapy:cycle`, invocaciones cortas, límites, checkpoint y lock.
+- Automatización mediante `alertapy:cycle`, fuentes vencidas prioritarias, límites cooperativos, checkpoint de la cola general y lock. El runner local despierta cada 60 segundos por defecto; el cron de producción cada minuto sigue pendiente de configurar y probar en Hostinger.
 
 ## Límites de confianza
 

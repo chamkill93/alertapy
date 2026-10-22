@@ -35,6 +35,9 @@ return [
     'admin_token' => env('ALERTAPY_ADMIN_TOKEN'),
 
     'cycle' => [
+        // Refresh services and live monitoring before slower general news sites.
+        // Each source still obeys its own polling interval and error handling.
+        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', '1000noticias', 'nanduti', 'abc'],
         'max_seconds' => (int) env('ALERTAPY_CYCLE_MAX_SECONDS', 180),
         'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 20),
         'max_candidates' => (int) env('ALERTAPY_MAX_CANDIDATES_PER_CYCLE', 100),
@@ -411,8 +414,10 @@ return [
             'published_timezone' => 'America/Asuncion',
             'search_terms' => ['agua', 'energía', 'eléctrica', 'luz', 'apagón'],
             'max_age_hours' => 168,
-            'page_size' => 25,
-            'max_pages' => 1,
+            // "agua" also matches "Paraguay" in WordPress full-text search.
+            // Read beyond the first 25 broad matches within the retained week.
+            'page_size' => 100,
+            'max_pages' => 3,
             'max_candidates' => 30,
         ],
         'nanduti' => [
@@ -422,8 +427,8 @@ return [
             'published_timezone' => 'America/Asuncion',
             'search_terms' => ['agua', 'energía', 'eléctrica', 'luz', 'apagón'],
             'max_age_hours' => 168,
-            'page_size' => 25,
-            'max_pages' => 1,
+            'page_size' => 100,
+            'max_pages' => 3,
             'max_candidates' => 30,
         ],
         'hoy' => [

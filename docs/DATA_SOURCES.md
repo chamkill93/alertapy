@@ -16,11 +16,11 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | --- | --- | ---: | --- |
 | ANDE | Oficial | 5 min | Parser paginado; acceso HTTP directo bloqueado actualmente por Radware; importación asistida disponible |
 | SENEPA | Oficial (API WordPress) | 10 min | Collector dedicado, paginado y geolocalizable |
-| ESSAP | Oficial | 10 min | API pública oficial de WordPress, categoría `informe-de-prensa`; filtro determinista de acontecimientos de agua |
-| Dirección de Meteorología e Hidrología | Oficial | 5 min | Fase 9 |
+| ESSAP | Oficial | 10 min | API pública oficial de WordPress; categorías de prensa, noticias, comunicados y obras, con filtro determinista de acontecimientos de agua |
+| Dirección de Meteorología e Hidrología | Oficial | 5 min | Avisos oficiales con fecha de emisión y departamentos afectados; ventana de 12 horas |
 | INFONA | Oficial | 30 min | Fase 9 |
-| MADES | Oficial | 30 min | Fase 9 |
-| SIAGUAPY | Oficial | 30 min | Fase 9 |
+| MADES | Oficial | 30 min | Noticias institucionales: solo hechos territoriales clasificables, con fecha y ubicación verificables |
+| SIAGUAPY | Sensor | 30 min | Tabla oficial de alertas hidrológicas: conserva estados de alerta recientes; lecturas normales no generan incidencias |
 | MOPC | Oficial | 10 min | Fase 9 |
 | MOPC - red vial | Dataset oficial | Actualización manual versionada | GeoJSON, KML/KMZ o CSV mediante `alertapy:roads:import`; no se incluye geometría ficticia |
 | OpenStreetMap - rutas PY | Cartografía pública ODbL | Actualización manual versionada | Copia local de relaciones `network=PY:national`; códigos contrastados con la publicación vial del MOPC |
@@ -58,7 +58,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 
 Canales verificados el 22/10/2026: [API de 1000 Noticias](https://1000noticias.com.py/wp-json/wp/v2/posts), [API de Ñandutí](https://nanduti.live/wp-json/wp/v2/posts), [Última Hora / ANDE](https://www.ultimahora.com/buscador?q=ande&s=0), [Última Hora / ESSAP](https://www.ultimahora.com/buscador?q=essap&s=0), [La Nación / ANDE](https://www.lanacion.com.py/tag/ande/) y [La Nación / ESSAP](https://www.lanacion.com.py/tag/essap/). Los buscadores de Última Hora aportan artículos recientes que no aparecen en sus etiquetas antiguas.
 
-`UtilityNewsCollector` consulta por separado agua, energía, eléctrica, luz y apagón; por defecto, una página de 25 publicaciones por término, una ventana de siete días y un máximo de 30 candidatos únicos por medio. Todos los términos se consultan antes de aplicar el cupo de candidatos más recientes. Son límites configurables, no una garantía de cobertura exhaustiva. La próxima pasada vuelve a revisar la ventana y el ingestor conserva la identidad del artículo; releerlo no crea otra incidencia ni renueva su fecha.
+`UtilityNewsCollector` consulta por separado agua, energía, eléctrica, luz y apagón; la configuración de 1000 Noticias y Ñandutí recorre hasta tres páginas de 100 publicaciones por término, una ventana de siete días y un máximo de 30 candidatos únicos por medio. Se amplió la paginación porque la búsqueda WordPress de «agua» también devuelve «Paraguay» y puede desplazar noticias pertinentes de la primera página. Todos los términos se consultan antes de aplicar el cupo de candidatos más recientes. Son límites configurables, no una garantía de cobertura exhaustiva. La próxima pasada vuelve a revisar la ventana y el ingestor conserva la identidad del artículo; releerlo no crea otra incidencia ni renueva su fecha.
 
 Solo se admiten electricidad/agua con un hecho reconocible, fecha de publicación válida, dominio original y lugar conocido. `date_gmt` prevalece sobre la fecha local; no se usa la modificación o la hora de consulta como publicación. Los comunicados institucionales, negaciones de cortes y referencias figuradas se excluyen. Una reposición futura o parcial no cierra un corte. Los cierres reales requieren coincidencia con el hecho; las palabras «corte de agua» por sí solas no fusionan barrios distintos.
 
@@ -66,7 +66,9 @@ Cuando la noticia contiene una única fecha y franja horaria explícitas del cor
 
 Una respuesta vacía válida se diferencia de un bloqueo, un timeout o JSON incompatible. Si falla alguna consulta del medio, se registra el error y el ciclo continúa con otras fuentes. Cada listado HTML tiene oportunidad de aportar resultados antes del límite global; una portada abundante no desplaza todos los canales temáticos. Un titular mixto que anuncia varios servicios y ciudades puede seguir sin publicarse cuando no permite atribuir cada afectación con precisión.
 
-El ciclo general se inicia cada cinco minutos, pero la frecuencia efectiva de una fuente depende de su intervalo, la duración de las anteriores y el presupuesto por pasada. El cron consulta fuentes y escribe la base; el redeploy solo actualiza código. Para instalaciones existentes: `php artisan db:seed --class=UtilityNewsSourceSeeder --force`. La importación crea las dos fuentes ausentes y preserva configuraciones o desactivaciones existentes.
+El ciclo general está preparado para iniciarse cada minuto: runner local con intervalo predeterminado de 60 segundos y cron de Hostinger todavía pendiente de configurar. Las conexiones vencidas de ANDE, ESSAP, ERSSAN, SIAGUAPY, Meteorología, ambos feeds DMH, 1000 Noticias, Ñandutí y ABC tienen prioridad; después continúa la cola general desde su checkpoint. La frecuencia efectiva depende del intervalo de cada fuente, las consultas en marcha y el presupuesto por pasada. El cron consulta fuentes y escribe la base; el redeploy solo actualiza código. Para instalaciones existentes: `php artisan db:seed --class=UtilityNewsSourceSeeder --force`. La importación crea las dos fuentes ausentes y preserva configuraciones o desactivaciones existentes.
+
+La [comprobación del 22/10/2026](PRE_HOSTINGER_SOURCE_CHECKS.md) distingue acceso técnico, disponibilidad de publicaciones recientes y cantidad de incidencias aceptadas. Cero alertas no convierte una fuente normal en fallida, ni una respuesta anti-bot en una fuente sana.
 
 ### Preferencia técnica
 

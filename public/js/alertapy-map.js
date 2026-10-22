@@ -16,7 +16,12 @@
     const elements = {
         categoryFilter: document.getElementById('category-filter'),
         toggleCategories: document.getElementById('toggle-categories'),
+        combineCategories: document.getElementById('combine-categories'),
+        categorySelectionHelp: document.getElementById('category-selection-help'),
         periodFilter: document.getElementById('period-filter'),
+        precisePeriodFilter: document.getElementById('precise-period-filter'),
+        precisePeriodStatus: document.getElementById('precise-period-status'),
+        advancedFilterIndicator: document.getElementById('advanced-filter-indicator'),
         sourceFilter: document.getElementById('source-filter'),
         nearRadius: document.getElementById('near-radius'),
         nearMapCenter: document.getElementById('near-map-center'),
@@ -81,6 +86,7 @@
         abortController: null,
         loading: false,
         categoriesVisible: true,
+        allCategories: true,
         locationCircle: null,
         reportSelectingLocation: false,
         reportLocationMarker: null,
@@ -217,7 +223,8 @@
     const geometries = L.featureGroup().addTo(map);
 
     function selectedCategories() {
-        return [...elements.categoryFilter.querySelectorAll('input:checked')].map(input => input.value);
+        const selector = state.allCategories ? 'input:not(:disabled)' : 'input:checked';
+        return [...elements.categoryFilter.querySelectorAll(selector)].map(input => input.value);
     }
 
     function buildIncidentUrl() {
@@ -498,7 +505,7 @@
             message.className = 'muted';
             message.textContent = selectedCategories().length
                 ? 'No hay incidencias para esta selección. Probá otro período, tipo de fuente o zona del mapa.'
-                : 'Los eventos están ocultos. Activá una categoría o pulsá “Mostrar todas”.';
+                : 'Los eventos están ocultos. Activá una categoría o pulsá “Todas”.';
             elements.summary.appendChild(message);
             return;
         }
@@ -1384,15 +1391,60 @@
         }, 350);
     });
 
+    function syncAdvancedFilterIndicator() {
+        const labels = [];
+        const sourceLabels = { official: 'Oficial', press: 'Prensa', sensor: 'Sensor', community: 'Comunidad' };
+        if (state.source && sourceLabels[state.source]) labels.push(sourceLabels[state.source]);
+        if (Number.isFinite(state.nearLatitude) && Number.isFinite(state.nearLongitude) && !elements.nearRadius.disabled) {
+            labels.push(`${state.radiusKm} km`);
+        }
+        if (elements.combineCategories?.checked) labels.push('Combinación');
+        if (['1h', '6h'].includes(state.period)) labels.push(state.period === '1h' ? '1 h' : '6 h');
+        if (elements.advancedFilterIndicator) {
+            elements.advancedFilterIndicator.hidden = labels.length === 0;
+            elements.advancedFilterIndicator.textContent = labels.length
+                ? `${labels.length} ${labels.length === 1 ? 'filtro' : 'filtros'} · ${labels.join(' · ')}` : '';
+        }
+    }
+
     function syncCategoryToggle() {
-        state.categoriesVisible = [...elements.categoryFilter.querySelectorAll('input:not(:disabled)')].some(input => input.checked);
-        elements.toggleCategories.textContent = state.categoriesVisible ? 'Ocultar todas' : 'Mostrar todas';
+        const inputs = [...elements.categoryFilter.querySelectorAll('input:not(:disabled)')];
+        const allChecked = inputs.length > 0 && inputs.every(input => input.checked);
+        state.allCategories = Boolean(state.allCategories || (elements.combineCategories?.checked && allChecked));
+        state.categoriesVisible = state.allCategories || inputs.some(input => input.checked);
+        elements.toggleCategories.setAttribute('aria-pressed', String(state.allCategories));
+        elements.categoryFilter.classList.toggle('is-all-selected', state.allCategories);
         return state.categoriesVisible;
     }
 
     syncCategoryToggle();
+    syncAdvancedFilterIndicator();
     elements.categoryFilter.addEventListener('change', () => {
+        state.allCategories = false;
         syncCategoryToggle();
+        syncAdvancedFilterIndicator();
+        loadIncidents();
+    });
+    elements.combineCategories?.addEventListener('change', () => {
+        const inputs = [...elements.categoryFilter.querySelectorAll('input:not(:disabled)')];
+        const combine = elements.combineCategories.checked;
+        const selected = inputs.filter(input => input.checked).map(input => input.value);
+        const wasAll = state.allCategories;
+        inputs.forEach(input => {
+            input.checked = false;
+            input.type = combine ? 'checkbox' : 'radio';
+        });
+        inputs.forEach(input => {
+            input.checked = combine ? wasAll || selected.includes(input.value)
+                : !wasAll && input.value === selected[0];
+        });
+        if (!combine && selected.length === 0) state.allCategories = true;
+        elements.categoryFilter.setAttribute('role', combine ? 'group' : 'radiogroup');
+        elements.categorySelectionHelp.textContent = combine
+            ? 'Activá o quitá las categorías que quieras combinar. 0 indica que no hay incidencias para esta selección.'
+            : 'Un toque muestra solo esa capa. «Todas» vuelve a mostrar todo. 0 indica que no hay incidencias para esta selección.';
+        syncCategoryToggle();
+        syncAdvancedFilterIndicator();
         loadIncidents();
     });
     let infrastructureFilterDebounce;
@@ -1403,21 +1455,31 @@
     });
     elements.monitoringFilter.addEventListener('change', loadWeatherStations);
     elements.roadFilter.addEventListener('change', loadCartographyLayers);
-    elements.periodFilter.addEventListener('click', event => {
+    function selectPeriod(event) {
         const button = event.target.closest('[data-period]');
         if (!button) return;
         state.period = button.dataset.period;
-        elements.periodFilter.querySelectorAll('button').forEach(item => {
+        const buttons = [...elements.periodFilter.querySelectorAll('button'),
+            ...(elements.precisePeriodFilter?.querySelectorAll('button') || [])];
+        buttons.forEach(item => {
             const selected = item === button;
             item.classList.toggle('active', selected);
             item.setAttribute('aria-pressed', String(selected));
         });
+        if (elements.precisePeriodStatus) {
+            elements.precisePeriodStatus.hidden = !['1h', '6h'].includes(state.period);
+            elements.precisePeriodStatus.textContent = state.period === '1h' ? 'Última hora' : 'Últimas 6 horas';
+        }
+        syncAdvancedFilterIndicator();
         loadIncidents();
-    });
+    }
+    elements.periodFilter.addEventListener('click', selectPeriod);
+    elements.precisePeriodFilter?.addEventListener('click', selectPeriod);
 
     elements.toggleCategories.addEventListener('click', () => {
-        const showAll = !syncCategoryToggle();
-        elements.categoryFilter.querySelectorAll('input:not(:disabled)').forEach(input => { input.checked = showAll; });
+        state.allCategories = true;
+        const combine = Boolean(elements.combineCategories?.checked);
+        elements.categoryFilter.querySelectorAll('input:not(:disabled)').forEach(input => { input.checked = combine; });
         syncCategoryToggle();
         loadIncidents();
     });
@@ -1449,6 +1511,7 @@
         elements.nearRadius.disabled = false;
         elements.clearRadius.hidden = false;
         elements.radiusStatus.textContent = `Radio de ${state.radiusKm} km desde ${origin === 'location' ? 'tu ubicación' : 'el centro elegido'}.`;
+        syncAdvancedFilterIndicator();
         if (state.locationCircle) map.removeLayer(state.locationCircle);
         state.locationCircle = L.circle([latitude, longitude], {
             radius: state.radiusKm * 1000,
@@ -1476,6 +1539,7 @@
         elements.nearRadius.disabled = true;
         elements.clearRadius.hidden = true;
         elements.radiusStatus.textContent = 'Sin filtro por radio. Elegí un centro para activarlo.';
+        syncAdvancedFilterIndicator();
         loadIncidents();
     }
 
@@ -1510,6 +1574,7 @@
 
     elements.sourceFilter.addEventListener('change', event => {
         state.source = event.target.value;
+        syncAdvancedFilterIndicator();
         loadIncidents();
     });
 

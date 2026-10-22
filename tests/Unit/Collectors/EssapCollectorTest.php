@@ -9,6 +9,8 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\LocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 class EssapCollectorTest extends TestCase
@@ -71,6 +73,8 @@ class EssapCollectorTest extends TestCase
         $this->assertSame('Asunción', $candidates[0]->detectedLocation);
         $this->assertTrue($candidates[0]->metadata['official_api']);
         Http::assertSent(fn ($request): bool => $request['categories'] === '6,7,34,35');
+        Http::assertSent(fn ($request): bool => $request['after'] === '2026-08-11T16:00:00'
+            && str_contains($request['_fields'], 'date_gmt'));
     }
 
     public function test_missing_and_future_publication_dates_are_not_treated_as_recent_incidents(): void
@@ -92,5 +96,53 @@ class EssapCollectorTest extends TestCase
 
         $this->assertCount(1, $candidates);
         $this->assertSame('essap-3', $candidates->first()->externalIdentifier);
+    }
+
+    public function test_gmt_date_preserves_recent_boundary_and_rejects_invalid_dates_or_reference_links(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-22 15:00:00 America/Asuncion');
+        config()->set('alertapy.sources.essap.max_age_hours', 168);
+        $post = [
+            'id' => 1, 'link' => 'https://www.essap.com.py/corte-asuncion/',
+            'date' => '2026-10-15T15:01:00', 'date_gmt' => '2026-10-15T18:01:00',
+            'title' => ['rendered' => 'Corte de agua potable afecta a vecinos'],
+            'excerpt' => ['rendered' => 'Reparación de tubería principal.'],
+            'content' => ['rendered' => '<p>El corte afecta a Asunción</p><p>Vecinos reclaman la reposición.</p>'],
+        ];
+        Http::fake(['www.essap.com.py/wp-json/wp/v2/posts*' => Http::response([
+            $post,
+            [...$post, 'id' => 2, 'date_gmt' => '2026-02-31T10:00:00'],
+            [...$post, 'id' => 3, 'date_gmt' => 'today'],
+            [...$post, 'id' => 4, 'link' => 'https://essap.com.py.attacker.test/noticia/'],
+            [...$post, 'id' => 5, 'link' => 'javascript:alert(1)'],
+            [...$post, 'id' => 6, 'date_gmt' => '2026-10-15T17:59:59'],
+        ])]);
+
+        $result = app(EssapCollector::class)->collect(new Source(['slug' => 'essap', 'type' => SourceType::Official]));
+
+        $this->assertCount(1, $result);
+        $this->assertSame('2026-10-15T15:01:00-03:00', $result->sole()->publishedAt->toIso8601String());
+        $this->assertSame('Asunción', $result->sole()->detectedLocation);
+        $this->assertSame('https://www.essap.com.py/corte-asuncion/', $result->sole()->originalUrl);
+        Http::assertSent(fn ($request): bool => $request['after'] === '2026-10-15T15:00:00');
+    }
+
+    #[DataProvider('malformedResponses')]
+    public function test_invalid_api_payloads_are_errors_instead_of_healthy_empty_results(string $body): void
+    {
+        Http::fake(['www.essap.com.py/wp-json/wp/v2/posts*' => Http::response($body)]);
+        $this->expectException(RuntimeException::class);
+        app(EssapCollector::class)->collect(new Source(['slug' => 'essap', 'type' => SourceType::Official]));
+    }
+
+    public static function malformedResponses(): array
+    {
+        return [['{}'], ['{"code":"rest_forbidden"}'], ['<html>Challenge</html>'], ['[null]']];
+    }
+
+    public function test_empty_valid_api_list_remains_a_successful_zero(): void
+    {
+        Http::fake(['www.essap.com.py/wp-json/wp/v2/posts*' => Http::response([])]);
+        $this->assertCount(0, app(EssapCollector::class)->collect(new Source(['slug' => 'essap', 'type' => SourceType::Official])));
     }
 }

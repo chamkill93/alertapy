@@ -106,6 +106,34 @@ class UtilityNewsCollectorTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_publisher_search_noise_does_not_hide_water_news_on_the_next_page(): void
+    {
+        // The public API matches "agua" within "Paraguay": the first page can
+        // contain one hundred unrelated posts before an operational water alert.
+        config()->set('alertapy.sources.news-test', [
+            ...config('alertapy.sources.1000noticias'),
+            'api_url' => 'https://news.test/wp-json/wp/v2/posts',
+            'search_terms' => ['agua', 'luz'],
+        ]);
+        Http::fake(function ($request) {
+            if ($request['search'] === 'luz') {
+                return Http::response([], 200, ['X-WP-TotalPages' => '0']);
+            }
+            $posts = (int) $request['page'] === 1
+                ? array_map(fn ($id) => $this->newsPost($id, ['title' => ['rendered' => 'Información institucional de Paraguay']]), range(1, 100))
+                : [$this->newsPost(139)];
+
+            return Http::response($posts, 200, ['X-WP-TotalPages' => '2']);
+        });
+
+        $result = app(UtilityNewsCollector::class)->collect($this->source());
+
+        $this->assertSame('news-test-wp-139', $result->sole()->externalIdentifier);
+        $this->assertSame('water', $result->sole()->metadata['category_slug']);
+        Http::assertSentCount(3);
+        Http::assertSent(fn ($request) => $request['search'] === 'agua' && $request['page'] === 2 && $request['per_page'] === 100);
+    }
+
     public function test_scheduled_cut_preserves_publication_and_uses_explicit_operating_hours(): void
     {
         Http::fake(['news.test/*' => Http::response([$this->newsPost(1, [

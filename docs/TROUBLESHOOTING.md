@@ -67,4 +67,8 @@ La suite no usa red. Si falla por SQLite, habilitá `pdo_sqlite` y `sqlite3` en 
 
 ## Cron se solapa o agota tiempo
 
-Verificá primero manualmente `php artisan alertapy:cycle`. El comando ya incluye lock, límites por lote y checkpoint; luego revisá que hPanel use la ruta PHP correcta y un intervalo de cinco minutos.
+Verificá primero manualmente `php artisan alertapy:cycle`. Para producción seguí el wrapper de [HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md), con la ruta PHP real y un cron propuesto cada minuto. El plan y ese cron todavía deben comprobarse en hPanel. No lo dupliques con `schedule:run` ni con otros comandos de ingesta programados.
+
+El comando incluye lock, límites por lote y checkpoint general. Los servicios, hidrología, DMH y ABC vencidos se atienden primero; después avanza la cola general. El límite de tiempo se comprueba entre fuentes, así que un collector lento puede extender la pasada. Compará `source_runs.started_at` con `polling_minutes`, además de revisar `scheduler_cycles`: tener ciclos recientes no garantiza que todas las fuentes se consulten con la frecuencia esperada.
+
+Un HTTP 200 con verificación anti-bot es una conexión degradada, como se observó en ANDE; no equivale a un listado vacío válido. ESSAP puede responder una lista JSON vacía y SIAGUAPY puede tener todas sus estaciones normales. Consultá la [verificación con evidencias](PRE_HOSTINGER_SOURCE_CHECKS.md) antes de interpretar cero noticias como fallo.

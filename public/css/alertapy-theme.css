@@ -119,6 +119,48 @@
 .filters .zone-weather { background: #294c53; color: #d6e7e3; }
 .filters .sidebar-footer { border-top-color: #4b6b70; color: #abc5c9; }
 
+/* The primary path is one layer per tap; supporting controls stay folded. */
+.filters { gap: .9rem; }
+.filters .sidebar-heading { padding-bottom: .8rem; }
+.filters .sidebar-intro { margin-top: .3rem; }
+.filters .period-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.filters .period-grid button[data-period="now"] { grid-column: auto; }
+.filters .period-grid button:not([data-period="now"]) { font-size: .75rem; }
+.filters .category-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+.filters .category-option { grid-template-columns: 23px minmax(0, 1fr) auto; gap: .35rem; min-height: 48px; padding: .5rem .4rem; font-size: .7rem; line-height: 1.25; }
+.filters .category-icon { width: 23px; height: 25px; border-radius: 7px; }
+.filters .category-icon > svg { width: 15px; height: 15px; }
+.filters .category-count { min-width: 18px; padding: .2rem; font-size: .63rem; }
+.filters .category-selection-mark { display: none; position: absolute; right: 3px; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: #b7eac8; color: #173d30; font-weight: 800; font-size: 10px; place-items: center; }
+.filters .category-option:has(input:checked) { border-color: #a1d7bc; box-shadow: inset 3px 0 0 var(--category-color); background: #2a5355; }
+.filters .category-option:has(input:checked) .category-selection-mark { display: grid; }
+.filters .category-list.is-all-selected .category-option { border-color: #34525c; box-shadow: none; background: #17323d; color: #bdd0d3; }
+.filters .category-list.is-all-selected .category-selection-mark { display: none; }
+.filters .category-list.is-all-selected .category-option .category-icon { opacity: 1; }
+.all-categories-button { min-height: 40px; padding: .4rem .8rem; border-radius: 9px; border: 1px solid #58777a; color: #d2e5df; background: #23434b; cursor: pointer; font-size: .74rem; font-weight: 650; }
+.all-categories-button[aria-pressed="true"] { border-color: #b7eac8; background: #b7eac8; color: #173d30; }
+.all-categories-button:hover { border-color: #d1f2db; }
+.filters .filter-help { font-size: .67rem; line-height: 1.5; margin-top: .45rem; }
+.filter-disclosure { border: 1px solid #42616a; border-radius: 11px; background: #15333d; }
+.filter-disclosure > summary { display: flex; align-items: center; gap: .55rem; min-height: 48px; padding: .7rem .75rem; color: #d4e7e1; cursor: pointer; font-size: .8rem; font-weight: 650; list-style: none; }
+.filter-disclosure > summary::-webkit-details-marker { display: none; }
+.filter-disclosure > summary:focus-visible { outline: 3px solid #c7efd3; outline-offset: 2px; border-radius: 10px; }
+.filter-disclosure > summary .app-icon { width: 17px; height: 17px; color: #b2d6d0; }
+.disclosure-chevron { margin-left: auto; font-size: 1rem; line-height: 1; transition: transform .15s; }
+.filter-disclosure[open] > summary { border-bottom: 1px solid #42616a; }
+.filter-disclosure[open] > summary .disclosure-chevron { transform: rotate(180deg); }
+.filter-disclosure-content { display: grid; gap: 1.1rem; padding: .9rem .65rem; }
+.filter-disclosure-content > * { min-width: 0; }
+.combine-categories-option { display: flex; align-items: center; gap: .6rem; min-height: 44px; font-size: .76rem; line-height: 1.4; color: #d4e7e1; cursor: pointer; }
+.combine-categories-option input { width: 18px; height: 18px; margin: 0; accent-color: #b7eac8; }
+.precise-period-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.precise-period-options button { min-height: 44px; border: 1px solid #58777a; border-radius: 9px; color: #d2e5df; background: #23434b; cursor: pointer; }
+.precise-period-options button[aria-pressed="true"] { background: #b7eac8; color: #173d30; border-color: #b7eac8; }
+.precise-period-status { color: #cbe8d4; font-size: .7rem; }
+.filter-disclosure-label { display: grid; gap: .3rem; min-width: 0; }
+.filter-disclosure-label small { color: #bde6cd; font-size: .66rem; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere; }
+.filter-disclosure > summary > .app-icon { flex-shrink: 0; }
+
 .map-shell { border: 1px solid #b0c8c1; border-radius: 18px; overflow: hidden; background: #c4dbcd; box-shadow: 0 4px 18px #143d3420; }
 .map-shell::after { position: absolute; inset: 0; z-index: 450; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 60px #153f3d0d; content: ""; }
 .leaflet-container { background: #cbddcf; }

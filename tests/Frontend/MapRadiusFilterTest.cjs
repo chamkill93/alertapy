@@ -9,6 +9,8 @@ function harness() {
         radiusStatus: { textContent: '' }, clearRadius: eventTarget({ hidden: true }),
         nearMe: eventTarget(), nearMeFilter: eventTarget(), nearMapCenter: eventTarget(),
         zoneNow: { hidden: true }, zoneNowContent: { replaceChildren() {} }, status: { hidden: true },
+        sourceFilter: eventTarget(), combineCategories: { checked: false }, advancedFilterIndicator: { hidden: true, textContent: '' },
+        advancedFilterOptions: { open: false },
     };
     const circles = [], requests = [], renders = [], geoCallbacks = [];
     let loads = 0;
@@ -35,8 +37,10 @@ function harness() {
         },
     };
     const code = sourceSection('    function buildIncidentUrl()', '    async function loadIncidents(')
+        + sourceSection('    function syncAdvancedFilterIndicator()', '    function syncCategoryToggle()')
         + sourceSection('    async function loadZoneNow()', '    function renderZoneNow(')
         + sourceSection('    function applyRadiusCenter(', "    elements.sourceFilter.addEventListener(")
+        + sourceSection("    elements.sourceFilter.addEventListener(", "    elements.nearRadius.addEventListener(")
         + sourceSection("    elements.nearRadius.addEventListener(", "    elements.mobileFilterToggle.addEventListener(")
         + '\nreturn {buildIncidentUrl, applyRadiusCenter, clearRadiusFilter, requestNearMe};';
     const functions = new Function(...Object.keys(context), code)(...Object.values(context));
@@ -71,6 +75,26 @@ test('changing the radius updates the same selected center and the request', () 
     assert.equal(h.state.nearLatitude, -25.3);
     assert.equal(h.circles[1].options.radius, 25000);
     assert.equal(h.circles[0].removed, true);
+});
+
+test('source and location filters stay identifiable when advanced options are closed and clear independently', () => {
+    const h = harness();
+    h.elements.sourceFilter.dispatch('change', { target: { value: 'press' } });
+    assert.equal(h.elements.advancedFilterOptions.open, false);
+    assert.equal(h.elements.advancedFilterIndicator.hidden, false);
+    assert.equal(h.elements.advancedFilterIndicator.textContent, '1 filtro · Prensa');
+    h.requestNearMe();
+    h.geoCallbacks[0].success({ coords: { latitude: -25.3, longitude: -57.6 } });
+    assert.equal(h.elements.advancedFilterIndicator.textContent, '2 filtros · Prensa · 5 km');
+    h.elements.nearRadius.value = '25';
+    h.elements.nearRadius.dispatch('change');
+    assert.equal(h.elements.advancedFilterIndicator.textContent, '2 filtros · Prensa · 25 km');
+    h.clearRadiusFilter();
+    assert.equal(h.elements.advancedFilterIndicator.textContent, '1 filtro · Prensa');
+    h.elements.sourceFilter.dispatch('change', { target: { value: '' } });
+    assert.equal(h.elements.advancedFilterIndicator.hidden, true);
+    assert.equal(h.elements.advancedFilterIndicator.textContent, '');
+    assert.equal(h.elements.advancedFilterOptions.open, false);
 });
 
 test('centers outside coverage do not send invalid queries or replace the current filter', () => {

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-label="Termómetro">
+  <g fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 5a2 2 0 0 1 4 0v9.2a4.5 4.5 0 1 1-4 0z"/>
+    <path d="M12 8v8"/>
+    <circle cx="12" cy="18" r="2.2" fill="white" stroke="none"/>
+    <path d="M15.8 6H18M15.8 10H18"/>
+  </g>
+</svg>

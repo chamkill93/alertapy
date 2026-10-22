@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-label="Anemómetro">
+  <g fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="10" r="1.5" fill="white" stroke="none"/>
+    <path d="M12 10 7.3 7.3M12 10l4.7-2.7M12 10v5.3"/>
+    <circle cx="6.5" cy="6.8" r="2"/>
+    <circle cx="17.5" cy="6.8" r="2"/>
+    <circle cx="12" cy="17" r="2"/>
+    <path d="M12 18.8V22"/>
+  </g>
+</svg>

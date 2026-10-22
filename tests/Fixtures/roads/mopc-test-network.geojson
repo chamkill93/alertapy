@@ -1,0 +1,12 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"code":"PY02","name":"Ruta Nacional PY02","classification":"nacional","department":"Central","district":"Capiatá","city":"Capiatá","aliases":"Ruta 2;PY-02"},
+      "geometry": {"type":"LineString","coordinates":[[-57.50,-25.35],[-57.45,-25.36],[-57.40,-25.37]]}
+    },
+    {"type":"Feature","properties":{"code":"PY02","reference_type":"KM_MARKER","kilometer":25,"name":"Km 25","accuracy":"40"},"geometry":{"type":"Point","coordinates":[-57.50,-25.35]}},
+    {"type":"Feature","properties":{"code":"PY02","reference_type":"KM_MARKER","kilometer":30,"name":"Km 30","accuracy":"40"},"geometry":{"type":"Point","coordinates":[-57.40,-25.37]}}
+  ]
+}

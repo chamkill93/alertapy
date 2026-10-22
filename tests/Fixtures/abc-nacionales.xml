@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+    <channel>
+        <title>RSS Nacionales en ABC Color</title>
+        <item>
+            <title><![CDATA[Fatal accidente en Pedrozo: tránsito afectado sobre la Ruta PY02]]></title>
+            <link>https://www.abc.com.py/nacionales/2026/08/18/fatal-accidente-en-pedrozo/</link>
+            <guid>https://www.abc.com.py/nacionales/2026/08/18/fatal-accidente-en-pedrozo/</guid>
+            <pubDate>Tue, 18 Aug 2026 18:00:00 +0000</pubDate>
+            <content:encoded><![CDATA[<p>Un accidente de tránsito registrado en Pedrozo afecta la circulación sobre la Ruta PY02.</p>]]></content:encoded>
+        </item>
+        <item>
+            <title><![CDATA[Tormentas eléctricas afectan ahora a Alto Paraná]]></title>
+            <link>https://www.abc.com.py/clima/2026/08/18/tormentas-electricas-en-alto-parana/</link>
+            <guid>https://www.abc.com.py/clima/2026/08/18/tormentas-electricas-en-alto-parana/</guid>
+            <pubDate>Tue, 18 Aug 2026 17:30:00 +0000</pubDate>
+            <content:encoded><![CDATA[<p>Una alerta meteorológica incluye al departamento de Alto Paraná.</p>]]></content:encoded>
+        </item>
+        <item>
+            <title><![CDATA[¿Vas al Rally del Paraguay? Así estará el clima en Encarnación]]></title>
+            <link>https://www.abc.com.py/nacionales/2026/08/18/clima-para-el-rally/</link>
+            <guid>https://www.abc.com.py/nacionales/2026/08/18/clima-para-el-rally/</guid>
+            <pubDate>Tue, 18 Aug 2026 17:00:00 +0000</pubDate>
+            <content:encoded><![CDATA[<p>El pronóstico menciona posibles tormentas, pero no constituye una alerta territorial.</p>]]></content:encoded>
+        </item>
+    </channel>
+</rss>

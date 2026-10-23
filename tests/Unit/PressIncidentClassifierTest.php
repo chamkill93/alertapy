@@ -179,6 +179,20 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('water', $classifier->classify('Vecinos siguen sin agua y esperan el restablecimiento del suministro en Luque', ''));
     }
 
+    public function test_air_quality_reports_are_not_duplicated_as_generic_territorial_news(): void
+    {
+        $classifier = new PressIncidentClassifier;
+
+        $this->assertSame(
+            ['air_quality'],
+            $classifier->classifyAll('Contaminación atmosférica supera límites sanitarios en Asunción', ''),
+        );
+        $this->assertSame(
+            ['territorial_news'],
+            $classifier->classifyAll('Contaminación de un arroyo preocupa a vecinos de Caaguazú', ''),
+        );
+    }
+
     public function test_it_distinguishes_figurative_accidents_from_physical_crashes(): void
     {
         $classifier = new PressIncidentClassifier;

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             SourceSeeder::class,
             AdditionalPressSourceSeeder::class,
+            RegionalPressSourceSeeder::class,
             LocationSeeder::class,
         ]);
     }

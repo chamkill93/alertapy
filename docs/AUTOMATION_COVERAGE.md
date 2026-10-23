@@ -42,6 +42,8 @@ En la lectura local de las 18:12 del 22/10, la capa de electricidad tenía dos s
 | NASA FIRMS y MADES aire | Detecciones térmicas y calidad del aire | Requieren claves; actualmente deshabilitados. Una detección térmica no confirma un incendio |
 | GDELT y redes sociales | Descubrimiento de posibles evidencias | Opcionales/deshabilitados; requieren configuración y, en varios casos, claves o canales autorizados |
 
+La expansión regional incorpora once portales locales con intervalos de 30 minutos y límites de 18 enlaces/12 candidatos por consulta: Caazapá Ahora, Norte Digital, Red Digital San Pedro, Digital Misiones, QAP Chaco News, Caaguazú Noticias Digital, Diario Vanguardia, Concepción al Día, Tercer Ojo, Portal de Curuguaty y Portal Capitán Meza. El seeder `RegionalPressSourceSeeder` los agrega sin reactivar fuentes que un operador haya deshabilitado. La actividad visible de las portadas no equivale a una consulta de crawler exitosa; después de sembrarlos, revisar su salud real en `/admin/connections`.
+
 ## Seguimiento automático por capa
 
 Estas fuentes forman parte del mismo `alertapy:cycle`; las habilitadas se consultan automáticamente al vencer su intervalo. Un contador en cero quiere decir que no hay una incidencia publicable vigente, no que se haya simulado un evento.
@@ -64,6 +66,8 @@ Estas fuentes forman parte del mismo `alertapy:cycle`; las habilitadas se consul
 | Novedades territoriales | MADES, INFONA, DINAC y prensa | Solo hechos publicados con fecha, categoría y localización reconocibles. |
 
 En esa misma lectura, las incidencias vigentes de electricidad, agua e hidrología tenían fuentes originales enlazadas. Otras capas no tenían un evento publicable en la ventana consultada. La cobertura de cada fuente y su estado se puede inspeccionar en el backoffice autenticado.
+
+La ampliación busca más evidencia local para nueve departamentos declarados y la región del Chaco, pero no implica una fuente verificable para cada departamento ni captura toda noticia publicada. No se añadió Pilar Times porque su portada consultada no mostraba actividad reciente comparable a las demás. Los resultados siguen sujetos a los límites de cada portada, robots/controles de acceso, fecha explícita, clasificación y evidencia de ubicación.
 
 El listado anterior de Unicanal devuelve 404. Su [portada oficial](https://www.unicanal.com.py/) enlaza noticias de [La Tribuna](https://www.latribuna.com.py/); se añadió La Tribuna con atribución propia y Unicanal quedó deshabilitado por defecto hasta disponer de un canal directo adecuado. Se conserva su historial.
 

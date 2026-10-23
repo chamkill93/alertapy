@@ -114,4 +114,43 @@ class HealthNewsCollectorTest extends TestCase
         $this->assertSame(3, Http::recorded()->count());
     }
 
+
+    public function test_unlocated_official_health_news_uses_asuncion_only_as_a_map_reference(): void
+    {
+        $url = 'https://www.mspbs.gov.py/portal/campana-nacional-vacunacion.html';
+        config()->set('alertapy.sources.mspbs-health', [
+            'listing_urls' => ['https://www.mspbs.gov.py/noticias.php?page=1&url=portal'],
+            'prefilter_requires_location' => false,
+            'summary_title_only' => true,
+            'max_age_hours' => 168,
+            'max_links' => 20,
+            'max_candidates' => 10,
+            'location_search_article_body' => true,
+            'category_classifier' => 'health',
+        ]);
+        Http::preventStrayRequests();
+        Http::fake([
+            'www.mspbs.gov.py/noticias.php*' => Http::response('<h2><a href="'.$url.'">Campaña nacional de vacunación</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="Campaña nacional de vacunación"><meta property="article:published_time" content="2026-10-22T12:00:00-03:00"><article><p>La campaña se realizará en todo el país, sin puntos territoriales anunciados.</p></article>'),
+        ]);
+        $source = new Source([
+            'name' => 'MSPBS',
+            'slug' => 'mspbs-health',
+            'type' => SourceType::Official,
+            'base_url' => 'https://www.mspbs.gov.py/',
+            'domain' => 'mspbs.gov.py',
+            'configuration_json' => config('alertapy.sources.mspbs-health'),
+        ]);
+
+        $candidate = app(MspbsCollector::class)->collect($source)->sole();
+
+        $this->assertSame('health_public', $candidate->metadata['category_slug']);
+        $this->assertSame('Asunción', $candidate->detectedLocation);
+        $this->assertTrue($candidate->metadata['location_is_fallback']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['department']);
+        $this->assertSame(-25.2800459, $candidate->latitude);
+        $this->assertSame(-57.6343814, $candidate->longitude);
+    }
+
 }

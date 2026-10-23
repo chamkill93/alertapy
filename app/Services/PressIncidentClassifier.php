@@ -21,7 +21,7 @@ class PressIncidentClassifier
         'health_vector' => '/\b(hantavirus|dengue|chikungunya|zika|arbovirosis|aedes aegypti|brote epidemiologico|minga ambiental|control vectorial|eliminacion de criaderos|fumigacion)\b/u',
         'health_public' => '/\b(alertas? epidemiologicas?|alertas? sanitarias?|emergencias? sanitarias?|brotes?(?: epidemiologicos?)?|amenazas? sanitarias?|vigilancia (?:epidemiologica|comunitaria)|casos? (?:confirmados?|detectados?|positivos?)|circulacion comunitaria|virus respiratorios?|cuadros respiratorios?|sarampion|influenza|vacunacion|inmunizacion|hospital(?:es)?|servicios? de salud|region sanitaria|unidades? de salud|\busf\b|atenciones? (?:medicas?|especializadas?)?|asistencia (?:medica|en salud)|atencion (?:medica|sanitaria)|jornada de atencion|consultas? medicas?|medicamentos(?: e insumos)?|insumos y medicamentos|terapia intensiva|ambulancias?)\b/u',
         'emergency' => '/\b(derrumbe|arbol caido|colapso estructural|evacuacion)\w*/u',
-        'territorial_news' => '/\b(deforestacion|tala ilegal|contaminacion|fiscalizacion ambiental|intervencion ambiental|incumplimiento ambiental)\w*/u',
+        'territorial_news' => '/\b(deforestacion|tala ilegal|contaminacion(?! (?:atmosferica|del aire))|fiscalizacion ambiental|intervencion ambiental|incumplimiento ambiental)\w*/u',
     ];
 
     public function classify(string $title, string $content): ?string

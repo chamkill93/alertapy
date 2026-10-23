@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(82, Source::query()->count());
+        $this->assertSame(86, Source::query()->count());
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
@@ -38,13 +38,21 @@ class CatalogSeederTest extends TestCase
         $this->assertContains('pai', config('alertapy.cycle.priority_sources'));
         $this->assertContains('digies', config('alertapy.cycle.priority_sources'));
         $additionalPress = Source::query()->whereIn('slug', [
-            'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay',
+            'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya',
         ])->get();
-        $this->assertCount(5, $additionalPress);
-        $this->assertTrue($additionalPress->every(fn (Source $source): bool => $source->enabled
+        $this->assertCount(7, $additionalPress);
+        $originalPress = $additionalPress->whereIn('slug', ['asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay']);
+        $this->assertTrue($originalPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 15
             && ($source->configuration_json['location_search_article_body'] ?? null) === false));
+        $territorialPress = $additionalPress->whereIn('slug', ['ahendu', 'la-verdad-paraguaya']);
+        $this->assertTrue($territorialPress->every(fn (Source $source): bool => $source->enabled
+            && $source->polling_minutes === 30
+            && ($source->configuration_json['location_search_article_body'] ?? null) === true
+            && ($source->configuration_json['prefilter_requires_location'] ?? null) === false));
         $this->assertSame([], array_diff($additionalPress->pluck('slug')->all(), config('alertapy.cycle.priority_sources')));
+        $this->assertDatabaseHas('sources', ['slug' => 'ultimas-noticias-cde', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'hechos-digital', 'enabled' => true]);
         $this->assertSame(0, Incident::query()->count());
     }
 
@@ -84,6 +92,7 @@ class CatalogSeederTest extends TestCase
         $this->assertSame(45, $source->polling_minutes);
         $this->assertSame('Keep this setting', $source->configuration_json['operator_note']);
         $this->assertFalse($source->configuration_json['location_search_article_body']);
-        $this->assertSame(5, Source::query()->count());
+        $this->assertSame(7, Source::query()->count());
     }
 }
+

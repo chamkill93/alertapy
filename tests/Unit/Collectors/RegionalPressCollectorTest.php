@@ -60,9 +60,9 @@ class RegionalPressCollectorTest extends TestCase
         $this->assertTrue($candidate->metadata['privacy_limited']);
     }
 
-    public function test_frontera_seca_local_health_story_enters_the_public_health_layer(): void
+    public function test_frontera_seca_local_health_story_enters_the_public_health_layer_within_seven_days(): void
     {
-        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        CarbonImmutable::setTestNow('2026-10-20 12:00:00 America/Asuncion');
         $definition = collect(RegionalPressSourceSeeder::definitions())
             ->firstWhere('slug', 'frontera-seca-news');
         $this->assertIsArray($definition);

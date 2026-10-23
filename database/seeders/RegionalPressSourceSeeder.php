@@ -125,6 +125,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'regional_department' => 'Central',
                 'listing_urls' => ['https://www.luquenoticias.com.py/'],
             ],
+            [
+                'name' => 'Radio ZP30',
+                'slug' => 'radio-zp30',
+                'domain' => 'zp30.com.py',
+                'regional_department' => 'Boquerón',
+                'listing_urls' => ['https://www.zp30.com.py/es/category/noticias/noticias-locales/'],
+            ],
         ];
 
         return array_map(function (array $publisher): array {
@@ -164,4 +171,3 @@ class RegionalPressSourceSeeder extends Seeder
         }
     }
 }
-

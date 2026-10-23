@@ -46,7 +46,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | Telegram | Social | 5 min | Solo canales configurados/autorizados mediante Bot API |
 | YouTube | Discovery | 60 min | Solo canales configurados; usa metadatos, sin transcripción |
 | ABC Color | Prensa | 5 min | RSS incremental + archivo JSON público paginado (`Nacionales` y `Economía`) |
-| Última Hora | Prensa | 5 min | Portada, Chaco y búsquedas públicas ANDE/ESSAP ordenadas por fecha; metadatos de cada nota |
+| Última Hora | Prensa | 5 min | Portada, búsquedas públicas ANDE/ESSAP y listados regionales de Chaco, Ñeembucú, Pilar y Paraguarí; metadatos de cada nota |
 | La Nación | Prensa | 5 min | Portada, País y etiquetas ANDE/ESSAP; metadatos de cada nota |
 | La Tribuna | Prensa | 10 min | Portada y secciones HTML públicas; artículos de cortes programados con zonas y horarios, enlace original |
 | 1000 Noticias | Prensa | 15 min | Búsquedas de agua y electricidad en la API WordPress pública |
@@ -67,6 +67,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | Tercer Ojo | Prensa regional | 30 min | Portada; Caacupé y Cordillera |
 | Portal de Curuguaty | Prensa regional | 30 min | Portada, Locales y Sucesos; Canindeyú |
 | Portal Capitán Meza | Prensa regional | 30 min | Portada; Itapúa |
+| Radio ZP30 | Prensa regional | 30 min | Sección Noticias Locales; Chaco Central y otras localidades occidentales, solo con lugar explícito en la publicación |
 | Radio Guairá | Prensa regional | 30 min | Portada; noticias locales de Guairá |
 | Pedro Juan Digital | Prensa regional | 30 min | Portada y Locales; Amambay |
 | Amambay Digital | Prensa regional | 30 min | Portada; Amambay |
@@ -146,4 +147,3 @@ La capa de discovery está documentada en `docs/DISCOVERY_SOURCES.md`. Sus halla
 ## Datos reales
 
 Los seeders crean únicamente catálogos. No crean incidentes, ejecuciones exitosas ni cantidades. Los fixtures HTML y RSS inventados existen exclusivamente bajo `tests/Fixtures`.
-

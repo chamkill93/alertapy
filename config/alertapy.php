@@ -1,507 +1,1 @@
-<?php
-
-return [
-    'decision' => [
-        'provider' => env('ALERTAPY_DECISION_PROVIDER', 'rules'),
-    ],
-
-    'roads' => [
-        'enabled' => env('ALERTAPY_ROUTE_DATA_ENABLED', true),
-        'duplicate_km_tolerance' => (float) env('ALERTAPY_ROAD_DUPLICATE_KM_TOLERANCE', 1.0),
-        'intersection_tolerance_meters' => (float) env('ALERTAPY_ROAD_INTERSECTION_TOLERANCE_METERS', 80),
-        'max_segment_length_meters' => (float) env('ALERTAPY_ROAD_MAX_SEGMENT_LENGTH_METERS', 100000),
-    ],
-
-    'favorites' => [
-        'max_zones' => (int) env('ALERTAPY_MAX_FAVORITE_ZONES', 10),
-        'default_radius_km' => (float) env('ALERTAPY_DEFAULT_FAVORITE_RADIUS_KM', 3),
-        'max_radius_km' => (float) env('ALERTAPY_MAX_FAVORITE_RADIUS_KM', 25),
-    ],
-    'ine' => [
-        'wfs_endpoint' => env('ALERTAPY_INE_WFS_ENDPOINT', 'https://geonode.ine.gov.py/geoserver/ows'),
-        'district_layer' => env('ALERTAPY_INE_DISTRICT_LAYER', 'geonode:distritos_con_indicadores_censo_2022_2'),
-        'source_url' => env('ALERTAPY_INE_SOURCE_URL', 'https://geonode.ine.gov.py/catalogue/csw_to_extra_format/698621b4-b019-4199-9252-e96d0a98dfc8/distritos-con-indicadores-censo-2022.html'),
-    ],
-    'infrastructure' => [
-        'wfs_endpoint' => env('ALERTAPY_INFRASTRUCTURE_WFS_ENDPOINT', 'https://geonode.ine.gov.py/geoserver/ows'),
-        'source_url' => 'https://www.ine.gov.py/microdato/cartografia-digital-2012-locales-de-salud-policiales-y-educacion',
-        'layers' => [
-            'health' => 'geonode:puestos_salud_publicos',
-            'education' => 'geonode:locales_educativos_da62455ff56a5b7ea3495ede81a25ef9',
-            'police' => 'geonode:puestos_policiales_3aaac4d3b14c04fff1feafb185fdd6cc',
-        ],
-    ],
-    'max_incidents_per_request' => (int) env('ALERTAPY_MAX_INCIDENTS_PER_REQUEST', 200),
-    'admin_token' => env('ALERTAPY_ADMIN_TOKEN'),
-
-    'cycle' => [
-        // Refresh services, scheduled-outage press backups and live monitoring before slower general news sites.
-        // Each source still obeys its own polling interval and error handling.
-        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', 'abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna', '1000noticias', 'nanduti', 'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'senepa', 'mspbs-health', 'dgvs', 'pai', 'digies'],
-        'max_seconds' => (int) env('ALERTAPY_CYCLE_MAX_SECONDS', 180),
-        'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 30),
-        'max_candidates' => (int) env('ALERTAPY_MAX_CANDIDATES_PER_CYCLE', 100),
-        'max_ai_decisions' => (int) env('ALERTAPY_MAX_AI_DECISIONS_PER_CYCLE', 50),
-    ],
-
-    'scheduler_stale_minutes' => (int) env('ALERTAPY_SCHEDULER_STALE_MINUTES', 15),
-
-    'http' => [
-        'timeout' => (int) env('ALERTAPY_SOURCE_TIMEOUT', 15),
-        'user_agent' => env('ALERTAPY_SOURCE_USER_AGENT', 'AlertaPY/1.0 (territorial data collector)'),
-    ],
-
-    'ingestion' => [
-        // Los collectors oficiales aplican reglas deterministas y conservan la
-        // evidencia original; no necesitan un Ã¡rbitro de IA para publicar.
-        'official_sources_publish' => filter_var(
-            env('ALERTAPY_OFFICIAL_SOURCES_PUBLISH', true),
-            FILTER_VALIDATE_BOOL,
-        ),
-        // Las reglas locales deterministas son el camino operativo normal y no
-        // requieren IA. Puede desactivarse como interruptor editorial.
-        'local_rules_publish' => filter_var(
-            env('ALERTAPY_LOCAL_RULES_PUBLISH', true),
-            FILTER_VALIDATE_BOOL,
-        ),
-    ],
-
-    'opencode' => [
-        'enabled' => env('OPENCODE_ENABLED', false),
-        'url' => env('OPENCODE_DECISION_URL'),
-        'token' => env('OPENCODE_DECISION_TOKEN'),
-        'timeout' => (int) env('OPENCODE_DECISION_TIMEOUT', 30),
-    ],
-
-    'geocoding' => [
-        'provider' => env('GEOCODING_PROVIDER'),
-        'user_agent' => env('GEOCODING_USER_AGENT'),
-    ],
-
-    'reports' => [
-        'captcha_enabled' => filter_var(env('REPORT_CAPTCHA_ENABLED', false), FILTER_VALIDATE_BOOL),
-    ],
-
-    'sources' => [
-        'ande' => [
-            'enabled' => env('SOURCE_ANDE_ENABLED', true),
-            'max_articles' => (int) env('SOURCE_ANDE_MAX_ARTICLES', 250),
-            'max_pages' => (int) env('SOURCE_ANDE_MAX_PAGES', 5),
-            'lookback_days' => 0,
-            'browser_archive_path' => null,
-        ],
-        'essap' => [
-            'enabled' => env('SOURCE_ESSAP_ENABLED', true),
-            'api_url' => env('SOURCE_ESSAP_API_URL', 'https://www.essap.com.py/wp-json/wp/v2/posts'),
-            // ESSAP reparte la informaciÃ³n operativa entre prensa, noticias,
-            // comunicados y obras. Consultar una sola categorÃ­a dejaba fuera
-            // avisos vÃ¡lidos cuando el equipo editorial cambiaba su secciÃ³n.
-            'category_ids' => array_values(array_filter(array_map(
-                'intval',
-                explode(',', (string) env('SOURCE_ESSAP_CATEGORY_IDS', '6,7,34,35')),
-            ))),
-            'lookback_days' => 0,
-            'max_age_hours' => (int) env('SOURCE_ESSAP_MAX_AGE_HOURS', 168),
-            'page_size' => (int) env('SOURCE_ESSAP_PAGE_SIZE', 100),
-            'max_pages' => (int) env('SOURCE_ESSAP_MAX_PAGES', 5),
-            'max_candidates' => (int) env('SOURCE_ESSAP_MAX_CANDIDATES', 250),
-        ],
-        'meteorologia' => [
-            'enabled' => env('SOURCE_METEOROLOGIA_ENABLED', true),
-            'advisory_url' => env('SOURCE_METEOROLOGIA_ADVISORY_URL', 'https://www.meteorologia.gov.py/avisos/'),
-            'max_age_hours' => (int) env('SOURCE_METEOROLOGIA_MAX_AGE_HOURS', 12),
-        ],
-        'dmh-automatic-stations' => [
-            'enabled' => true,
-            'feed_url' => env('SOURCE_DMH_STATIONS_URL', 'https://www.meteorologia.gov.py/emas/data.json'),
-        ],
-        'dmh-cap' => [
-            'enabled' => true,
-            'messages_url' => env('SOURCE_DMH_CAP_MESSAGES_URL', 'https://wis2py.meteorologia.gov.py/oapi/collections/messages/items'),
-            'source_url' => 'https://wis2py.meteorologia.gov.py/oapi/collections/discovery-metadata/items/urn%3Awmo%3Amd%3Apy-dinac-dmh%3Acap?f=html',
-        ],
-        'infona' => [
-            'enabled' => env('SOURCE_INFONA_ENABLED', true),
-            'listing_urls' => ['https://infona.gov.py/'],
-            'prefilter_requires_location' => false,
-            'max_age_hours' => (int) env('SOURCE_INFONA_MAX_AGE_HOURS', 168),
-            'max_links' => 35,
-            'max_candidates' => 15,
-        ],
-        'mades' => [
-            'enabled' => env('SOURCE_MADES_ENABLED', true),
-            'listing_urls' => ['https://www.mades.gov.py/noticias/'],
-            'prefilter_requires_location' => false,
-            'max_age_hours' => (int) env('SOURCE_MADES_MAX_AGE_HOURS', 168),
-            'max_links' => 35,
-            'max_candidates' => 15,
-        ],
-        'siaguapy' => [
-            'enabled' => env('SOURCE_SIAGUAPY_ENABLED', true),
-            'alerts_url' => env('SOURCE_SIAGUAPY_ALERTS_URL', 'https://siaguapy.mades.gov.py/alertas-hidrologicas'),
-            'max_age_hours' => (int) env('SOURCE_SIAGUAPY_MAX_AGE_HOURS', 72),
-        ],
-        'mopc' => [
-            'enabled' => env('SOURCE_MOPC_ENABLED', true),
-            'listing_urls' => ['https://mopc.gov.py/noticias/'],
-            'prefilter_requires_location' => false,
-            'max_age_hours' => (int) env('SOURCE_MOPC_MAX_AGE_HOURS', 168),
-            'max_links' => 45,
-            'max_candidates' => 20,
-        ],
-        'senepa' => [
-            'enabled' => env('SOURCE_SENEPA_ENABLED', true),
-            'api_url' => env('SOURCE_SENEPA_API_URL', 'https://senepa.gov.py/wp-json/wp/v2/posts'),
-            'page_size' => (int) env('SOURCE_SENEPA_PAGE_SIZE', 50),
-            'max_pages' => (int) env('SOURCE_SENEPA_MAX_PAGES', 3),
-            'listing_urls' => [
-                'https://senepa.gov.py/',
-                'https://senepa.gov.py/category/noticias/',
-                'https://senepa.gov.py/{year}/{month_padded}/',
-                'https://senepa.gov.py/{year}/{month_padded}/page/2/',
-                'https://senepa.gov.py/{previous_year}/{previous_month_padded}/',
-            ],
-            'prefilter_requires_location' => false,
-            'forced_category_slug' => 'health_vector',
-            'required_event_pattern' => '/\b(arbovirosis|dengue|chikungunya|zika|chagas|paludismo|malaria|leishmaniasis|mosquitos?|aedes|minga ambiental|rastrillaje|control (?:fisico|quimico|vectorial)|bloqueo quimico|eliminacion de criaderos|destruccion de criaderos|vigilancia entomologica|fumigacion|rociado|insecticida)\w*/u',
-            'excluded_event_pattern' => '/\b(mecip|acuerdos? y compromisos? eticos|rendicion de cuentas|conferencia internacional|acto protocolar)\b/u',
-            'max_age_hours' => (int) env('SOURCE_SENEPA_MAX_AGE_HOURS', 168),
-            'max_links' => 100,
-            'max_candidates' => 50,
-        ],
-        'sen' => [
-            'enabled' => env('SOURCE_SEN_ENABLED', true),
-            'listing_urls' => ['https://sen.gov.py/category/noticias/'],
-            'prefilter_requires_location' => false,
-            'max_age_hours' => (int) env('SOURCE_SEN_MAX_AGE_HOURS', 168),
-            'max_links' => 35,
-            'max_candidates' => 15,
-        ],
-        'ministerio-publico' => [
-            'enabled' => env('SOURCE_MINISTERIO_PUBLICO_ENABLED', true),
-            // La portada carga cada archivo mensual con este endpoint oficial.
-            'archive_endpoint' => env('SOURCE_MINISTERIO_PUBLICO_URL', 'https://ministeriopublico.gov.py/inc/archivo-data.php?accion=paginar&pagina=1&anio={year}&mes={month}'),
-            'prefilter_requires_location' => false,
-            'summary_title_only' => true,
-            // El servidor omite su certificado intermedio. Se incluye el
-            // certificado oficial de Sectigo para mantener TLS verificado.
-            'tls_ca_bundle' => storage_path('app/certificates/sectigo-public-server-authentication-ca-ov-r35.pem'),
-            'max_age_hours' => (int) env('SOURCE_MINISTERIO_PUBLICO_MAX_AGE_HOURS', 168),
-            'max_links' => 60,
-            'max_candidates' => 25,
-        ],
-        'senad' => [
-            'enabled' => env('SOURCE_SENAD_ENABLED', true),
-            'listing_urls' => [env('SOURCE_SENAD_URL', 'https://senad.gov.py/category/operativos/')],
-            'prefilter_requires_location' => false,
-            'summary_title_only' => true,
-            'max_age_hours' => (int) env('SOURCE_SENAD_MAX_AGE_HOURS', 168),
-            'max_links' => 60,
-            'max_candidates' => 25,
-        ],
-        'npy' => [
-            'enabled' => env('SOURCE_NPY_ENABLED', true),
-            'listing_urls' => ['https://www.npy.com.py/'],
-            'prefilter_requires_location' => true,
-            'summary_title_only' => true,
-            'max_age_hours' => 72,
-            'max_links' => 80,
-            'max_candidates' => 25,
-        ],
-        'telefuturo' => [
-            'enabled' => env('SOURCE_TELEFUTURO_ENABLED', true),
-            'listing_urls' => ['https://www.telefuturo.com.py/'],
-            'prefilter_requires_location' => true,
-            'summary_title_only' => true,
-            'max_age_hours' => 72,
-            'max_links' => 60,
-            'max_candidates' => 20,
-        ],
-        'unicanal' => [
-            // The current official homepage links its news to La Tribuna.
-            // Keep that publisher separate so the original attribution is accurate.
-            'enabled' => env('SOURCE_UNICANAL_ENABLED', false),
-            'listing_urls' => ['https://www.unicanal.com.py/'],
-            'prefilter_requires_location' => true,
-            'summary_title_only' => true,
-            'max_age_hours' => 72,
-            'max_links' => 60,
-            'max_candidates' => 20,
-        ],
-        'latribuna' => [
-            'enabled' => env('SOURCE_LATRIBUNA_ENABLED', true),
-            'listing_urls' => [
-                'https://www.latribuna.com.py/',
-                'https://www.latribuna.com.py/nacionales/locales/',
-                'https://www.latribuna.com.py/sucesos/policiales/',
-            ],
-            'prefilter_requires_location' => true,
-            'summary_title_only' => true,
-            'max_age_hours' => 168,
-            'max_links' => 60,
-            'max_candidates' => 30,
-        ],
-        'c9n' => [
-            'enabled' => env('SOURCE_C9N_ENABLED', true),
-            'listing_urls' => ['https://www.c9n.com.py/ultimas-noticias/'],
-            'prefilter_requires_location' => true,
-            'summary_title_only' => true,
-            'max_age_hours' => 72,
-            'max_links' => 60,
-            'max_candidates' => 20,
-        ],
-        'monumental' => [
-            'enabled' => env('SOURCE_MONUMENTAL_ENABLED', true),
-            'listing_urls' => ['https://www.monumental.com.py/'],
-            'prefilter_requires_location' => true,
-            'summary_title_only' => true,
-            'max_age_hours' => 72,
-            'max_links' => 60,
-            'max_candidates' => 20,
-        ],
-        'snt' => [
-            'enabled' => env('SOURCE_SNT_ENABLED', true),
-            'listing_urls' => ['https://www.snt.com.py/noticias/'],
-            'prefilter_requires_location' => true,
-            'summary_title_only' => true,
-            'max_age_hours' => 72,
-            'max_links' => 60,
-            'max_candidates' => 20,
-        ],
-        'migraciones' => [
-            'enabled' => env('SOURCE_MIGRACIONES_ENABLED', true),
-            'listing_urls' => ['https://migraciones.gov.py/noticias/'],
-            'prefilter_requires_location' => false,
-            'summary_title_only' => true,
-            'max_age_hours' => 168,
-            'max_links' => 60,
-            'max_candidates' => 20,
-            'forced_category_slug' => 'borders',
-            'required_event_pattern' => '/\b(cierre|cerrad|suspension|restriccion|reapertura|reabre|habilitacion|nuevo horario|cambio de horario|cronograma de funcionamiento|operacion modificada|cambio de modalidad|problema operativo)\w*/u',
-            'excluded_event_pattern' => '/\b(control aleatorio|movimiento de|supervision|visita|reunion|coordinacion|capacitacion|inadmite|antecedentes)\w*/u',
-            'dedup_window_hours' => 72,
-            'dedup_source_only' => true,
-        ],
-        'dinac' => [
-            'enabled' => env('SOURCE_DINAC_ENABLED', true),
-            'listing_urls' => ['https://www.dinac.gov.py/v3/index.php/dinac/direcciones/aeropuertos/itemlist/category/11-noticias'],
-            'prefilter_requires_location' => false,
-            'summary_title_only' => true,
-            'max_age_hours' => 168,
-            'max_links' => 50,
-            'max_candidates' => 15,
-            'forced_category_slug' => 'territorial_news',
-            'required_event_pattern' => '/\b(cierre|cerrad|inhabilit|suspension|restriccion operativa|afectacion|cancelacion|demoras? generalizadas?|postergacion\w*.{0,35}ruta|operacion modificada|desvio de vuelos?)\w*/u',
-            'excluded_event_pattern' => '/\b(simulacro|curso|capacitacion|publicacion temporal|reglamento|informe|reunion|inauguracion|modernizacion)\w*/u',
-        ],
-        'mspbs-health' => [
-            'enabled' => env('SOURCE_MSPBS_HEALTH_ENABLED', true),
-            'listing_urls' => [
-                'https://www.mspbs.gov.py/noticias.php?page=1&url=portal',
-                'https://www.mspbs.gov.py/noticias.php?page=2&url=portal',
-                'https://www.mspbs.gov.py/noticias.php?page=3&url=portal',
-                'https://www.mspbs.gov.py/noticias.php?page=4&url=portal',
-                'https://www.mspbs.gov.py/index.php',
-            ],
-            'prefilter_requires_location' => false,
-            'summary_title_only' => true,
-            'max_age_hours' => 168,
-            'location_search_article_body' => true,
-            'category_classifier' => 'health',
-            'max_links' => 90,
-            'max_candidates' => 30,
-        ],
-        'dgvs' => [
-            'enabled' => env('SOURCE_DGVS_ENABLED', true),
-            'listing_urls' => ['https://dgvs.mspbs.gov.py/', 'https://dgvs.mspbs.gov.py/noticias/'],
-            'prefilter_requires_location' => false,
-            'summary_title_only' => true,
-            'max_age_hours' => 168,
-            'location_search_article_body' => true,
-            'category_classifier' => 'health',
-            'max_links' => 70,
-            'max_candidates' => 25,
-        ],
-        'erssan' => [
-            'enabled' => env('SOURCE_ERSSAN_ENABLED', true),
-            'listing_urls' => ['https://erssan.gov.py/noticias/'],
-            'prefilter_requires_location' => false,
-            'summary_title_only' => true,
-            'max_age_hours' => 168,
-            'max_links' => 50,
-            'max_candidates' => 20,
-            'forced_category_slug' => 'water',
-            'force_multi_location_department' => true,
-            'dedup_window_hours' => 168,
-            'dedup_source_only' => true,
-            'required_event_pattern' => '/\b(supervision|control\w*.{0,35}calidad|inspeccion especial|denuncias?.{0,55}(?:falta|calidad)|falta de (?:provision|servicio)|continuidad|presion|restriccion|alerta)\w*/u',
-            'excluded_event_pattern' => '/\b(charla|concienciacion|capacitacion|audiencia|expediente administrativo|congreso)\w*/u',
-        ],
-        'senacsa' => [
-            'enabled' => env('SOURCE_SENACSA_ENABLED', true),
-            'listing_urls' => ['https://senacsa.gov.py/noticias/'],
-            'prefilter_requires_location' => false,
-            'summary_title_only' => true,
-            'max_age_hours' => 168,
-            'max_links' => 50,
-            'max_candidates' => 15,
-            'forced_category_slug' => 'animal_health',
-            'required_event_pattern' => '/\b(alerta sanitaria|foco|brote|emergencia sanitaria|restriccion sanitaria|campana\w*.{0,35}vacunacion|operativo sanitario|interdiccion)\w*/u',
-            'excluded_event_pattern' => '/\b(auditoria|reunion|visita|exportacion|inauguracion|capacitacion|norma paraguaya)\w*/u',
-        ],
-        'mades-air-quality' => [
-            'enabled' => trim((string) env('MADES_AIR_API_KEY', '')) !== '',
-            'api_url' => env('MADES_AIR_API_URL', 'https://calidadaire.mades.gov.py/api/v1'),
-            'api_key' => env('MADES_AIR_API_KEY'),
-        ],
-        'nasa-firms' => [
-            'enabled' => env('NASA_FIRMS_ENABLED', false) && trim((string) env('NASA_FIRMS_MAP_KEY', '')) !== '',
-            'api_url' => env('NASA_FIRMS_API_URL', 'https://firms.modaps.eosdis.nasa.gov/api/area/csv'),
-            'map_key' => env('NASA_FIRMS_MAP_KEY'),
-            'source' => env('NASA_FIRMS_SOURCE', 'VIIRS_NOAA20_NRT'),
-            // Paraguay con un margen territorial pequeÃ±o y configurable.
-            'bbox' => env('NASA_FIRMS_BBOX', '-62.7,-27.7,-54.2,-19.1'),
-            'day_range' => (int) env('NASA_FIRMS_DAY_RANGE', 2),
-            'correlation_distance_km' => (float) env('FIRE_CORRELATION_DISTANCE_KM', 15),
-            'correlation_window_hours' => (int) env('FIRE_CORRELATION_WINDOW_HOURS', 24),
-        ],
-        'abc' => [
-            'enabled' => env('SOURCE_ABC_ENABLED', true),
-            'feed_url' => env('SOURCE_ABC_FEED_URL', 'https://www.abc.com.py/arc/outboundfeeds/rss/nacionales/'),
-            'recent_archive_enabled' => env('SOURCE_ABC_RECENT_ARCHIVE_ENABLED', true),
-            'archive_url' => env('SOURCE_ABC_ARCHIVE_URL', 'https://www.abc.com.py/pf/api/v3/content/fetch/sections-api'),
-            'archive_sections' => [
-                '/nacionales' => '/nacionales/',
-                '/economia' => '/economia/',
-            ],
-            'archive_page_size' => (int) env('SOURCE_ABC_ARCHIVE_PAGE_SIZE', 100),
-            'archive_max_pages' => (int) env('SOURCE_ABC_ARCHIVE_MAX_PAGES', 20),
-            'archive_max_candidates' => (int) env('SOURCE_ABC_ARCHIVE_MAX_CANDIDATES', 500),
-            'lookback_days' => 0,
-            'max_age_hours' => (int) env('SOURCE_ABC_MAX_AGE_HOURS', 48),
-            'max_candidates' => (int) env('SOURCE_ABC_MAX_CANDIDATES', 30),
-        ],
-        'ultimahora' => [
-            'enabled' => env('SOURCE_ULTIMAHORA_ENABLED', true),
-            // El medio publica article:published_time en UTC, pero sin sufijo de zona horaria.
-            'published_timezone' => 'UTC',
-            'listing_urls' => [
-                'https://www.ultimahora.com/buscador?q=ande&s=0',
-                'https://www.ultimahora.com/buscador?q=essap&s=0',
-                'https://www.ultimahora.com/',
-                'https://www.ultimahora.com/chaco',
-                'https://www.ultimahora.com/boqueron',
-                'https://www.ultimahora.com/presidente-hayes',
-                'https://www.ultimahora.com/alto-paraguay',
-            ],
-            'lookback_days' => 0,
-            'max_age_hours' => (int) env('SOURCE_ULTIMAHORA_MAX_AGE_HOURS', 72),
-            'max_links' => (int) env('SOURCE_ULTIMAHORA_MAX_LINKS', 120),
-            'max_candidates' => (int) env('SOURCE_ULTIMAHORA_MAX_CANDIDATES', 30),
-        ],
-        'lanacion' => [
-            'enabled' => env('SOURCE_LANACION_ENABLED', true),
-            'listing_urls' => [
-                'https://www.lanacion.com.py/tag/ande/',
-                'https://www.lanacion.com.py/tag/essap/',
-                'https://www.lanacion.com.py/',
-                'https://www.lanacion.com.py/category/pais/',
-            ],
-            'lookback_days' => 0,
-            'max_age_hours' => (int) env('SOURCE_LANACION_MAX_AGE_HOURS', 72),
-            'max_links' => (int) env('SOURCE_LANACION_MAX_LINKS', 100),
-            'max_candidates' => (int) env('SOURCE_LANACION_MAX_CANDIDATES', 25),
-        ],
-        '1000noticias' => [
-            'enabled' => env('SOURCE_1000NOTICIAS_ENABLED', true),
-            'api_url' => 'https://1000noticias.com.py/wp-json/wp/v2/posts',
-            'published_timezone' => 'America/Asuncion',
-            'search_terms' => ['agua', 'energÃ­a', 'elÃ©ctrica', 'luz', 'apagÃ³n'],
-            'max_age_hours' => 168,
-            // "agua" also matches "Paraguay" in WordPress full-text search.
-            // Read beyond the first 25 broad matches within the retained week.
-            'page_size' => 100,
-            'max_pages' => 3,
-            'max_candidates' => 30,
-        ],
-        'nanduti' => [
-            'enabled' => env('SOURCE_NANDUTI_ENABLED', true),
-            // The publisher's public WordPress API and original articles use nanduti.live.
-            'api_url' => 'https://nanduti.live/wp-json/wp/v2/posts',
-            'published_timezone' => 'America/Asuncion',
-            'search_terms' => ['agua', 'energÃ­a', 'elÃ©ctrica', 'luz', 'apagÃ³n'],
-            'max_age_hours' => 168,
-            'page_size' => 100,
-            'max_pages' => 3,
-            'max_candidates' => 30,
-        ],
-        'hoy' => [
-            'enabled' => env('SOURCE_HOY_ENABLED', true),
-            'listing_urls' => ['https://www.hoy.com.py/', 'https://www.hoy.com.py/nacionales'],
-            'prefilter_requires_location' => false,
-            'max_age_hours' => (int) env('SOURCE_HOY_MAX_AGE_HOURS', 72),
-            'max_links' => 35,
-            'max_candidates' => 20,
-        ],
-        'popular' => [
-            'enabled' => env('SOURCE_POPULAR_ENABLED', true),
-            'listing_urls' => ['https://www.popular.com.py/'],
-            'prefilter_requires_location' => false,
-            'max_age_hours' => (int) env('SOURCE_POPULAR_MAX_AGE_HOURS', 72),
-            'max_links' => 35,
-            'max_candidates' => 20,
-        ],
-        'extra' => [
-            'enabled' => env('SOURCE_EXTRA_ENABLED', true),
-            'listing_urls' => ['https://www.extra.com.py/'],
-            'prefilter_requires_location' => false,
-            'max_age_hours' => (int) env('SOURCE_EXTRA_MAX_AGE_HOURS', 72),
-            'max_links' => 35,
-            'max_candidates' => 20,
-        ],
-    ],
-
-    'discovery' => [
-        'gdelt' => [
-            'enabled' => env('GDELT_ENABLED', false),
-            'endpoint' => env('GDELT_API_URL', 'https://api.gdeltproject.org/api/v2/doc/doc'),
-            'query' => env('GDELT_QUERY', 'Paraguay ("sin luz" OR "sin agua" OR accidente OR choque OR incendio OR inundacion OR temporal OR "ruta bloqueada")'),
-            'timespan' => env('GDELT_TIMESPAN', '24h'),
-            'max_results' => (int) env('GDELT_MAX_RESULTS', 50),
-            'timeout' => (int) env('GDELT_TIMEOUT', 30),
-        ],
-        'x' => [
-            'enabled' => env('X_DISCOVERY_ENABLED', false) && trim((string) env('X_BEARER_TOKEN', '')) !== '',
-            'endpoint' => 'https://api.x.com/2/tweets/search/recent',
-            'bearer_token' => env('X_BEARER_TOKEN'),
-            'query' => env('X_DISCOVERY_QUERY', 'Paraguay ("sin luz" OR "sin agua" OR accidente OR choque OR asalto OR robo OR incendio OR inundaciÃ³n OR "ruta bloqueada") -is:retweet'),
-            'max_results' => (int) env('X_DISCOVERY_MAX_RESULTS', 50),
-        ],
-        'bluesky' => [
-            'enabled' => env('BLUESKY_DISCOVERY_ENABLED', false),
-            'endpoint' => env('BLUESKY_API_URL', 'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts'),
-            'query' => env('BLUESKY_DISCOVERY_QUERY', 'Paraguay accidente incendio inundaciÃ³n temporal "sin luz" "sin agua"'),
-            'max_results' => (int) env('BLUESKY_DISCOVERY_MAX_RESULTS', 50),
-        ],
-        'mastodon' => [
-            'enabled' => env('MASTODON_DISCOVERY_ENABLED', false),
-            'instances' => array_values(array_filter(array_map('trim', explode(',', (string) env('MASTODON_INSTANCES', ''))))),
-            'hashtags' => array_values(array_filter(array_map('trim', explode(',', (string) env('MASTODON_HASHTAGS', 'Paraguay,Asuncion'))))),
-        ],
-        'telegram' => [
-            'enabled' => env('TELEGRAM_DISCOVERY_ENABLED', false) && trim((string) env('TELEGRAM_BOT_TOKEN', '')) !== '',
-            'bot_token' => env('TELEGRAM_BOT_TOKEN'),
-            'channels' => array_values(array_filter(array_map('trim', explode(',', (string) env('TELEGRAM_CHANNELS', ''))))),
-        ],
-        'youtube' => [
-            'enabled' => env('YOUTUBE_DISCOVERY_ENABLED', false) && trim((string) env('YOUTUBE_API_KEY', '')) !== '',
-            'endpoint' => 'https://www.googleapis.com/youtube/v3/search',
-            'api_key' => env('YOUTUBE_API_KEY'),
-            'channel_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('YOUTUBE_CHANNEL_IDS', ''))))),
-            'query' => env('YOUTUBE_DISCOVERY_QUERY', 'accidente|incendio|robo|inundaciÃ³n|bloqueo|temporal|operativo'),
-            'lookback_hours' => (int) env('YOUTUBE_DISCOVERY_LOOKBACK_HOURS', 24),
-            'max_results_per_channel' => (int) env('YOUTUBE_DISCOVERY_MAX_RESULTS_PER_CHANNEL', 10),
-        ],
-    ],
-];
-
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éí÷N½N‹Z–‹­¦ëeŠw¬ÔðýÁ¡À()É•ÑÕÉ¸l(€€€€‘•¥Í¥½¸œ€ôøl(€€€€€€€€ÁÉ½Ù¥‘•Èœ€ôø•¹Ø 1IQAe}%M%=9}AI=Y%Hœ°€ÉÕ±•Ìœ¤°(€€€t°((€€€€É½…‘Ìœ€ôøl(€€€€€€€€•¹…‰±•œ€ôø•¹Ø 1IQAe}I=UQ}Q}9	1œ°ÑÉÕ”¤°(€€€€€€€€‘ÕÁ±¥…Ñ•}­µ}Ñ½±•É…¹”œ€ôø€¡™±½…Ð¤•¹Ø 1IQAe}I=}UA1%Q}-5}Q=1I9œ°€Ä¸À¤°(€€€€€€€€¥¹Ñ•ÉÍ•Ñ¥½¹}Ñ½±•É…¹•}µ•Ñ•ÉÌœ€ôø€¡™±½…Ð¤•¹Ø 1IQAe}I=}%9QIMQ%=9}Q=1I9}5QILœ°€àÀ¤°(€€€€€€€€µ…á}Í•µ•¹Ñ}±•¹Ñ¡}µ•Ñ•ÉÌœ€ôø€¡™±½…Ð¤•¹Ø 1IQAe}I=}5a}M59Q}19Q!}5QILœ°€ÄÀÀÀÀÀ¤°(€€€t°((€€€€™…Ù½É¥Ñ•Ìœ€ôøl(€€€€€€€€µ…á}é½¹•Ìœ€ôø€¡¥¹Ð¤•¹Ø 1IQAe}5a}Y=I%Q}i=9Lœ°€ÄÀ¤°(€€€€€€€€‘•™…Õ±Ñ}É…‘¥ÕÍ}­´œ€ôø€¡™±½…Ð¤•¹Ø 1IQAe}U1Q}Y=I%Q}I%UM}-4œ°€Ì¤°(€€€€€€€€µ…á}É…‘¥ÕÍ}­´œ€ôø€¡™±½…Ð¤•¹Ø 1IQAe}5a}Y=I%Q}I%UM}-4œ°€ÈÔ¤°(€€€t°(€€€€¥¹”œ€ôøl(€€€€€€€€Ý™Í}•¹‘Á½¥¹Ðœ€ôø•¹Ø 1IQAe}%9}]M}9A=%9Pœ°€¡ÑÑÁÌè¼½•½¹½‘”¹¥¹”¹½Ø¹Áä½•½Í•ÉÙ•È½½ÝÌœ¤°(€€€€€€€€‘¥ÍÑÉ¥Ñ}±…å•Èœ€ôø•¹Ø 1IQAe}%9}%MQI%Q}1eHœ°€•½¹½‘”é‘¥ÍÑÉ¥Ñ½Í}½¹}¥¹‘¥…‘½É•Í}•¹Í½|ÈÀÈÉ|Èœ¤°(€€€€€€€€Í½ÕÉ•}ÕÉ°œ€ôø•¹Ø 1IQAe}%9}M=UI}UI0œ°€¡ÑÑÁÌè¼½•½¹½‘”¹¥¹”¹½Ø¹Áä½…Ñ…±½Õ”½ÍÝ}Ñ½}•áÑÉ…}™½Éµ…Ð¼ØäàØÈÅˆÐµˆÀÄä´ÐÄää´äÈÔÈµ”äÙÁ„äá‘™Œà½‘¥ÍÑÉ¥Ñ½Ìµ½¸µ¥¹‘¥…‘½É•Ìµ•¹Í¼´ÈÀÈÈ¹¡Ñµ°œ¤°(€€€t°(€€€€¥¹™É…ÍÑÉÕÑÕÉ”œ€ôøl(€€€€€€€€Ý™Í}•¹‘Á½¥¹Ðœ€ôø•¹Ø 1IQAe}%9IMQIUQUI}]M}9A=%9Pœ°€¡ÑÑÁÌè¼½•½¹½‘”¹¥¹”¹½Ø¹Áä½•½Í•ÉÙ•È½½ÝÌœ¤°(€€€€€€€€Í½ÕÉ•}ÕÉ°œ€ôø€¡ÑÑÁÌè¼½ÝÝÜ¹¥¹”¹½Ø¹Áä½µ¥É½‘…Ñ¼½…ÉÑ½É…™¥„µ‘¥¥Ñ…°´ÈÀÄÈµ±½…±•Ìµ‘”µÍ…±ÕµÁ½±¥¥…±•Ìµäµ•‘Õ…¥½¸œ°(€€€€€€€€±…å•ÉÌœ€ôøl(€€€€€€€€€€€€¡•…±Ñ œ€ôø€•½¹½‘”éÁÕ•ÍÑ½Í}Í…±Õ‘}ÁÕ‰±¥½Ìœ°(€€€€€€€€€€€€•‘Õ…Ñ¥½¸œ€ôø€•½¹½‘”é±½…±•Í}•‘Õ…Ñ¥Ù½Í}‘„ØÈÐÔÕ™˜ÔÙ„ÕˆÝ•„ÌÐäÕ•‘”àÅ„ÈÕ•˜äœ°(€€€€€€€€€€€€Á½±¥”œ€ôø€•½¹½‘”éÁÕ•ÍÑ½Í}Á½±¥¥…±•Í|Í………ŒÑÍˆÄÑŒÀÑ™™˜Å™•…™ˆÄàÕ™‘ÙŒœ°(€€€€€€€t°(€€€t°(€€€€µ…á}¥¹¥‘•¹ÑÍ}Á•É}É•ÅÕ•ÍÐœ€ôø€¡¥¹Ð¤•¹Ø 1IQAe}5a}%9%9QM}AI}IEUMPœ°€ÈÀÀ¤°(€€€€…‘µ¥¹}Ñ½­•¸œ€ôø•¹Ø 1IQAe}5%9}Q=-8œ¤°((€€€€å±”œ€ôøl(€€€€€€€€¼¼I•™É•Í Í•ÉÙ¥•Ì°Í¡•‘Õ±•µ½ÕÑ…”ÁÉ•ÍÌ‰…­ÕÁÌ…¹±¥Ù”µ½¹¥Ñ½É¥¹œ‰•™½É”Í±½Ý•È•¹•É…°¹•ÝÌÍ¥Ñ•Ì¸(€€€€€€€€¼¼… Í½ÕÉ”ÍÑ¥±°½‰•åÌ¥ÑÌ½Ý¸Á½±±¥¹œ¥¹Ñ•ÉÙ…°…¹•ÉÉ½È¡…¹‘±¥¹œ¸(€€€€€€€€ÁÉ¥½É¥Ñå}Í½ÕÉ•Ìœ€ôøl…¹‘”œ°€•ÍÍ…Àœ°€•ÉÍÍ…¸œ°€Í¥…Õ…Áäœ°€µ•Ñ•½É½±½¥„œ°€‘µ µ…ÕÑ½µ…Ñ¥ŒµÍÑ…Ñ¥½¹Ìœ°€‘µ µ…Àœ°€…‰Œœ°€Õ±Ñ¥µ…¡½É„œ°€±…¹…¥½¸œ°€¡½äœ°€±…ÑÉ¥‰Õ¹„œ°€œÄÀÀÁ¹½Ñ¥¥…Ìœ°€¹…¹‘ÕÑ¤œ°€…ÍÕ¹¥½¸µ…ÑÕ…°œ°€…¡½É„µÁ…É…Õ…äœ°€•±¹…¥½¹…°œ°€±„µ±…Ù”œ°€É…Ñ¥¼µÁ…É…Õ…äœ°€Í•¹•Á„œ°€µÍÁ‰Ìµ¡•…±Ñ œ°€‘ÙÌœ°€Á…¤œ°€‘¥¥•Ìt°(€€€€€€€€µ…á}Í•½¹‘Ìœ€ôø€¡¥¹Ð¤•¹Ø 1IQAe}e1}5a}M=9Lœ°€ÄàÀ¤°(€€€€€€€€µ…á}Í½ÕÉ•Ìœ€ôø€¡¥¹Ð¤•¹Ø 1IQAe}5a}M=UIM}AI}e1œ°€ÌÀ¤°(€€€€€€€€µ…á}…¹‘¥‘…Ñ•Ìœ€ôø€¡¥¹Ð¤•¹Ø 1IQAe}5a}9%QM}AI}e1œ°€ÄÀÀ¤°(€€€€€€€€µ…á}…¥}‘•¥Í¥½¹Ìœ€ôø€¡¥¹Ð¤•¹Ø 1IQAe}5a}%}%M%=9M}AI}e1œ°€ÔÀ¤°(€€€t°((€€€€Í¡•‘Õ±•É}ÍÑ…±•}µ¥¹ÕÑ•Ìœ€ôø€¡¥¹Ð¤•¹Ø 1IQAe}M!U1I}MQ1}5%9UQLœ°€ÄÔ¤°((€€€€¡ÑÑÀœ€ôøl(€€€€€€€€Ñ¥µ•½ÕÐœ€ôø€¡¥¹Ð¤•¹Ø 1IQAe}M=UI}Q%5=UPœ°€ÄÔ¤°(€€€€€€€€ÕÍ•É}…•¹Ðœ€ôø•¹Ø 1IQAe}M=UI}UMI}9Pœ°€±•ÉÑ…Ad¼Ä¸À€¡Ñ•ÉÉ¥Ñ½É¥…°‘…Ñ„½±±•Ñ½È¤œ¤°(€€€t°((€€€€¥¹•ÍÑ¥½¸œ€ôøl(€€€€€€€€¼¼1½Ì½±±•Ñ½ÉÌ½™¥¥…±•Ì…Á±¥…¸É•±…Ì‘•Ñ•Éµ¥¹¥ÍÑ…Ìä½¹Í•ÉÙ…¸±„(€€€€€€€€¼¼•Ù¥‘•¹¥„½É¥¥¹…°ì¹¼¹••Í¥Ñ…¸Õ¸ƒ…É‰¥ÑÉ¼‘”%Á…É„ÁÕ‰±¥…È¸(€€€€€€€€½™™¥¥…±}Í½ÕÉ•Í}ÁÕ‰±¥Í œ€ôø™¥±Ñ•É}Ù…È (€€€€€€€€€€€•¹Ø 1IQAe}=%%1}M=UIM}AU	1%M œ°ÑÉÕ”¤°(€€€€€€€€€€€%1QI}Y1%Q}	==0°(€€€€€€€€¤°(€€€€€€€€¼¼1…ÌÉ•±…Ì±½…±•Ì‘•Ñ•Éµ¥¹¥ÍÑ…ÌÍ½¸•°…µ¥¹¼½Á•É…Ñ¥Ù¼¹½Éµ…°ä¹¼(€€€€€€€€¼¼É•ÅÕ¥•É•¸%¸AÕ•‘”‘•Í…Ñ¥Ù…ÉÍ”½µ¼¥¹Ñ•ÉÉÕÁÑ½È•‘¥Ñ½É¥…°¸(€€€€€€€€±½…±}ÉÕ±•Í}ÁÕ‰±¥Í œ€ôø™¥±Ñ•É}Ù…È (€€€€€€€€€€€•¹Ø 1IQAe}1=1}IU1M}AU	1%M œ°ÑÉÕ”¤°(€€€€€€€€€€€%1QI}Y1%Q}	==0°(€€€€€€€€¤°(€€€t°((€€€€½Á•¹½‘”œ€ôøl(€€€€€€€€•¹…‰±•œ€ôø•¹Ø =A9=}9	1œ°™…±Í”¤°(€€€€€€€€ÕÉ°œ€ôø•¹Ø =A9=}%M%=9}UI0œ¤°(€€€€€€€€Ñ½­•¸œ€ôø•¹Ø =A9=}%M%=9}Q=-8œ¤°(€€€€€€€€Ñ¥µ•½ÕÐœ€ôø€¡¥¹Ð¤•¹Ø =A9=}%M%=9}Q%5=UPœ°€ÌÀ¤°(€€€t°((€€€€•½½‘¥¹œœ€ôøl(€€€€€€€€ÁÉ½Ù¥‘•Èœ€ôø•¹Ø ==%9}AI=Y%Hœ¤°(€€€€€€€€ÕÍ•É}…•¹Ðœ€ôø•¹Ø ==%9}UMI}9Pœ¤°(€€€t°((€€€€É•Á½ÉÑÌœ€ôøl(€€€€€€€€…ÁÑ¡…}•¹…‰±•œ€ôø™¥±Ñ•É}Ù…È¡•¹Ø IA=IQ}AQ!}9	1œ°™…±Í”¤°%1QI}Y1%Q}	==0¤°(€€€t°((€€€€Í½ÕÉ•Ìœ€ôøl(€€€€€€€€…¹‘”œ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}9}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€µ…á}…ÉÑ¥±•Ìœ€ôø€¡¥¹Ð¤•¹Ø M=UI}9}5a}IQ%1Lœ°€ÈÔÀ¤°(€€€€€€€€€€€€µ…á}Á…•Ìœ€ôø€¡¥¹Ð¤•¹Ø M=UI}9}5a}ALœ°€Ô¤°(€€€€€€€€€€€€±½½­‰…­}‘…åÌœ€ôø€À°(€€€€€€€€€€€€‰É½ÝÍ•É}…É¡¥Ù•}Á…Ñ œ€ôø¹Õ±°°(€€€€€€€t°(€€€€€€€€•ÍÍ…Àœ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}MMA}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€…Á¥}ÕÉ°œ€ôø•¹Ø M=UI}MMA}A%}UI0œ°€¡ÑÑÁÌè¼½ÝÝÜ¹•ÍÍ…À¹½´¹Áä½ÝÀµ©Í½¸½ÝÀ½ØÈ½Á½ÍÑÌœ¤°(€€€€€€€€€€€€¼¼MM@É•Á…ÉÑ”±„¥¹™½Éµ…§Í¸½Á•É…Ñ¥Ù„•¹ÑÉ”ÁÉ•¹Í„°¹½Ñ¥¥…Ì°(€€€€€€€€€€€€¼¼½µÕ¹¥…‘½Ìä½‰É…Ì¸½¹ÍÕ±Ñ…ÈÕ¹„Í½±„…Ñ•½Ëµ„‘•©…‰„™Õ•É„(€€€€€€€€€€€€¼¼…Ù¥Í½ÌÛ…±¥‘½ÌÕ…¹‘¼•°•ÅÕ¥Á¼•‘¥Ñ½É¥…°…µ‰¥…‰„ÍÔÍ•§Í¸¸(€€€€€€€€€€€€…Ñ•½Éå}¥‘Ìœ€ôø…ÉÉ…å}Ù…±Õ•Ì¡…ÉÉ…å}™¥±Ñ•È¡…ÉÉ…å}µ…À (€€€€€€€€€€€€€€€€¥¹ÑÙ…°œ°(€€€€€€€€€€€€€€€•áÁ±½‘” œ°œ°€¡ÍÑÉ¥¹œ¤•¹Ø M=UI}MMA}Q=Ie}%Lœ°€œØ°Ü°ÌÐ°ÌÔœ¤¤°(€€€€€€€€€€€€¤¤¤°(€€€€€€€€€€€€±½½­‰…­}‘…åÌœ€ôø€À°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}MMA}5a}}!=UILœ°€ÄØà¤°(€€€€€€€€€€€€Á…•}Í¥é”œ€ôø€¡¥¹Ð¤•¹Ø M=UI}MMA}A}M%iœ°€ÄÀÀ¤°(€€€€€€€€€€€€µ…á}Á…•Ìœ€ôø€¡¥¹Ð¤•¹Ø M=UI}MMA}5a}ALœ°€Ô¤°(€€€€€€€€€€€€µ…á}…¹‘¥‘…Ñ•Ìœ€ôø€¡¥¹Ð¤•¹Ø M=UI}MMA}5a}9%QLœ°€ÈÔÀ¤°(€€€€€€€t°(€€€€€€€€µ•Ñ•½É½±½¥„œ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}5Q=I=1=%}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€…‘Ù¥Í½Éå}ÕÉ°œ€ôø•¹Ø M=UI}5Q=I=1=%}Y%M=Ie}UI0œ°€¡ÑÑÁÌè¼½ÝÝÜ¹µ•Ñ•½É½±½¥„¹½Ø¹Áä½…Ù¥Í½Ì¼œ¤°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}5Q=I=1=%}5a}}!=UILœ°€ÄÈ¤°(€€€€€€€t°(€€€€€€€€‘µ µ…ÕÑ½µ…Ñ¥ŒµÍÑ…Ñ¥½¹Ìœ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôøÑÉÕ”°(€€€€€€€€€€€€™••‘}ÕÉ°œ€ôø•¹Ø M=UI}5!}MQQ%=9M}UI0œ°€¡ÑÑÁÌè¼½ÝÝÜ¹µ•Ñ•½É½±½¥„¹½Ø¹Áä½•µ…Ì½‘…Ñ„¹©Í½¸œ¤°(€€€€€€€t°(€€€€€€€€‘µ µ…Àœ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôøÑÉÕ”°(€€€€€€€€€€€€µ•ÍÍ…•Í}ÕÉ°œ€ôø•¹Ø M=UI}5!}A}5MMM}UI0œ°€¡ÑÑÁÌè¼½Ý¥ÌÉÁä¹µ•Ñ•½É½±½¥„¹½Ø¹Áä½½…Á¤½½±±•Ñ¥½¹Ì½µ•ÍÍ…•Ì½¥Ñ•µÌœ¤°(€€€€€€€€€€€€Í½ÕÉ•}ÕÉ°œ€ôø€¡ÑÑÁÌè¼½Ý¥ÌÉÁä¹µ•Ñ•½É½±½¥„¹½Ø¹Áä½½…Á¤½½±±•Ñ¥½¹Ì½‘¥Í½Ù•Éäµµ•Ñ…‘…Ñ„½¥Ñ•µÌ½ÕÉ¸”ÍÝµ¼”Íµ”ÍÁäµ‘¥¹…Œµ‘µ ”Í…Àý˜õ¡Ñµ°œ°(€€€€€€€t°(€€€€€€€€¥¹™½¹„œ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}%9=9}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€±¥ÍÑ¥¹}ÕÉ±Ìœ€ôøl¡ÑÑÁÌè¼½¥¹™½¹„¹½Ø¹Áä¼t°(€€€€€€€€€€€€ÁÉ•™¥±Ñ•É}É•ÅÕ¥É•Í}±½…Ñ¥½¸œ€ôø™…±Í”°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}%9=9}5a}}!=UILœ°€ÄØà¤°(€€€€€€€€€€€€µ…á}±¥¹­Ìœ€ôø€ÌÔ°(€€€€€€€€€€€€µ…á}…¹‘¥‘…Ñ•Ìœ€ôø€ÄÔ°(€€€€€€€t°(€€€€€€€€µ…‘•Ìœ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}5M}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€±¥ÍÑ¥¹}ÕÉ±Ìœ€ôøl¡ÑÑÁÌè¼½ÝÝÜ¹µ…‘•Ì¹½Ø¹Áä½¹½Ñ¥¥…Ì¼t°(€€€€€€€€€€€€ÁÉ•™¥±Ñ•É}É•ÅÕ¥É•Í}±½…Ñ¥½¸œ€ôø™…±Í”°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}5M}5a}}!=UILœ°€ÄØà¤°(€€€€€€€€€€€€µ…á}±¥¹­Ìœ€ôø€ÌÔ°(€€€€€€€€€€€€µ…á}…¹‘¥‘…Ñ•Ìœ€ôø€ÄÔ°(€€€€€€€t°(€€€€€€€€Í¥…Õ…Áäœ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}M%UAe}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€…±•ÉÑÍ}ÕÉ°œ€ôø•¹Ø M=UI}M%UAe}1IQM}UI0œ°€¡ÑÑÁÌè¼½Í¥…Õ…Áä¹µ…‘•Ì¹½Ø¹Áä½…±•ÉÑ…Ìµ¡¥‘É½±½¥…Ìœ¤°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}M%UAe}5a}}!=UILœ°€ÜÈ¤°(€€€€€€€t°(€€€€€€€€µ½ÁŒœ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}5=A}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€±¥ÍÑ¥¹}ÕÉ±Ìœ€ôøl¡ÑÑÁÌè¼½µ½ÁŒ¹½Ø¹Áä½¹½Ñ¥¥…Ì¼t°(€€€€€€€€€€€€ÁÉ•™¥±Ñ•É}É•ÅÕ¥É•Í}±½…Ñ¥½¸œ€ôø™…±Í”°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}5=A}5a}}!=UILœ°€ÄØà¤°(€€€€€€€€€€€€µ…á}±¥¹­Ìœ€ôø€ÐÔ°(€€€€€€€€€€€€µ…á}…¹‘¥‘…Ñ•Ìœ€ôø€ÈÀ°(€€€€€€€t°(€€€€€€€€Í•¹•Á„œ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}M9A}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€…Á¥}ÕÉ°œ€ôø•¹Ø M=UI}M9A}A%}UI0œ°€¡ÑÑÁÌè¼½Í•¹•Á„¹½Ø¹Áä½ÝÀµ©Í½¸½ÝÀ½ØÈ½Á½ÍÑÌœ¤°(€€€€€€€€€€€€Á…•}Í¥é”œ€ôø€¡¥¹Ð¤•¹Ø M=UI}M9A}A}M%iœ°€ÔÀ¤°(€€€€€€€€€€€€µ…á}Á…•Ìœ€ôø€¡¥¹Ð¤•¹Ø M=UI}M9A}5a}ALœ°€Ì¤°(€€€€€€€€€€€€±¥ÍÑ¥¹}ÕÉ±Ìœ€ôøl(€€€€€€€€€€€€€€€€¡ÑÑÁÌè¼½Í•¹•Á„¹½Ø¹Áä¼œ°(€€€€€€€€€€€€€€€€¡ÑÑÁÌè¼½Í•¹•Á„¹½Ø¹Áä½…Ñ•½Éä½¹½Ñ¥¥…Ì¼œ°(€€€€€€€€€€€€€€€€¡ÑÑÁÌè¼½Í•¹•Á„¹½Ø¹Áä½íå•…Éô½íµ½¹Ñ¡}Á…‘‘•‘ô¼œ°(€€€€€€€€€€€€€€€€¡ÑÑÁÌè¼½Í•¹•Á„¹½Ø¹Áä½íå•…Éô½íµ½¹Ñ¡}Á…‘‘•‘ô½Á…”¼È¼œ°(€€€€€€€€€€€€€€€€¡ÑÑÁÌè¼½Í•¹•Á„¹½Ø¹Áä½íÁÉ•Ù¥½ÕÍ}å•…Éô½íÁÉ•Ù¥½ÕÍ}µ½¹Ñ¡}Á…‘‘•‘ô¼œ°(€€€€€€€€€€€t°(€€€€€€€€€€€€ÁÉ•™¥±Ñ•É}É•ÅÕ¥É•Í}±½…Ñ¥½¸œ€ôø™…±Í”°(€€€€€€€€€€€€™½É•‘}…Ñ•½Éå}Í±Õœœ€ôø€¡•…±Ñ¡}Ù•Ñ½Èœ°(€€€€€€€€€€€€É•ÅÕ¥É•‘}•Ù•¹Ñ}Á…ÑÑ•É¸œ€ôø€œ½qˆ¡…É‰½Ù¥É½Í¥Íñ‘•¹Õ•ñ¡¥­Õ¹Õ¹å…ñé¥­…ñ¡……ÍñÁ…±Õ‘¥Íµ½ñµ…±…É¥…ñ±•¥Í¡µ…¹¥…Í¥Íñµ½ÍÅÕ¥Ñ½Ìýñ…•‘•Íñµ¥¹„…µ‰¥•¹Ñ…±ñÉ…ÍÑÉ¥±±…©•ñ½¹ÑÉ½°€ üé™¥Í¥½ñÅÕ¥µ¥½ñÙ•Ñ½É¥…°¥ñ‰±½ÅÕ•¼ÅÕ¥µ¥½ñ•±¥µ¥¹…¥½¸‘”É¥…‘•É½Íñ‘•ÍÑÉÕ¥½¸‘”É¥…‘•É½ÍñÙ¥¥±…¹¥„•¹Ñ½µ½±½¥…ñ™Õµ¥…¥½¹ñÉ½¥…‘½ñ¥¹Í•Ñ¥¥‘„¥qÜ¨½Ôœ°(€€€€€€€€€€€€•á±Õ‘•‘}•Ù•¹Ñ}Á…ÑÑ•É¸œ€ôø€œ½qˆ¡µ•¥Áñ…Õ•É‘½Ìüä½µÁÉ½µ¥Í½Ìü•Ñ¥½ÍñÉ•¹‘¥¥½¸‘”Õ•¹Ñ…Íñ½¹™•É•¹¥„¥¹Ñ•É¹…¥½¹…±ñ…Ñ¼ÁÉ½Ñ½½±…È¥qˆ½Ôœ°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}M9A}5a}}!=UILœ°€ÄØà¤°(€€€€€€€€€€€€µ…á}±¥¹­Ìœ€ôø€ÄÀÀ°(€€€€€€€€€€€€µ…á}…¹‘¥‘…Ñ•Ìœ€ôø€ÔÀ°(€€€€€€€t°(€€€€€€€€Í•¸œ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}M9}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€±¥ÍÑ¥¹}ÕÉ±Ìœ€ôøl¡ÑÑÁÌè¼½Í•¸¹½Ø¹Áä½…Ñ•½Éä½¹½Ñ¥¥…Ì¼t°(€€€€€€€€€€€€ÁÉ•™¥±Ñ•É}É•ÅÕ¥É•Í}±½…Ñ¥½¸œ€ôø™…±Í”°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}M9}5a}}!=UILœ°€ÄØà¤°(€€€€€€€€€€€€µ…á}±¥¹­Ìœ€ôø€ÌÔ°(€€€€€€€€€€€€µ…á}…¹‘¥‘…Ñ•Ìœ€ôø€ÄÔ°(€€€€€€€t°(€€€€€€€€µ¥¹¥ÍÑ•É¥¼µÁÕ‰±¥¼œ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}5%9%MQI%=}AU	1%=}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€¼¼1„Á½ÉÑ…‘„…É„…‘„…É¡¥Ù¼µ•¹ÍÕ…°½¸•ÍÑ”•¹‘Á½¥¹Ð½™¥¥…°¸(€€€€€€€€€€€€…É¡¥Ù•}•¹‘Á½¥¹Ðœ€ôø•¹Ø M=UI}5%9%MQI%=}AU	1%=}UI0œ°€¡ÑÑÁÌè¼½µ¥¹¥ÍÑ•É¥½ÁÕ‰±¥¼¹½Ø¹Áä½¥¹Œ½…É¡¥Ù¼µ‘…Ñ„¹Á¡Àý…¥½¸õÁ…¥¹…È™Á…¥¹„ôÄ™…¹¥¼õíå•…Éô™µ•Ìõíµ½¹Ñ¡ôœ¤°(€€€€€€€€€€€€ÁÉ•™¥±Ñ•É}É•ÅÕ¥É•Í}±½…Ñ¥½¸œ€ôø™…±Í”°(€€€€€€€€€€€€ÍÕµµ…Éå}Ñ¥Ñ±•}½¹±äœ€ôøÑÉÕ”°(€€€€€€€€€€€€¼¼°Í•ÉÙ¥‘½È½µ¥Ñ”ÍÔ•ÉÑ¥™¥…‘¼¥¹Ñ•Éµ•‘¥¼¸M”¥¹±Õå”•°(€€€€€€€€€€€€¼¼•ÉÑ¥™¥…‘¼½™¥¥…°‘”M•Ñ¥¼Á…É„µ…¹Ñ•¹•ÈQ1LÙ•É¥™¥…‘¼¸(€€€€€€€€€€€€Ñ±Í}…}‰Õ¹‘±”œ€ôøÍÑ½É…•}Á…Ñ  …ÁÀ½•ÉÑ¥™¥…Ñ•Ì½Í•Ñ¥¼µÁÕ‰±¥ŒµÍ•ÉÙ•Èµ…ÕÑ¡•¹Ñ¥…Ñ¥½¸µ„µ½ØµÈÌÔ¹Á•´œ¤°(€€€€€€€€€€€€µ…á}…•}¡½ÕÉÌœ€ôø€¡¥¹Ð¤•¹Ø M=UI}5%9%MQI%=}AU	1%=}5a}}!=UILœ°€ÄØà¤°(€€€€€€€€€€€€µ…á}±¥¹­Ìœ€ôø€ØÀ°(€€€€€€€€€€€€µ…á}…¹‘¥‘…Ñ•Ìœ€ôø€ÈÔ°(€€€€€€€t°(€€€€€€€€Í•¹…œ€ôøl(€€€€€€€€€€€€•¹…‰±•œ€ôø•¹Ø M=UI}M9}9	1œ°ÑÉÕ”¤°(€€€€€€€€€€€€±¥ÍÑ¥¹}ÕÉ±Ìœ€ôøm•¹Ø M=UI}M9}UI0œ°€¡ÑÑÁÌè¼½Í•¹…¹½Ø¹Áä½…Ñ•½Éä½½Á•É…Ñ¥Ù½Ì¼œ¥t³m:öÚ$z{-®éÜj×G'VR’À¢vÆ—7F–æu÷W&Ç2rÓâ²v‡GG3¢òöW'76âæv÷bç’öæ÷F–6–2òuÒÀ¢w&Vf–ÇFW%÷&WV—&W5öÆö6F–öârÓâfÇ6RÀ¢w7VÖÖ'•÷F—FÆUööæÇ’rÓâG'VRÀ¢vÖ…övUö†÷W'2rÓâc‚À¢vÖ…öÆ–æ·2rÓâSÀ¢vÖ…ö6æF–FFW2rÓâ#À¢vf÷&6VEö6FVv÷'•÷6ÇVrrÓâwvFW"rÀ¢vf÷&6Uö×VÇF•öÆö6F–öåöFW'FÖVçBrÓâG'VRÀ¢vFVGW÷v–æF÷uö†÷W'2rÓâc‚À¢vFVGW÷6÷W&6UööæÇ’rÓâG'VRÀ¢w&WV—&VEöWfVçE÷GFW&ârÓârõÆ"‡7WW'f—6–öçÆ6öçG&öÅÇr¢ç³Ã3WÖ6Æ–FGÆ–ç7V66–öâW7V6–ÇÆFVçVæ6–3òç³ÃSWÒƒó¦fÇFÆ6Æ–FB—ÆfÇFFRƒó§&÷f—6–öçÇ6W'f–6–ò—Æ6öçF–çV–FGÇ&W6–öçÇ&W7G&–66–öçÆÆW'F•Çr¢÷RrÀ¢vW†6ÇVFVEöWfVçE÷GFW&ârÓârõÆ"†6†&ÆÆ6öæ6–Væ6–6–öçÆ66—F6–öçÆVF–Væ6–ÆW‡VF–VçFRFÖ–æ—7G&F—f÷Æ6öæw&W6ò•Çr¢÷RrÀ¢ÒÀ¢w6Væ76rÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4Uõ4Tä54ôTä$ÄTBrÂG'VR’À¢vÆ—7F–æu÷W&Ç2rÓâ²v‡GG3¢ò÷6Væ76æv÷bç’öæ÷F–6–2òuÒÀ¢w&Vf–ÇFW%÷&WV—&W5öÆö6F–öârÓâfÇ6RÀ¢w7VÖÖ'•÷F—FÆUööæÇ’rÓâG'VRÀ¢vÖ…övUö†÷W'2rÓâc‚À¢vÖ…öÆ–æ·2rÓâSÀ¢vÖ…ö6æF–FFW2rÓâRÀ¢vf÷&6VEö6FVv÷'•÷6ÇVrrÓâvæ–ÖÅö†VÇF‚rÀ¢w&WV—&VEöWfVçE÷GFW&ârÓârõÆ"†ÆW'F6æ—F&–Æfö6÷Æ'&÷FWÆVÖW&vVæ6–6æ—F&–Ç&W7G&–66–öâ6æ—F&–Æ6×æÇr¢ç³Ã3W×f7Væ6–öçÆ÷W&F—fò6æ—F&–÷Æ–çFW&F–66–öâ•Çr¢÷RrÀ¢vW†6ÇVFVEöWfVçE÷GFW&ârÓârõÆ"†VF—F÷&–Ç&WVæ–öçÇf—6—FÆW‡÷'F6–öçÆ–æVwW&6–öçÆ66—F6–öçÆæ÷&Ö&wV–•Çr¢÷RrÀ¢ÒÀ¢vÖFW2Ö—"×VÆ—G’rÓâ°¢vVæ&ÆVBrÓâG&–Ò‚‡7G&–ær’Vçb‚tÔDU5ô•%ô•ô´U’rÂrr’’ÓÒrrÀ¢v•÷W&ÂrÓâVçb‚tÔDU5ô•%ô•õU$ÂrÂv‡GG3¢òö6Æ–FF—&RæÖFW2æv÷bç’ö’÷cr’À¢v•ö¶W’rÓâVçb‚tÔDU5ô•%ô•ô´U’r’À¢ÒÀ¢væ6Öf—&×2rÓâ°¢vVæ&ÆVBrÓâVçb‚tä4ôd•$Õ5ôTä$ÄTBrÂfÇ6R’bbG&–Ò‚‡7G&–ær’Vçb‚tä4ôd•$Õ5ôÔô´U’rÂrr’’ÓÒrrÀ¢v•÷W&ÂrÓâVçb‚tä4ôd•$Õ5ô•õU$ÂrÂv‡GG3¢òöf—&×2æÖöF2æV÷6F—2ææ6æv÷bö’ö&Vö77br’À¢vÖö¶W’rÓâVçb‚tä4ôd•$Õ5ôÔô´U’r’À¢w6÷W&6RrÓâVçb‚tä4ôd•$Õ5õ4õU$4RrÂud”•%5ôäô#ôå%Br’À¢òò&wV’6öâVâÖ&vVâFW'&—F÷&–ÂWV\;ò’6öæf–wW&&ÆRà¢v&&÷‚rÓâVçb‚tä4ôd•$Õ5ô$$õ‚rÂrÓc"ãrÂÓ#rãrÂÓSBã"ÂÓ’ãr’À¢vF•÷&ævRrÓâ†–çB’Vçb‚tä4ôd•$Õ5ôD•õ$ätRrÂ"’À¢v6÷'&VÆF–öåöF—7Fæ6Uö¶ÒrÓâ†fÆöB’Vçb‚td•$Uô4õ%$TÄD”ôåôD•5Dä4Uô´ÒrÂR’À¢v6÷'&VÆF–öå÷v–æF÷uö†÷W'2rÓâ†–çB’Vçb‚td•$Uô4õ%$TÄD”ôåõt”äDõuô„õU%2rÂ#B’À¢ÒÀ¢v&2rÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4Uô$5ôTä$ÄTBrÂG'VR’À¢vfVVE÷W&ÂrÓâVçb‚u4õU$4Uô$5ôdTTEõU$ÂrÂv‡GG3¢ò÷wwræ&2æ6öÒç’ö&2ö÷WF&÷VæFfVVG2÷'72öæ6–öæÆW2òr’À¢w&V6VçEö&6†—fUöVæ&ÆVBrÓâVçb‚u4õU$4Uô$5õ$T4TåEô$4„•dUôTä$ÄTBrÂG'VR’À¢v&6†—fU÷W&ÂrÓâVçb‚u4õU$4Uô$5ô$4„•dUõU$ÂrÂv‡GG3¢ò÷wwræ&2æ6öÒç’÷bö’÷c2ö6öçFVçBöfWF6‚÷6V7F–öç2Ö’r’À¢v&6†—fU÷6V7F–öç2rÓâ°¢röæ6–öæÆW2rÓâröæ6–öæÆW2òrÀ¢röV6öæöÖ–rÓâröV6öæöÖ–òrÀ¢ÒÀ¢v&6†—fU÷vU÷6—¦RrÓâ†–çB’Vçb‚u4õU$4Uô$5ô$4„•dUõtUõ4•¤RrÂ’À¢v&6†—fUöÖ…÷vW2rÓâ†–çB’Vçb‚u4õU$4Uô$5ô$4„•dUôÔ…õtU2rÂ#’À¢v&6†—fUöÖ…ö6æF–FFW2rÓâ†–çB’Vçb‚u4õU$4Uô$5ô$4„•dUôÔ…ô4äD”DDU2rÂS’À¢vÆöö¶&6µöF—2rÓâÀ¢vÖ…övUö†÷W'2rÓâ†–çB’Vçb‚u4õU$4Uô$5ôÔ…ôtUô„õU%2rÂC‚’À¢vÖ…ö6æF–FFW2rÓâ†–çB’Vçb‚u4õU$4Uô$5ôÔ…ô4äD”DDU2rÂ3’À¢ÒÀ¢wVÇF–Ö†÷&rÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4UõTÅD”Ô„õ$ôTä$ÄTBrÂG'VR’À¢òòVÂÖVF–òV&Æ–6'F–6ÆS§V&Æ—6†VE÷F–ÖRVâUD2ÂW&ò6–â7Vf–¦òFR¦öæ†÷&&–à¢wV&Æ—6†VE÷F–ÖW¦öæRrÓâuUD2rÀ¢vÆ—7F–æu÷W&Ç2rÓâ°¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒö'W66F÷#÷ÖæFRg3ÓrÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒö'W66F÷#÷ÖW76g3ÓrÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒòrÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒö6†6òrÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒö&÷VW&öârÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒ÷&W6–FVçFRÖ†–W2rÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒöÇFò×&wV’rÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒöæVVÖ'V7RrÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒ÷–Æ"rÀ¢v‡GG3¢ò÷wwrçVÇF–Ö†÷&æ6öÒ÷&wV&’rÀ¢ÒÀ¢vÆöö¶&6µöF—2rÓâÀ¢vÖ…övUö†÷W'2rÓâ†–çB’Vçb‚u4õU$4UõTÅD”Ô„õ$ôÔ…ôtUô„õU%2rÂs"’À¢vÖ…öÆ–æ·2rÓâ†–çB’Vçb‚u4õU$4UõTÅD”Ô„õ$ôÔ…ôÄ”äµ2rÂ#’À¢vÖ…ö6æF–FFW2rÓâ†–çB’Vçb‚u4õU$4UõTÅD”Ô„õ$ôÔ…ô4äD”DDU2rÂ3’À¢ÒÀ¢vÆæ6–öârÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4UôÄä4”ôåôTä$ÄTBrÂG'VR’À¢vÆ—7F–æu÷W&Ç2rÓâ°¢v‡GG3¢ò÷wwræÆæ6–öâæ6öÒç’÷FröæFRòrÀ¢v‡GG3¢ò÷wwræÆæ6–öâæ6öÒç’÷FröW76òrÀ¢v‡GG3¢ò÷wwræÆæ6–öâæ6öÒç’òrÀ¢v‡GG3¢ò÷wwræÆæ6–öâæ6öÒç’ö6FVv÷'’÷—2òrÀ¢ÒÀ¢vÆöö¶&6µöF—2rÓâÀ¢vÖ…övUö†÷W'2rÓâ†–çB’Vçb‚u4õU$4UôÄä4”ôåôÔ…ôtUô„õU%2rÂs"’À¢vÖ…öÆ–æ·2rÓâ†–çB’Vçb‚u4õU$4UôÄä4”ôåôÔ…ôÄ”äµ2rÂ’À¢vÖ…ö6æF–FFW2rÓâ†–çB’Vçb‚u4õU$4UôÄä4”ôåôÔ…ô4äD”DDU2rÂ#R’À¢ÒÀ¢sæ÷F–6–2rÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4UóäõD”4”5ôTä$ÄTBrÂG'VR’À¢v•÷W&ÂrÓâv‡GG3¢òóæ÷F–6–2æ6öÒç’÷wÖ§6öâ÷w÷c"÷÷7G2rÀ¢wV&Æ—6†VE÷F–ÖW¦öæRrÓâtÖW&–6ô7Væ6–öârÀ¢w6V&6…÷FW&×2rÓâ²vwVrÂvVæW&|:ÖrÂvVÌ:–7G&–6rÂvÇW¢rÂv|;6âuÒÀ¢vÖ…övUö†÷W'2rÓâc‚À¢òò&wV"Ç6òÖF6†W2%&wV’"–âv÷&E&W72gVÆÂ×FW‡B6V&6‚à¢òò&VB&W–öæBF†Rf—'7B#R'&öBÖF6†W2v—F†–âF†R&WF–æVBvVV²à¢wvU÷6—¦RrÓâÀ¢vÖ…÷vW2rÓâ2À¢vÖ…ö6æF–FFW2rÓâ3À¢ÒÀ¢vææGWF’rÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4UôääEUD•ôTä$ÄTBrÂG'VR’À¢òòF†RV&Æ—6†W"w2V&Æ–2v÷&E&W72’æB÷&–v–æÂ'F–6ÆW2W6RææGWF’æÆ—fRà¢v•÷W&ÂrÓâv‡GG3¢òöææGWF’æÆ—fR÷wÖ§6öâ÷w÷c"÷÷7G2rÀ¢wV&Æ—6†VE÷F–ÖW¦öæRrÓâtÖW&–6ô7Væ6–öârÀ¢w6V&6…÷FW&×2rÓâ²vwVrÂvVæW&|:ÖrÂvVÌ:–7G&–6rÂvÇW¢rÂv|;6âuÒÀ¢vÖ…övUö†÷W'2rÓâc‚À¢wvU÷6—¦RrÓâÀ¢vÖ…÷vW2rÓâ2À¢vÖ…ö6æF–FFW2rÓâ3À¢ÒÀ¢v†÷’rÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4Uô„õ•ôTä$ÄTBrÂG'VR’À¢vÆ—7F–æu÷W&Ç2rÓâ²v‡GG3¢ò÷wwræ†÷’æ6öÒç’òrÂv‡GG3¢ò÷wwræ†÷’æ6öÒç’öæ6–öæÆW2uÒÀ¢w&Vf–ÇFW%÷&WV—&W5öÆö6F–öârÓâfÇ6RÀ¢vÖ…övUö†÷W'2rÓâ†–çB’Vçb‚u4õU$4Uô„õ•ôÔ…ôtUô„õU%2rÂs"’À¢vÖ…öÆ–æ·2rÓâ3RÀ¢vÖ…ö6æF–FFW2rÓâ#À¢ÒÀ¢w÷VÆ"rÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4UõõTÄ%ôTä$ÄTBrÂG'VR’À¢vÆ—7F–æu÷W&Ç2rÓâ²v‡GG3¢ò÷wwrç÷VÆ"æ6öÒç’òuÒÀ¢w&Vf–ÇFW%÷&WV—&W5öÆö6F–öârÓâfÇ6RÀ¢vÖ…övUö†÷W'2rÓâ†–çB’Vçb‚u4õU$4UõõTÄ%ôÔ…ôtUô„õU%2rÂs"’À¢vÖ…öÆ–æ·2rÓâ3RÀ¢vÖ…ö6æF–FFW2rÓâ#À¢ÒÀ¢vW‡G&rÓâ°¢vVæ&ÆVBrÓâVçb‚u4õU$4UôU…E$ôTä$ÄTBrÂG'VR’À¢vÆ—7F–æu÷W&Ç2rÓâ²v‡GG3¢ò÷wwræW‡G&æ6öÒç’òuÒÀ¢w&Vf–ÇFW%÷&WV—&W5öÆö6F–öârÓâfÇ6RÀ¢vÖ…övUö†÷W'2rÓâ†–çB’Vçb‚u4õU$4UôU…E$ôÔ…ôtUô„õU%2rÂs"’À¢vÖ…öÆ–æ·2rÓâ3RÀ¢vÖ…ö6æF–FFW2rÓâ#À¢ÒÀ¢ÒÀ ¢vF—66÷fW'’rÓâ°¢vvFVÇBrÓâ°¢vVæ&ÆVBrÓâVçb‚ttDTÅEôTä$ÄTBrÂfÇ6R’À¢vVæGö–çBrÓâVçb‚ttDTÅEô•õU$ÂrÂv‡GG3¢òö’ævFVÇG&ö¦V7Bæ÷&rö’÷c"öFö2öFö2r’À¢wVW'’rÓâVçb‚ttDTÅEõTU%’rÂu&wV’‚'6–âÇW¢"õ"'6–âwV"õ"66–FVçFRõ"6†÷VRõ"–æ6VæF–òõ"–çVæF6–öâõ"FV×÷&Âõ"''WF&Æ÷VVF"’r’À¢wF–ÖW7ârÓâVçb‚ttDTÅEõD”ÔU5ârÂs#F‚r’À¢vÖ…÷&W7VÇG2rÓâ†–çB’Vçb‚ttDTÅEôÔ…õ$U5TÅE2rÂS’À¢wF–ÖV÷WBrÓâ†–çB’Vçb‚ttDTÅEõD”ÔTõUBrÂ3’À¢ÒÀ¢w‚rÓâ°¢vVæ&ÆVBrÓâVçb‚u…ôD•44õdU%•ôTä$ÄTBrÂfÇ6R’bbG&–Ò‚‡7G&–ær’Vçb‚u…ô$T$U%õDô´TârÂrr’’ÓÒrrÀ¢vVæGö–çBrÓâv‡GG3¢òö’ç‚æ6öÒó"÷GvVWG2÷6V&6‚÷&V6VçBrÀ¢v&V&W%÷Fö¶VârÓâVçb‚u…ô$T$U%õDô´Târ’À¢wVW'’rÓâVçb‚u…ôD•44õdU%•õTU%’rÂu&wV’‚'6–âÇW¢"õ"'6–âwV"õ"66–FVçFRõ"6†÷VRõ"6ÇFòõ"&ö&òõ"–æ6VæF–òõ"–çVæF6œ;6âõ"''WF&Æ÷VVF"’Ö—3§&WGvVWBr’À¢vÖ…÷&W7VÇG2rÓâ†–çB’Vçb‚u…ôD•44õdU%•ôÔ…õ$U5TÅE2rÂS’À¢ÒÀ¢v&ÇVW6·’rÓâ°¢vVæ&ÆVBrÓâVçb‚t$ÅTU4µ•ôD•44õdU%•ôTä$ÄTBrÂfÇ6R’À¢vVæGö–çBrÓâVçb‚t$ÅTU4µ•ô•õU$ÂrÂv‡GG3¢ò÷V&Æ–2æ’æ'6·’æ÷‡'2öæ'6·’æfVVBç6V&6…÷7G2r’À¢wVW'’rÓâVçb‚t$ÅTU4µ•ôD•44õdU%•õTU%’rÂu&wV’66–FVçFR–æ6VæF–ò–çVæF6œ;6âFV×÷&Â'6–âÇW¢"'6–âwV"r’À¢vÖ…÷&W7VÇG2rÓâ†–çB’Vçb‚t$ÅTU4µ•ôD•44õdU%•ôÔ…õ$U5TÅE2rÂS’À¢ÒÀ¢vÖ7FöFöârÓâ°¢vVæ&ÆVBrÓâVçb‚tÔ5DôDôåôD•44õdU%•ôTä$ÄTBrÂfÇ6R’À¢v–ç7Fæ6W2rÓâ'&•÷fÇVW2†'&•öf–ÇFW"†'&•öÖ‚wG&–ÒrÂW‡ÆöFR‚rÂrÂ‡7G&–ær’Vçb‚tÔ5DôDôåô”å5Dä4U2rÂrr’’’’’À¢v†6‡Fw2rÓâ'&•÷fÇVW2†'&•öf–ÇFW"†'&•öÖ‚wG&–ÒrÂW‡ÆöFR‚rÂrÂ‡7G&–ær’Vçb‚tÔ5DôDôåô„4…Du2rÂu&wV’Ä7Væ6–öâr’’’’’À¢ÒÀ¢wFVÆVw&ÒrÓâ°¢vVæ&ÆVBrÓâVçb‚uDTÄTu$ÕôD•44õdU%•ôTä$ÄTBrÂfÇ6R’bbG&–Ò‚‡7G&–ær’Vçb‚uDTÄTu$Õô$õEõDô´TârÂrr’’ÓÒrrÀ¢v&÷E÷Fö¶VârÓâVçb‚uDTÄTu$Õô$õEõDô´Târ’À¢v6†ææVÇ2rÓâ'&•÷fÇVW2†'&•öf–ÇFW"†'&•öÖ‚wG&–ÒrÂW‡ÆöFR‚rÂrÂ‡7G&–ær’Vçb‚uDTÄTu$Õô4„ääTÅ2rÂrr’’’’’À¢ÒÀ¢w–÷WGV&RrÓâ°¢vVæ&ÆVBrÓâVçb‚u”õUET$UôD•44õdU%•ôTä$ÄTBrÂfÇ6R’bbG&–Ò‚‡7G&–ær’Vçb‚u”õUET$Uô•ô´U’rÂrr’’ÓÒrrÀ¢vVæGö–çBrÓâv‡GG3¢ò÷wwrævöövÆV—2æ6öÒ÷–÷WGV&R÷c2÷6V&6‚rÀ¢v•ö¶W’rÓâVçb‚u”õUET$Uô•ô´U’r’À¢v6†ææVÅö–G2rÓâ'&•÷fÇVW2†'&•öf–ÇFW"†'&•öÖ‚wG&–ÒrÂW‡ÆöFR‚rÂrÂ‡7G&–ær’Vçb‚u”õUET$Uô4„ääTÅô”E2rÂrr’’’’’À¢wVW'’rÓâVçb‚u”õUET$UôD•44õdU%•õTU%’rÂv66–FVçFWÆ–æ6VæF–÷Ç&ö&÷Æ–çVæF6œ;6çÆ&Æ÷VV÷ÇFV×÷&ÇÆ÷W&F—fòr’À¢vÆöö¶&6µö†÷W'2rÓâ†–çB’Vçb‚u”õUET$UôD•44õdU%•ôÄôô´$4µô„õU%2rÂ#B’À¢vÖ…÷&W7VÇG5÷W%ö6†ææVÂrÓâ†–çB’Vçb‚u”õUET$UôD•44õdU%•ôÔ…õ$U5TÅE5õU%ô4„ääTÂrÂ’À¢ÒÀ¢ÒÀ¥Ó° 

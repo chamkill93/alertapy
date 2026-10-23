@@ -33,6 +33,10 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-cap', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'pai', 'enabled' => true, 'ingestion_type' => 'html']);
         $this->assertDatabaseHas('sources', ['slug' => 'agencia-ip', 'enabled' => true, 'ingestion_type' => 'html']);
+        $this->assertDatabaseHas('sources', ['slug' => 'cde-hot', 'enabled' => true, 'ingestion_type' => 'html']);
+        $cdeHot = Source::query()->where('slug', 'cde-hot')->sole();
+        $this->assertSame('regional_press', $cdeHot->configuration_json['collector']);
+        $this->assertSame(15, $cdeHot->polling_minutes);
         $this->assertDatabaseHas('sources', ['slug' => 'gobernacion-neembucu', 'enabled' => true, 'type' => 'official']);
         $neembucuGovernment = Source::query()->where('slug', 'gobernacion-neembucu')->sole();
         $this->assertSame('press_homepage', $neembucuGovernment->configuration_json['collector']);

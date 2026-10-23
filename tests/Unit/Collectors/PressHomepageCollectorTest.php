@@ -391,12 +391,20 @@ class PressHomepageCollectorTest extends TestCase
                 'regional_department' => 'Guairá',
             ],
         ]);
-        Http::fake([
-            $listingUrl => Http::response('<div><h2><a href="'.$articleUrl.'">'.$title.'</a></h2><span>hace 3 horas 1 min de lectura</span></div>'),
-            $articleUrl => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="'.$description.'"><article><p>'.$description.'</p></article>'),
-        ]);
+        Http::preventStrayRequests();
+        Http::fake(function ($request) use ($listingUrl, $articleUrl, $title, $description) {
+            return match ($request->url()) {
+                $listingUrl => Http::response('<div><h2><a href="'.$articleUrl.'">'.$title.'</a></h2><span>hace 3 horas 1 min de lectura</span></div>'),
+                $articleUrl => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="'.$description.'"><article><p>'.$description.'</p></article>'),
+                default => Http::response('Unexpected request: '.$request->url(), 404),
+            };
+        });
 
-        $candidate = app(PressHomepageCollector::class)->collect($source)->sole();
+        $candidates = app(PressHomepageCollector::class)->collect($source);
+
+        $this->assertCount(2, Http::recorded());
+        $this->assertCount(1, $candidates);
+        $candidate = $candidates->sole();
 
         $this->assertSame($articleUrl, $candidate->originalUrl);
         $this->assertSame('health_public', $candidate->metadata['category_slug']);

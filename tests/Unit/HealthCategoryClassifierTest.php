@@ -33,6 +33,12 @@ class HealthCategoryClassifierTest extends TestCase
         $this->assertSame(['health_vector', 'health_public'], $classifier->classifyAll(
             'Salud reporta diez semanas sin dengue, pero en tres regiones aumentan las sospechas',
         ));
+        $this->assertSame(['health_vector', 'health_public'], $classifier->classifyAll(
+            'Vacunación dengue: ya recibiste la primera dosis, no te olvides de la segunda',
+        ));
+        $this->assertSame(['health_public'], $classifier->classifyAll(
+            'Realizan charla de concienciación sobre la prevención del cáncer de mama en la DNERHS',
+        ));
         $this->assertNull($classifier->classify('Capacitación administrativa del MSPBS en Asunción'));
     }
 

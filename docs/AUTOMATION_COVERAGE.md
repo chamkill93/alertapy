@@ -10,7 +10,9 @@ En Hostinger, un único cron por minuto debe invocar `scripts/run-cycle.sh`. El 
 
 El seed del catálogo define 104 fuentes y 15 categorías; la cantidad habilitada en producción depende de la base desplegada y de las opciones del operador. Una auditoría de solo lectura comparó fuentes habilitadas con el registro de comandos y encontró un collector para cada una. El ciclo maestro elige las fuentes vencidas, respeta la frecuencia de cada una y avanza el resto mediante checkpoint; su presupuesto por defecto es 32 fuentes o 180 segundos por ciclo. Una fuente puede responder sin novedades, estar bloqueada o necesitar reparación. El backoffice privado `/admin/connections` distingue estado, última consulta, último éxito y salud del ciclo. `/api/sources/status` requiere sesión administrativa; el mapa público ya no consulta ni muestra estos diagnósticos.
 
-GDELT quedó habilitado por defecto con cuatro búsquedas temáticas balanceadas cada 30 minutos. Sus enlaces se guardan en el backoffice como descubrimientos pendientes; esta cobertura amplia no publica titulares no verificados ni inventa puntos del mapa.
+GDELT quedó habilitado por defecto con cinco búsquedas temáticas balanceadas cada 30 minutos. Sus enlaces se guardan en el backoffice como descubrimientos pendientes; esta cobertura amplia no publica titulares no verificados ni inventa puntos del mapa.
+
+Las notas periodísticas que describen una incidencia clasificable pero no informan dónde ocurrió pueden verse en el mapa con un punto de referencia en Asunción. La ficha lo identifica como ubicación desconocida; ciudad y departamento permanecen vacíos, y el punto no activa alertas de cercanía ni contexto territorial o de infraestructura. Las fuentes oficiales y de sensores conservan su propio tratamiento de ubicación y no reciben este fallback.
 
 En la lectura local de las 18:12 del 22/10, la capa de electricidad tenía dos señales vigentes de los últimos siete días, agua una e hidrología una; el resto de las capas también se consulta, aunque no todas tenían una incidencia vigente. Son conteos de ese momento, no cuotas ni datos simulados. La lista de capas y fuentes activas se detalla abajo.
 

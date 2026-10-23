@@ -20,4 +20,4 @@ exec 9>storage/app/deployment.lock
 flock -sn 9 || { printf 'Despliegue en curso; se omite este ciclo.\n'; exit 0; }
 [[ ! -f storage/framework/down ]] || { printf 'Mantenimiento activo; se omite este ciclo.\n'; exit 0; }
 
-exec "$php_bin" artisan alertapy:cycle --no-interaction
+exec "$php_bin" artisan schedule:run --no-interaction

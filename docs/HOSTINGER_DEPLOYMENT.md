@@ -135,11 +135,11 @@ Probar desde SSH:
 /bin/bash /RUTA/ABSOLUTA/DEL/PROYECTO/scripts/run-cycle.sh /RUTA/ABSOLUTA/PHP
 ```
 
-Configuración propuesta, todavía pendiente de aplicar y comprobar en la cuenta de Hostinger: en hPanel → Cron Jobs, elegir **Custom** y ese comando, con los cinco campos en `*` (`* * * * *`, cada minuto). El wrapper localiza el proyecto, omite mantenimiento y comparte un lock con el deploy. Laravel controla fuentes vencidas, checkpoints y duplicación de ciclos. El wrapper exige `flock`; verificarlo en el plan. [Sintaxis de cron documentada por Hostinger](https://www.hostinger.com/ca/tutorials/crontab-syntax/).
+Configuración propuesta, todavía pendiente de aplicar y comprobar en la cuenta de Hostinger: en hPanel → Cron Jobs, elegir **Custom** y ese comando, con los cinco campos en `*` (`* * * * *`, cada minuto). El wrapper localiza el proyecto, omite mantenimiento, comparte un lock con el deploy e invoca `schedule:run`. Laravel ejecuta el ciclo de noticias cada minuto y las sincronizaciones territoriales y de infraestructura en sus fechas programadas; el ciclo respeta frecuencias, checkpoints y bloqueos por fuente. El wrapper exige `flock`; verificarlo en el plan. [Sintaxis de cron documentada por Hostinger](https://www.hostinger.com/ca/tutorials/crontab-syntax/).
 
 Confirmar la zona horaria y la salida del job en el plan real; la aplicación usa `America/Asuncion`. La cadencia de un minuto despierta el ciclo, pero no fuerza la descarga de cada fuente en cada pasada. Las fuentes conservan su intervalo y los límites del ciclo son cooperativos: una consulta que ya comenzó termina antes de ceder el turno. Electricidad, agua, hidrología, monitoreo DMH y sus fuentes de respaldo tienen prioridad cuando están vencidas; el resto continúa desde su checkpoint.
 
-No configurar este wrapper simultáneamente con `schedule:run`. El scheduler Laravel alternativo se invoca cada minuto; revisar su lista, ya que ambas estrategias no necesariamente cubren las mismas tareas. Los catálogos territoriales periódicos deben revisarse por separado.
+No configurar otro cron `schedule:run` junto con este wrapper: ya ejecuta el scheduler completo y un segundo job sería redundante. Confirmar su lista con `php artisan schedule:list` después de instalar.
 
 Verificar tres ciclos: ejecución reciente, errores por fuente, antigüedad de noticias, candidatos, ubicación y publicación. `/up` solo demuestra disponibilidad web. Cero incidencias nuevas puede ser legítimo, pero el cron debe dejar trazabilidad. CPU, disco, timeouts y respuestas 403/429 pueden retrasar ingesta. Consultar la [revisión previa de conexiones](PRE_HOSTINGER_SOURCE_CHECKS.md); sus resultados locales no demuestran acceso desde la IP del hosting.
 

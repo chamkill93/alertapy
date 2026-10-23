@@ -222,10 +222,12 @@ class AutomaticCycleTest extends TestCase
         $lock->release();
     }
 
-    public function test_scheduler_only_schedules_general_cycle_for_live_sources(): void
+    public function test_scheduler_schedules_master_cycle_and_periodic_map_data_syncs(): void
     {
         $events = collect(app(Schedule::class)->events());
         $this->assertCount(1, $events->filter(fn ($event) => str_contains($event->command ?? '', 'alertapy:cycle')));
+        $this->assertCount(1, $events->filter(fn ($event) => str_contains($event->command ?? '', 'alertapy:sync-ine-territories')));
+        $this->assertCount(1, $events->filter(fn ($event) => str_contains($event->command ?? '', 'alertapy:sync-critical-infrastructure')));
         $this->assertCount(0, $events->filter(fn ($event) => preg_match('/alertapy:(scrape|discover|sync-monitoring)\b/', $event->command ?? '') === 1));
     }
 

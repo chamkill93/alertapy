@@ -3,10 +3,12 @@
 namespace Tests\Unit\Collectors;
 
 use App\Collectors\MspbsCollector;
+use App\Collectors\HealthNewsCollector;
 use App\Enums\SourceType;
 use App\Models\Source;
 use Carbon\CarbonImmutable;
 use Database\Seeders\LocationSeeder;
+use Database\Seeders\AdditionalHealthSourceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -75,4 +77,41 @@ class HealthNewsCollectorTest extends TestCase
         $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->originalUrl === $storyUrl
             && preg_match('/^'.preg_quote($title, '/').'(?: Ámbito territorial: .+)?$/u', $candidate->content) === 1));
     }
+
+    public function test_dnerhs_latest_regional_health_report_is_collected_across_all_six_regions(): void
+    {
+        $title = 'Talleres territoriales fortalecieron las Redes Integradas e Integrales de Servicios de Salud – RIISS y los Equipos Interprofesionales de Salud – EqIPS en seis regiones del país.';
+        $articleUrl = 'https://dnerhs.mspbs.gov.py/index.php/2026/10/22/talleres-territoriales-fortalecieron-las-redes-integradas-e-integrales-de-servicios-de-salud-riiss-y-los-equipos-interprofesionales-de-salud-eqips-en-seis-regiones-del-pais/';
+        $newsListing = 'https://dnerhs.mspbs.gov.py/index.php/category/dnerhs/noticias/';
+        $eqipsListing = 'https://dnerhs.mspbs.gov.py/index.php/category/dnerhs/dn/dgprhs/eqips/';
+        $listingHtml = '<article><h2><a href="'.$articleUrl.'">'.$title.'</a></h2><time datetime="2026-10-22">22 de octubre de 2026</time></article>';
+        $articleHtml = '<meta property="og:title" content="'.$title.'">'
+            .'<meta property="og:description" content="Entre junio y octubre de 2026, el MSPBS desarrolló talleres territoriales en seis regiones sanitarias del país.">'
+            .'<meta property="article:published_time" content="2026-10-22T14:39:00-03:00">'
+            .'<article>'
+            .'<p>Las jornadas se llevaron a cabo en las Regiones Sanitarias de Itapúa, Caazapá, Paraguarí, Alto Paraná, Central y San Pedro.</p>'
+            .'<p>Itapúa: Alto Verá y San Pedro del Paraná. Caazapá: Moisés Bertoni, San Juan Nepomuceno e Higinio Morínigo. Paraguarí: Pirayú, María Antonia y Mbujapey. Alto Paraná: Ciudad del Este, Itakyry y Juan E. O’Leary. Central: J. Augusto Saldívar, Ñemby, Capiatá y San Antonio. San Pedro: Santa Rosa del Aguaray, San Pedro del Ykuamanduyú y San Vicente Pancholo.</p>'
+            .'</article>';
+
+        $definition = collect(AdditionalHealthSourceSeeder::definitions())->firstWhere('slug', 'dnerhs');
+        $source = new Source($definition);
+
+        Http::preventStrayRequests();
+        Http::fake([
+            $newsListing => Http::response($listingHtml),
+            $eqipsListing => Http::response($listingHtml),
+            $articleUrl => Http::response($articleHtml),
+        ]);
+
+        $candidates = app(HealthNewsCollector::class)->collect($source);
+
+        $this->assertSame(['health_public'], $candidates->pluck('metadata.category_slug')->unique()->values()->all());
+        $this->assertEqualsCanonicalizing(
+            ['Itapúa', 'Caazapá', 'Paraguarí', 'Alto Paraná', 'Central', 'San Pedro'],
+            $candidates->pluck('metadata.department')->filter()->unique()->values()->all(),
+        );
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->originalUrl === $articleUrl));
+        $this->assertSame(3, Http::recorded()->count());
+    }
+
 }

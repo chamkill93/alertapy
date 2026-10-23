@@ -161,6 +161,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://tvs.com.py/', 'https://tvs.com.py/category/locales/'],
             ],
             [
+                'name' => 'Frontera Seca News',
+                'slug' => 'frontera-seca-news',
+                'domain' => 'fronterasecanews.com',
+                'regional_department' => 'Amambay',
+                'listing_urls' => ['https://fronterasecanews.com/'],
+            ],
+            [
                 'name' => 'Radio ZP30',
                 'slug' => 'radio-zp30',
                 'domain' => 'zp30.com.py',

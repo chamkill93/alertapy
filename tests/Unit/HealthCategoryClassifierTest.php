@@ -15,6 +15,12 @@ class HealthCategoryClassifierTest extends TestCase
         $this->assertSame(['health_vector'], $classifier->classifyAll('SENEPA realiza minga ambiental en Luque'));
         $this->assertSame(['health_vector', 'health_public'], $classifier->classifyAll('Confirman brote de dengue en Boquerón'));
         $this->assertSame(['health_public'], $classifier->classifyAll('Asistencia en salud llega a familias afectadas en Alto Paraguay'));
+        $this->assertSame(['health_public'], $classifier->classifyAll(
+            'Equipos de salud asisten a comunidades afectadas por inundaciones en Misiones',
+        ));
+        $this->assertSame(['health_vector', 'health_public'], $classifier->classifyAll(
+            'Salud reporta diez semanas sin dengue, pero en tres regiones aumentan las sospechas',
+        ));
         $this->assertNull($classifier->classify('Capacitación administrativa del MSPBS en Asunción'));
     }
 

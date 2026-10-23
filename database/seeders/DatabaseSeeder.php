@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class,
             SourceSeeder::class,
+            AdditionalHealthSourceSeeder::class,
             AdditionalPressSourceSeeder::class,
             RegionalPressSourceSeeder::class,
             LocationSeeder::class,

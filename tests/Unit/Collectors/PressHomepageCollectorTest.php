@@ -66,6 +66,33 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertSame('2026-08-18T20:08:42-03:00', $candidates[0]->publishedAt?->toIso8601String());
     }
 
+    public function test_unlocated_press_incidents_use_asuncion_only_as_a_map_reference(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-18 21:00:00 America/Asuncion');
+        config()->set('alertapy.sources.ultimahora.listing_urls', ['https://www.ultimahora.com/']);
+        $source = new Source([
+            'name' => 'Última Hora', 'slug' => 'ultimahora', 'type' => SourceType::Press,
+            'base_url' => 'https://www.ultimahora.com/', 'domain' => 'ultimahora.com',
+        ]);
+        $title = 'Incendio deja daños materiales y varias familias evacuadas';
+        Http::fake([
+            'www.ultimahora.com/' => Http::response('<h2><a href="https://www.ultimahora.com/incendio-sin-lugar">'.$title.'</a></h2>'),
+            'www.ultimahora.com/incendio-sin-lugar' => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="Bomberos controlaron las llamas y asistieron a las familias afectadas."><meta property="article:published_time" content="2026-08-18T22:00:00Z">'),
+        ]);
+
+        $candidate = app(PressHomepageCollector::class)->collect($source)->sole();
+
+        $this->assertSame('Asunción', $candidate->detectedLocation);
+        $this->assertSame('fire', $candidate->metadata['category_slug']);
+        $this->assertTrue($candidate->metadata['location_is_fallback']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['department']);
+        $this->assertSame('approximate', $candidate->metadata['location_accuracy']);
+        $this->assertStringContainsString('Ubicación no informada', $candidate->metadata['location_text']);
+        $this->assertSame(-25.2800459, $candidate->latitude);
+        $this->assertSame(-57.6343814, $candidate->longitude);
+    }
+
     public function test_thematic_listings_share_the_global_link_budget_and_duplicate_urls_are_fetched_once(): void
     {
         CarbonImmutable::setTestNow('2026-08-18 21:00:00 America/Asuncion');
@@ -351,7 +378,10 @@ class PressHomepageCollectorTest extends TestCase
             'www.ultimahora.com/' => Http::response('<h2><a href="https://www.ultimahora.com/accidente">Accidente de tránsito deja dos heridos</a></h2>'),
             'www.ultimahora.com/accidente' => Http::response('<meta property="og:title" content="Accidente de tránsito deja dos heridos"><meta property="og:description" content="Los heridos fueron auxiliados."><meta property="article:published_time" content="2026-08-18T22:00:00Z"><footer><p>Redacción: Asunción, Paraguay.</p></footer>'),
         ]);
-        $this->assertCount(0, app(PressHomepageCollector::class)->collect($source));
+        $candidate = app(PressHomepageCollector::class)->collect($source)->sole();
+        $this->assertTrue($candidate->metadata['location_is_fallback']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['department']);
     }
 
     public function test_it_never_interprets_a_missing_publication_date_as_now(): void

@@ -36,7 +36,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | DIGESA | Oficial | 60 min | Salud ambiental, residuos, higiene e inspecciones; se evita convertir registros nacionales en incidencias locales |
 | INS | Oficial | 60 min | Noticias del Instituto Nacional de Salud; clasificador sanitario y geolocalización de la nota |
 | INAN | Oficial | 60 min | Alimentación y nutrición; solo alertas o hechos territoriales clasificables |
-| DNERHS | Oficial | 60 min | Recursos humanos y servicios de salud; requiere ubicación explícita para el mapa |
+| DNERHS | Oficial | 60 min | Categorías vigentes Noticias y EqIPS; recursos humanos y servicios de salud, con fecha y ubicación explícitas para el mapa |
 | ERSSAN | Oficial | 30 min | Supervisiones, controles y problemas publicados sobre agua; separado de ESSAP |
 | SENACSA | Oficial | 60 min | Alertas, focos, campañas y restricciones de sanidad animal; categoría propia |
 | Dirección Nacional de Migraciones | Oficial | 30 min | Cambios operativos, restricciones, cierres y reaperturas de pasos fronterizos |

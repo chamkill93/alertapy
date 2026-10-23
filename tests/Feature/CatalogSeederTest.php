@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(106, Source::query()->count());
+        $this->assertSame(107, Source::query()->count());
         $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
         $this->assertCount(4, config('alertapy.discovery.gdelt.queries'));
         $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);
@@ -29,6 +29,8 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
         $this->assertSame(168, config('alertapy.sources.latribuna.max_age_hours'));
+        $this->assertContains('https://www.latribuna.com.py/etiqueta/neembucu-2/', config('alertapy.sources.latribuna.listing_urls'));
+        $this->assertContains('https://www.latribuna.com.py/etiqueta/paraguari-departamento/', config('alertapy.sources.latribuna.listing_urls'));
         foreach (['abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna'] as $utilityPressSource) {
             $this->assertContains($utilityPressSource, config('alertapy.cycle.priority_sources'));
         }
@@ -77,6 +79,13 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'rdn', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'paraguay24horas', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'el-surti', 'enabled' => true]);
+        $elSurti = Source::query()->where('slug', 'el-surti')->sole();
+        $this->assertSame('press_homepage', $elSurti->configuration_json['collector']);
+        $this->assertSame(30, $elSurti->polling_minutes);
+        $this->assertSame(['https://elsurti.com/'], $elSurti->configuration_json['listing_urls']);
+        $this->assertFalse($elSurti->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($elSurti->configuration_json['location_search_article_body']);
         $paraguay24Horas = Source::query()->where('slug', 'paraguay24horas')->sole();
         $this->assertSame(30, $paraguay24Horas->polling_minutes);
         $this->assertSame('https://paraguay24horas.com/', $paraguay24Horas->base_url);
@@ -149,7 +158,7 @@ class CatalogSeederTest extends TestCase
         $this->assertSame(45, $source->polling_minutes);
         $this->assertSame('Keep this setting', $source->configuration_json['operator_note']);
         $this->assertFalse($source->configuration_json['location_search_article_body']);
-        $this->assertSame(13, Source::query()->count());
+        $this->assertSame(14, Source::query()->count());
     }
 }
 

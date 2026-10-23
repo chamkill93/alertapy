@@ -73,6 +73,17 @@ class AdditionalPressSourceSeeder extends Seeder
                 'max_candidates' => 12,
             ],
             [
+                'name' => 'El Surti',
+                'slug' => 'el-surti',
+                'domain' => 'elsurti.com',
+                'polling_minutes' => 30,
+                'listing_urls' => ['https://elsurti.com/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 18,
+                'max_candidates' => 12,
+            ],
+            [
                 'name' => 'RDN - Resumen de Noticias',
                 'slug' => 'rdn',
                 'domain' => 'rdn.com.py',

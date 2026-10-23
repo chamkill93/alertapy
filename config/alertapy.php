@@ -234,6 +234,8 @@ return [
                 'https://www.latribuna.com.py/',
                 'https://www.latribuna.com.py/nacionales/locales/',
                 'https://www.latribuna.com.py/sucesos/policiales/',
+                'https://www.latribuna.com.py/etiqueta/neembucu-2/',
+                'https://www.latribuna.com.py/etiqueta/paraguari-departamento/',
             ],
             'prefilter_requires_location' => true,
             'summary_title_only' => true,

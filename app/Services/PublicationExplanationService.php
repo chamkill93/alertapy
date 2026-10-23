@@ -17,7 +17,8 @@ class PublicationExplanationService
             SourceType::Community => 'Reporte identificado como comunitario',
             default => 'Fuente identificada y trazable',
         }];
-        if ($incident->latitude !== null && $incident->longitude !== null) $reasons[] = 'Ubicación territorial identificada';
+        if ($incident->usesReferenceLocation()) $reasons[] = 'Ubicación no informada; marcador de referencia en Asunción';
+        elseif ($incident->latitude !== null && $incident->longitude !== null) $reasons[] = 'Ubicación territorial identificada';
         if ($incident->published_at !== null) $reasons[] = 'Publicación con fecha verificable';
         if ($incident->sources()->distinct('source_id')->count('source_id') >= 2) $reasons[] = 'Coincide con una fuente independiente';
         return ['reasons' => $reasons];

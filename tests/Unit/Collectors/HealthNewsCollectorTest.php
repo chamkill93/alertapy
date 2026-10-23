@@ -184,7 +184,7 @@ class HealthNewsCollectorTest extends TestCase
         $this->assertSame($articleUrl, $health->originalUrl);
         $this->assertSame('Encarnación', $health->metadata['city']);
         $this->assertSame('Itapúa', $health->metadata['department']);
-        $this->assertSame(3, Http::recorded()->count());
+        $this->assertSame(4, Http::recorded()->count());
     }
 
 }

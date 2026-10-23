@@ -91,6 +91,20 @@ class RegionalPressSourceSeeder extends Seeder
                 ],
             ],
             [
+                'name' => 'AGR 101.3 FM / Revista Unión',
+                'slug' => 'agr-fm-tv',
+                'domain' => 'agrfmtv.com.py',
+                'regional_department' => 'Canindeyú',
+                'listing_urls' => ['https://www.agrfmtv.com.py/'],
+            ],
+            [
+                'name' => 'Canindeyú Digital',
+                'slug' => 'canindeyu-digital',
+                'domain' => 'canindeyudigital.com',
+                'regional_department' => 'Canindeyú',
+                'listing_urls' => ['https://www.canindeyudigital.com/canindeyu'],
+            ],
+            [
                 'name' => 'Portal Capitán Meza',
                 'slug' => 'portal-capitan-meza',
                 'domain' => 'capitanmeza.com.py',

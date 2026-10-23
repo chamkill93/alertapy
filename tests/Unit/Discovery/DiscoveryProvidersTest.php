@@ -65,12 +65,17 @@ class DiscoveryProvidersTest extends TestCase
             'url' => 'https://dgvs.mspbs.gov.py/rhinovirus-circulacion',
             'title' => 'Rhinovirus causa más de la mitad de las internaciones por cuadros respiratorios',
             'seendate' => '20261023T100000Z',
+        ], [
+            'url' => 'https://dgvs.mspbs.gov.py/parainfluenza-reporte',
+            'title' => 'Parainfluenza detectada en muestras clínicas',
+            'seendate' => '20261023T090000Z',
         ]]])]);
 
         $items = app(GdeltDiscoveryProvider::class)->discover($this->source('gdelt', SourceType::Discovery));
 
-        $this->assertCount(1, $items);
-        $this->assertSame('https://dgvs.mspbs.gov.py/rhinovirus-circulacion', $items[0]->originalUrl);
+        $this->assertCount(2, $items);
+        $this->assertContains('https://dgvs.mspbs.gov.py/rhinovirus-circulacion', $items->pluck('originalUrl')->all());
+        $this->assertContains('https://dgvs.mspbs.gov.py/parainfluenza-reporte', $items->pluck('originalUrl')->all());
     }
 
     public function test_bluesky_parses_public_posts_as_unverified_social_discovery(): void

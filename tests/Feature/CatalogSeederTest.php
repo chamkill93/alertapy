@@ -40,6 +40,9 @@ class CatalogSeederTest extends TestCase
             && ($source->configuration_json['category_classifier'] ?? null) === 'health'));
         $this->assertDatabaseHas('sources', ['slug' => 'rdn', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
+        $diarioParaguayo = Source::query()->where('slug', 'diario-paraguayo')->sole();
+        $this->assertSame('diarioparaguayo.com', $diarioParaguayo->domain);
+        $this->assertSame('https://www.diarioparaguayo.com.py/', $diarioParaguayo->base_url);
         $this->assertSame('health', Source::query()->where('slug', 'pai')->sole()->configuration_json['category_classifier']);
         $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['pai']);
         $this->assertContains('pai', config('alertapy.cycle.priority_sources'));

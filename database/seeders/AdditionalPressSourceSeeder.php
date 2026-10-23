@@ -72,6 +72,27 @@ class AdditionalPressSourceSeeder extends Seeder
                 'max_links' => 18,
                 'max_candidates' => 12,
             ],
+            [
+                'name' => 'RDN - Resumen de Noticias',
+                'slug' => 'rdn',
+                'domain' => 'rdn.com.py',
+                'polling_minutes' => 30,
+                'listing_urls' => ['https://www.rdn.com.py/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 30,
+                'max_candidates' => 20,
+            ],
+            [
+                'name' => 'Diario Paraguayo',
+                'slug' => 'diario-paraguayo',
+                'domain' => 'diarioparaguayo.com.py',
+                'polling_minutes' => 30,
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 30,
+                'max_candidates' => 20,
+            ],
         ];
 
         return array_map(function (array $publisher): array {

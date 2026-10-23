@@ -45,6 +45,33 @@ class HealthCategoryClassifierTest extends TestCase
         $this->assertNull($classifier->classify('Capacitación administrativa del MSPBS en Asunción'));
     }
 
+    public function test_it_uses_the_article_lead_to_correlate_health_topics(): void
+    {
+        $classifier = new HealthCategoryClassifier;
+
+        $this->assertSame(
+            ['health_vector', 'health_public'],
+            $classifier->classifyAll(
+                'Dengue: tras lluvias se insta a reforzar la prevención de criaderos',
+                'El reporte de vigilancia epidemiológica indica casos sospechosos y actualiza la situación sanitaria.',
+            ),
+        );
+        $this->assertSame(
+            ['health_public'],
+            $classifier->classifyAll(
+                'Jornada comunitaria en Caaguazú',
+                'La brigada realizó vacunación y atención médica en la región.',
+            ),
+        );
+        $this->assertSame(
+            ['health_vector'],
+            $classifier->classifyAll(
+                'SENEPA realiza minga ambiental en Luque',
+                'El operativo eliminó criaderos y brindó recomendaciones a los vecinos.',
+            ),
+        );
+    }
+
     public function test_health_notice_can_be_correlated_with_a_separate_territorial_layer(): void
     {
         $title = 'Asistencia en salud llega a familias afectadas por crecidas en Ciudad del Este';

@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(109, Source::query()->count());
+        $this->assertSame(110, Source::query()->count());
         $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
         $this->assertCount(5, config('alertapy.discovery.gdelt.queries'));
         $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);
@@ -98,6 +98,14 @@ class CatalogSeederTest extends TestCase
         $diarioParaguayo = Source::query()->where('slug', 'diario-paraguayo')->sole();
         $this->assertSame('diarioparaguayo.com', $diarioParaguayo->domain);
         $this->assertSame('https://www.diarioparaguayo.com.py/', $diarioParaguayo->base_url);
+        $primeraPlana = Source::query()->where('slug', 'primera-plana')->sole();
+        $this->assertSame('https://diarioprimeraplana.com/', $primeraPlana->base_url);
+        $this->assertSame(['https://diarioprimeraplana.com/'], $primeraPlana->configuration_json['listing_urls']);
+        $this->assertFalse($primeraPlana->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($primeraPlana->configuration_json['location_search_article_body']);
+        $this->assertSame(168, $primeraPlana->configuration_json['max_age_hours']);
+        $this->assertSame(30, $primeraPlana->polling_minutes);
+        $this->assertSame(\App\Collectors\PressHomepageCollector::class, app(SourceCommandRegistry::class)->scrapers()['primera-plana']);
         $this->assertSame('health', Source::query()->where('slug', 'pai')->sole()->configuration_json['category_classifier']);
         $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['pai']);
         $this->assertContains('pai', config('alertapy.cycle.priority_sources'));

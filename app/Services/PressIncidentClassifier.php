@@ -60,18 +60,21 @@ class PressIncidentClassifier
 
         $matches = [];
         $riverEvent = preg_match('/\b(?:rio|arroyo)\b/u', $evidence) === 1
-            && preg_match('/\b(?:crecida|desborde|bajante|sube)\b/u', $evidence) === 1;
+            && preg_match('/\b(?:crec\w*|desbord\w*|baj\w*|descens\w*|desciend\w*|sub\w*|aument\w*|increment\w*)\b/u', $evidence) === 1;
         $suppressUnconfirmedRiverFlood = false;
 
         if ($riverEvent) {
             $negativeImpact = preg_match('/\b(?:no|sin)\b.{0,45}\b(?:afecta\w*|inunda\w*|anega\w*|aisla\w*|danos?|riesgo|evacu\w*)\b/u', $evidence) === 1;
-            $concreteImpact = preg_match('/\b(?:arrasa|afecta|inunda|anega|aisla|evacuan|evacuacion|desaloj\w*|reubic\w*|traslad\w*|mudan familias|cierran? compuertas|cierre de compuertas)\b/u', $evidence) === 1;
+            $concreteImpact = preg_match('/\b(?:arrasa|afecta|inunda\w*|anega\w*|aisla|evacuan|evacuacion|desaloj\w*|reubic\w*|traslad\w*|mudan familias|cierran? compuertas|cierre de compuertas|damnificad\w*|afectad\w*|anegad\w*|inundad\w*|desplazad\w*)\b/u', $evidence) === 1;
+
+            // Los cambios de nivel pertenecen a Hidrología aunque no impliquen
+            // una inundación. La capa de inundaciones exige impacto confirmado.
+            $matches[] = 'hydrology';
 
             if ($negativeImpact || ! $concreteImpact) {
-                // A river level mention alone is not a flood incident.
                 $suppressUnconfirmedRiverFlood = true;
             } else {
-                $matches[] = 'hydrology';
+                $matches[] = 'weather_flood';
             }
         }
 

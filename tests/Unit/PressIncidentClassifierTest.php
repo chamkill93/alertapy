@@ -136,16 +136,35 @@ class PressIncidentClassifierTest extends TestCase
         );
     }
 
-    public function test_river_events_require_concrete_impact_and_ignore_normal_or_negated_reports(): void
+    public function test_river_level_changes_are_hydrology_and_flood_layer_requires_confirmed_impact(): void
     {
         $classifier = new PressIncidentClassifier;
 
-        $this->assertSame('hydrology', $classifier->classify('Crecida del río Paraguay arrasa cultivos y amenaza al ganado en Humaitá', ''));
-        $this->assertSame('hydrology', $classifier->classify('Pilar: cierran compuertas de estación de bombeos ante crecida del río Paraguay', ''));
-        $this->assertNull($classifier->classify('Concepción: Río Paraguay sube 9 centímetros, pero no se reportan inundaciones', ''));
-        $this->assertNull($classifier->classify('La crecida del río Paraguay no afecta a pobladores de Pilar', ''));
+        $this->assertSame(
+            ['hydrology', 'weather_flood'],
+            $classifier->classifyAll('Crecida del río Paraguay arrasa cultivos y amenaza al ganado en Humaitá', ''),
+        );
+        $this->assertSame(
+            ['hydrology', 'weather_flood'],
+            $classifier->classifyAll('Itaipú continúa con la asistencia a damnificados ante descenso del río Paraná', ''),
+        );
+        $this->assertSame(
+            ['hydrology'],
+            $classifier->classifyAll('Nivel del río Paraná registra leve descenso e Itaipú ofrece herramienta para estar informado', ''),
+        );
+        $this->assertSame(
+            ['hydrology'],
+            $classifier->classifyAll('Itaipú prevé aumento del nivel del río Paraná y alerta sobre posible impacto a más viviendas', ''),
+        );
+        $this->assertSame(
+            ['hydrology'],
+            $classifier->classifyAll('Concepción: Río Paraguay sube 9 centímetros, pero no se reportan inundaciones', ''),
+        );
+        $this->assertSame(
+            ['hydrology'],
+            $classifier->classifyAll('La crecida del río Paraguay no afecta a pobladores de Pilar', ''),
+        );
         $this->assertNull($classifier->classify('Río Paraguay registra nivel normal en Asunción', ''));
-        $this->assertNull($classifier->classify('Río Paraguay sube 9 centímetros en Concepción', ''));
     }
 
     public function test_explicitly_denied_service_cuts_and_forensic_thirst_are_not_incidents(): void

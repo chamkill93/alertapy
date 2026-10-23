@@ -157,4 +157,34 @@ class HealthNewsCollectorTest extends TestCase
         $this->assertSame(-57.6343814, $candidate->longitude);
     }
 
+
+    public function test_ips_daily_health_story_is_collected_with_its_original_source_link(): void
+    {
+        $definition = collect(AdditionalHealthSourceSeeder::definitions())->firstWhere('slug', 'ips');
+        $this->assertNotNull($definition);
+        $source = new Source($definition);
+        $articleUrl = 'https://portal.ips.gov.py/sistemas/ipsportal/noticia.php?cod=4901';
+        $title = 'Presidente del IPS verifica situación del Hospital Regional de Encarnación y anuncia intervención urgente en su infraestructura';
+        $listing = '<article><h2><a href="'.$articleUrl.'">'.$title.'</a></h2><time datetime="2026-10-22">22 de octubre de 2026</time></article>';
+        $article = '<meta property="og:title" content="'.$title.'">'
+            .'<meta property="og:description" content="El Hospital Regional del IPS en Encarnación recibirá mejoras de infraestructura.">'
+            .'<meta property="article:published_time" content="2026-10-22T10:00:00-03:00">'
+            .'<article><p>El presidente visitó el Hospital Regional de Encarnación, departamento de Itapúa, y anunció una intervención en su infraestructura.</p></article>';
+
+        Http::preventStrayRequests();
+        Http::fake([
+            'portal.ips.gov.py/sistemas/ipsportal/noticias.php*' => Http::response($listing),
+            'portal.ips.gov.py/sistemas/ipsportal/noticia.php*' => Http::response($article),
+        ]);
+
+        $candidates = app(HealthNewsCollector::class)->collect($source);
+
+        $health = $candidates->firstWhere('metadata.category_slug', 'health_public');
+        $this->assertNotNull($health);
+        $this->assertSame($articleUrl, $health->originalUrl);
+        $this->assertSame('Encarnación', $health->metadata['city']);
+        $this->assertSame('Itapúa', $health->metadata['department']);
+        $this->assertSame(3, Http::recorded()->count());
+    }
+
 }

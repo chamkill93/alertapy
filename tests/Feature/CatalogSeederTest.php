@@ -171,7 +171,7 @@ class CatalogSeederTest extends TestCase
         $this->assertSame(45, $source->polling_minutes);
         $this->assertSame('Keep this setting', $source->configuration_json['operator_note']);
         $this->assertFalse($source->configuration_json['location_search_article_body']);
-        $this->assertSame(14, Source::query()->count());
+        $this->assertSame(15, Source::query()->count());
     }
 }
 

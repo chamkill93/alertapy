@@ -44,6 +44,12 @@ class CatalogSeederTest extends TestCase
         $this->assertTrue($healthSources->every(fn (Source $source): bool => $source->enabled
             && ($source->configuration_json['collector'] ?? null) === 'health_news'
             && ($source->configuration_json['category_classifier'] ?? null) === 'health'));
+        $dnerhs = Source::query()->where('slug', 'dnerhs')->sole();
+        $this->assertSame('health_news', $dnerhs->configuration_json['collector']);
+        $this->assertSame([
+            'https://dnerhs.mspbs.gov.py/index.php/category/dnerhs/noticias/',
+            'https://dnerhs.mspbs.gov.py/index.php/category/dnerhs/dn/dgprhs/eqips/',
+        ], $dnerhs->configuration_json['listing_urls']);
         $this->assertDatabaseHas('sources', ['slug' => 'rdn', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'paraguay24horas', 'enabled' => true]);

@@ -83,7 +83,7 @@ El listado anterior de Unicanal devuelve 404. Su [portada oficial](https://www.u
 
 `php artisan alertapy:status` muestra base, scheduler y fuentes. En Windows, los comandos sobre la base local deben usar el INI y variables de conexión del runner; el `.env` conserva la configuración MySQL del proyecto. Para comprobaciones automatizadas se usa SQLite **en memoria**; nunca la base real.
 
-La última corrida completa registrada aprobó **330 pruebas PHP (1681 aserciones) y 35 pruebas JavaScript**. La auditoría actual incorpora una prueba de catálogo que exige un comando de ciclo para cada fuente habilitada. También se verificó el rechazo de una segunda instancia del runner mientras la primera mantiene el lock.
+La última corrida completa del commit `fa53004` aprobó **333 pruebas PHP (1701 aserciones) y 36 pruebas JavaScript**; también pasó el smoke test de migraciones MySQL. La prueba nueva exige un comando de ciclo para cada fuente habilitada y que las 19 prioridades quepan en el lote máximo de 20. [Ejecución de CI](https://github.com/chamkill93/alertapy/actions/runs/39946763633). También se verificó el rechazo de una segunda instancia del runner mientras la primera mantiene el lock.
 
 Las capas ignoran respuestas obsoletas después de cambiar la selección. La infraestructura reparte su límite global sin perder colegios al activar salud o policía: en el área de prueba devuelve 2471 de 2471 lugares. Las vistas fuera de cobertura devuelven una colección vacía. Los conteos junto a cada categoría explican cuándo no hay datos; el radio permite elegir un centro y quitar el filtro desde móvil. Las regresiones incluyen cargas tardías, errores de peticiones anteriores, selección manual y permisos de ubicación que llegan después de cancelar.
 

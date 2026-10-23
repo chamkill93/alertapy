@@ -58,6 +58,8 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | Popular | Prensa | 5 min | Fase 4 |
 | Extra | Prensa | 5 min | Fase 4 |
 
+El [GeoServer WFS público del INE](https://geonode.ine.gov.py/geoserver/ows) respondió el 23/10/2026 para `geonode:Vias_Principales_2022` (17.573 elementos) y `geonode:Hidrografia` (42.664, incluidos segmentos sin nombre). El mapa sirve copias GeoJSON versionadas; esa geometría todavía no se vuelve a generar automáticamente desde WFS. La red vial publicada es un dataset de 2022 y la geometría hidrográfica no representa niveles actuales: estos últimos provienen por separado de SIAGUAPY y DMH.
+
 ## Orden de integración
 
 ### Cobertura de servicios básicos

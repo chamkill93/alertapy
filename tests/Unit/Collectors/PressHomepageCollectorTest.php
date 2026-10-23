@@ -365,6 +365,46 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertSame('2026-10-24T08:00:00-03:00', $candidates[0]->metadata['occurred_at']);
     }
 
+    public function test_it_reads_relative_spanish_listing_dates_for_recent_regional_health_news(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        $listingUrl = 'https://www.visioncomunicaciones.com.py/blog/categories/villarrica';
+        $articleUrl = 'https://www.visioncomunicaciones.com.py/post/tamizaje-tuberculosis-villarrica';
+        $title = 'Tamizaje para detectar tuberculosis en la cárcel: realizan pruebas a cerca de 600 internos hasta el viernes';
+        $description = 'Salud Pública y el Ministerio de Justicia realizan una jornada de tamizaje para detectar tuberculosis en la Penitenciaría de Villarrica.';
+        $source = new Source([
+            'name' => 'Visión Comunicaciones',
+            'slug' => 'vision-comunicaciones',
+            'type' => SourceType::Press,
+            'base_url' => 'https://www.visioncomunicaciones.com.py/',
+            'domain' => 'visioncomunicaciones.com.py',
+            'enabled' => true,
+            'polling_minutes' => 30,
+            'configuration_json' => [
+                'listing_urls' => [$listingUrl],
+                'prefilter_requires_location' => false,
+                'max_age_hours' => 168,
+                'max_links' => 18,
+                'max_candidates' => 12,
+                'location_search_article_body' => true,
+                'summary_title_only' => true,
+                'regional_department' => 'Guairá',
+            ],
+        ]);
+        Http::fake([
+            $listingUrl => Http::response('<div><h2><a href="'.$articleUrl.'">'.$title.'</a></h2><span>hace 3 horas 1 min de lectura</span></div>'),
+            $articleUrl => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="'.$description.'"><article><p>'.$description.'</p></article>'),
+        ]);
+
+        $candidate = app(PressHomepageCollector::class)->collect($source)->sole();
+
+        $this->assertSame($articleUrl, $candidate->originalUrl);
+        $this->assertSame('health_public', $candidate->metadata['category_slug']);
+        $this->assertSame('Villarrica', $candidate->metadata['city']);
+        $this->assertSame('2026-10-23T09:00:00-03:00', $candidate->publishedAt->toIso8601String());
+        Http::assertSentCount(2);
+    }
+
     public function test_a_newsroom_address_in_the_footer_is_not_an_event_location(): void
     {
         CarbonImmutable::setTestNow('2026-08-18 21:00:00 America/Asuncion');

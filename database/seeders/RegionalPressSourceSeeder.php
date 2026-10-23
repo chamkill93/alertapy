@@ -133,6 +133,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://www.radioguaira.com/'],
             ],
             [
+                'name' => 'Visión Comunicaciones',
+                'slug' => 'vision-comunicaciones',
+                'domain' => 'visioncomunicaciones.com.py',
+                'regional_department' => 'Guairá',
+                'listing_urls' => ['https://www.visioncomunicaciones.com.py/blog/categories/villarrica'],
+            ],
+            [
                 'name' => 'Pedro Juan Digital',
                 'slug' => 'pedro-juan-digital',
                 'domain' => 'pedrojuandigital.com.py',

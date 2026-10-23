@@ -27,10 +27,11 @@ class RegionalPressSourceSeederTest extends TestCase
         $definitions = RegionalPressSourceSeeder::definitions();
         $slugs = array_column($definitions, 'slug');
 
-        $this->assertCount(25, $definitions);
+        $this->assertCount(26, $definitions);
         $this->assertContains('oviedopress', $slugs);
         $this->assertContains('mas-encarnacion', $slugs);
         $this->assertContains('tu-radio-925', $slugs);
+        $this->assertContains('vision-comunicaciones', $slugs);
         $this->assertCount(count($slugs), array_unique($slugs));
         $this->assertSame(count($definitions), Source::query()->whereIn('slug', $slugs)->count());
 
@@ -56,6 +57,15 @@ class RegionalPressSourceSeederTest extends TestCase
             if ($source->slug === 'portal-amambay') {
                 $this->assertSame('Amambay', $source->configuration_json['regional_department']);
                 $this->assertSame(['https://portalamambay.com.py/'], $source->configuration_json['listing_urls']);
+                $this->assertTrue($source->configuration_json['location_search_article_body']);
+            }
+            if ($source->slug === 'vision-comunicaciones') {
+                $this->assertSame('Guairá', $source->configuration_json['regional_department']);
+                $this->assertSame(
+                    ['https://www.visioncomunicaciones.com.py/blog/categories/villarrica'],
+                    $source->configuration_json['listing_urls'],
+                );
+                $this->assertFalse($source->configuration_json['prefilter_requires_location']);
                 $this->assertTrue($source->configuration_json['location_search_article_body']);
             }
         }

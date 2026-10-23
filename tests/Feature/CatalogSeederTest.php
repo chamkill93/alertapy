@@ -22,7 +22,7 @@ class CatalogSeederTest extends TestCase
 
         $this->assertSame(15, Category::query()->count());
         $this->assertDatabaseHas('categories', ['slug' => 'health_public', 'enabled' => true]);
-        $this->assertSame(111, Source::query()->count());
+        $this->assertSame(112, Source::query()->count());
         $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
         $this->assertCount(5, config('alertapy.discovery.gdelt.queries'));
         $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);

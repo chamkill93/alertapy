@@ -423,6 +423,25 @@ class PressHomepageCollector implements CollectorInterface
 
     private function dateFromText(string $text): ?CarbonImmutable
     {
+        $normalized = Str::lower(Str::ascii($text));
+
+        if (preg_match('/\bhace\s+(\d+)\s*(segundos?|seg|minutos?|min|horas?|hrs?|hr|h|dias?|semanas?|meses?|anos?)\b/u', $normalized, $relative) === 1) {
+            $elapsed = (int) $relative[1];
+            $unit = $relative[2];
+            $now = CarbonImmutable::now((string) config('app.timezone'));
+
+            return match (true) {
+                str_starts_with($unit, 'seg') => $now->subSeconds($elapsed),
+                str_starts_with($unit, 'min') => $now->subMinutes($elapsed),
+                str_starts_with($unit, 'hor'), in_array($unit, ['h', 'hr', 'hrs'], true) => $now->subHours($elapsed),
+                str_starts_with($unit, 'dia') => $now->subDays($elapsed),
+                str_starts_with($unit, 'sem') => $now->subWeeks($elapsed),
+                str_starts_with($unit, 'mes') => $now->subMonthsNoOverflow($elapsed),
+                str_starts_with($unit, 'ano') => $now->subYearsNoOverflow($elapsed),
+                default => null,
+            };
+        }
+
         if (preg_match('/(?:fecha|publicado el)?\s*:?\s*(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+(\d{4})/iu', $text, $match) === 1) {
             $months = [
                 'enero' => 1,

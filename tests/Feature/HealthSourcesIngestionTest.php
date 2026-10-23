@@ -55,7 +55,7 @@ class HealthSourcesIngestionTest extends TestCase
         $this->assertSame($title, $candidates[0]->title);
         $this->assertSame($articleUrl, $candidates[0]->originalUrl);
         $this->assertSame('health_public', $candidates[0]->metadata['category_slug']);
-        $this->assertSame('San Lorenzo', $candidates[0]->detectedLocation);
+        $this->assertSame('San Lorenzo, Central', $candidates[0]->detectedLocation);
         $this->assertSame('2026-10-19T12:00:00-03:00', $candidates[0]->publishedAt?->toIso8601String());
     }
 

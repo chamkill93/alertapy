@@ -9,6 +9,7 @@ use App\Models\Source;
 use Carbon\CarbonImmutable;
 use Database\Seeders\LocationSeeder;
 use Database\Seeders\AdditionalHealthSourceSeeder;
+use Database\Seeders\SourceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -185,6 +186,37 @@ class HealthNewsCollectorTest extends TestCase
         $this->assertSame('Encarnación', $health->metadata['city']);
         $this->assertSame('Itapúa', $health->metadata['department']);
         $this->assertSame(4, Http::recorded()->count());
+    }
+
+
+    public function test_pai_dengue_vaccination_is_correlated_across_health_layers_and_uses_asuncion_reference(): void
+    {
+        $this->seed(SourceSeeder::class);
+        $source = Source::query()->where('slug', 'pai')->firstOrFail();
+        $articleUrl = 'https://pai.mspbs.gov.py/vacunacion-dengue-ya-recibiste-la-primera-dosis-no-te-olvides-de-la-segunda/';
+        $title = 'Vacunación dengue: ya recibiste la primera dosis, no te olvides de la segunda';
+        $listing = '<article><h2><a href="'.$articleUrl.'">'.$title.'</a></h2><time datetime="2026-10-17">17 de octubre de 2026</time></article>';
+        $article = '<meta property="og:title" content="'.$title.'">'
+            .'<meta property="og:description" content="El PAI recuerda completar el esquema de vacunación contra el dengue.">'
+            .'<meta property="article:published_time" content="2026-10-17T10:00:00-03:00">'
+            .'<article><p>El programa recuerda completar la segunda dosis y eliminar criaderos de mosquitos.</p></article>';
+
+        Http::preventStrayRequests();
+        Http::fake([
+            '*pai.mspbs.gov.py/' => Http::response($listing),
+            '*pai.mspbs.gov.py/category/noticias*' => Http::response($listing),
+            $articleUrl => Http::response($article),
+        ]);
+
+        $candidates = app(HealthNewsCollector::class)->collect($source);
+
+        $this->assertSame(['health_vector', 'health_public'], $candidates->pluck('metadata.category_slug')->all());
+        $this->assertCount(2, $candidates);
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->originalUrl === $articleUrl
+            && $candidate->detectedLocation === 'Asunción'
+            && $candidate->metadata['location_is_fallback']
+            && $candidate->metadata['city'] === null
+            && $candidate->metadata['department'] === null));
     }
 
 }

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Str;
 
-/** Maps localized health headlines to the public-health or vector-control layer. */
+/** Maps localized health notices to the public-health or vector-control layer. */
 class HealthCategoryClassifier
 {
     private const VECTOR_PATTERN = '/\b(dengue|chikungunya|zika|arbovirosis|aedes aegypti|mosquitos?|control vectorial|eliminacion de criaderos|criaderos de mosquitos?|minga ambiental|vigilancia entomologica|chagas|malaria|paludismo|leishmaniasis)\b/u';
@@ -13,27 +13,30 @@ class HealthCategoryClassifier
 
     private const EPIDEMIC_CONTEXT_PATTERN = '/\b(alerta|brote|casos?|vigilancia|circulacion|epidemiolog|sanitari|reporta|sospechas?|aument|disminu|semanas?|regiones?)\w*/u';
 
-    public function classify(string $title): ?string
+    public function classify(string $title, string $context = ''): ?string
     {
-        return $this->classifyAll($title)[0] ?? null;
+        return $this->classifyAll($title, $context)[0] ?? null;
     }
 
     /** @return list<string> */
-    public function classifyAll(string $title): array
+    public function classifyAll(string $title, string $context = ''): array
     {
-        $headline = Str::lower(Str::ascii($title));
+        // Official health stories often put the event detail in the lead while
+        // keeping the headline generic. Use this article-specific context; the
+        // collector still requires a confirmed Paraguayan location for the map.
+        $evidence = Str::lower(Str::ascii($title.' '.$context));
         $categories = [];
 
-        if (preg_match(self::VECTOR_PATTERN, $headline) === 1) {
+        if (preg_match(self::VECTOR_PATTERN, $evidence) === 1) {
             $categories[] = 'health_vector';
         }
 
         // Epidemiology reports about vector-borne diseases belong in both
         // health layers; operational SENEPA prevention stays vector-only.
-        $vectorEpidemiology = preg_match(self::VECTOR_PATTERN, $headline) === 1
-            && preg_match(self::EPIDEMIC_CONTEXT_PATTERN, $headline) === 1;
+        $vectorEpidemiology = preg_match(self::VECTOR_PATTERN, $evidence) === 1
+            && preg_match(self::EPIDEMIC_CONTEXT_PATTERN, $evidence) === 1;
 
-        if (preg_match(self::PUBLIC_HEALTH_PATTERN, $headline) === 1 || $vectorEpidemiology) {
+        if (preg_match(self::PUBLIC_HEALTH_PATTERN, $evidence) === 1 || $vectorEpidemiology) {
             $categories[] = 'health_public';
         }
 

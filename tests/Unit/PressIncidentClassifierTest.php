@@ -113,6 +113,20 @@ class PressIncidentClassifierTest extends TestCase
         );
     }
 
+    public function test_it_keeps_correlated_layers_for_one_headline(): void
+    {
+        $classifier = new PressIncidentClassifier;
+
+        $this->assertSame(
+            ['electricity', 'weather_flood'],
+            $classifier->classifyAll('Temporal derriba postes y deja barrios sin electricidad en Alto Paraná', ''),
+        );
+        $this->assertSame(
+            ['hydrology', 'weather_flood'],
+            $classifier->classifyAll('Evacuan familias por crecida del río Paraguay en Humaitá', ''),
+        );
+    }
+
     public function test_river_events_require_concrete_impact_and_ignore_normal_or_negated_reports(): void
     {
         $classifier = new PressIncidentClassifier;
@@ -176,3 +190,4 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('traffic_accident', $classifier->classify('Después del choque de opiniones, un vehículo volcó en un accidente vial', ''));
     }
 }
+

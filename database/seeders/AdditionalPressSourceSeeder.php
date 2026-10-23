@@ -9,7 +9,7 @@ use App\Enums\TrustLevel;
 use App\Models\Source;
 use Illuminate\Database\Seeder;
 
-/** Adds independently operated and regional press sources without overwriting local changes. */
+/** Adds supplemental press sources without overwriting local changes. */
 class AdditionalPressSourceSeeder extends Seeder
 {
     /** @return array<int, array<string, mixed>> */

@@ -42,6 +42,36 @@ class AdditionalPressSourceSeeder extends Seeder
                 'max_links' => 18,
                 'max_candidates' => 12,
             ],
+            [
+                'name' => 'El Independiente',
+                'slug' => 'el-independiente',
+                'domain' => 'independiente.com.py',
+                'polling_minutes' => 30,
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 18,
+                'max_candidates' => 12,
+            ],
+            [
+                'name' => 'Parámetro',
+                'slug' => 'parametro',
+                'domain' => 'elparametro.com',
+                'polling_minutes' => 30,
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 18,
+                'max_candidates' => 12,
+            ],
+            [
+                'name' => 'Pulso Paraguayo',
+                'slug' => 'pulso-paraguayo',
+                'domain' => 'pulsoparaguayo.com',
+                'polling_minutes' => 30,
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 18,
+                'max_candidates' => 12,
+            ],
         ];
 
         return array_map(function (array $publisher): array {

@@ -131,6 +131,9 @@ class LocationSeeder extends Seeder
             ['type' => 'department', 'name' => 'Misiones', 'query' => 'Departamento de Misiones', 'city' => null, 'department' => 'Misiones', 'accuracy' => 'department', 'aliases' => ['Departamento de Misiones']],
             ['type' => 'department', 'name' => 'San Pedro', 'query' => 'Departamento de San Pedro', 'city' => null, 'department' => 'San Pedro', 'accuracy' => 'department', 'aliases' => ['Departamento de San Pedro']],
             ['type' => 'department', 'name' => 'Central', 'query' => 'Departamento Central, Paraguay', 'city' => null, 'department' => 'Central', 'accuracy' => 'department', 'aliases' => ['Departamento Central']],
+            ['type' => 'department', 'name' => 'Departamento de Concepción', 'query' => 'Departamento de Concepción, Paraguay', 'city' => null, 'department' => 'Concepción', 'accuracy' => 'department', 'aliases' => []],
+            ['type' => 'department', 'name' => 'Departamento de Guairá', 'query' => 'Departamento de Guairá, Paraguay', 'city' => null, 'department' => 'Guairá', 'accuracy' => 'department', 'aliases' => []],
+            ['type' => 'department', 'name' => 'Departamento de Paraguarí', 'query' => 'Departamento de Paraguarí, Paraguay', 'city' => null, 'department' => 'Paraguarí', 'accuracy' => 'department', 'aliases' => []],
         ];
     }
 
@@ -141,3 +144,4 @@ class LocationSeeder extends Seeder
         return preg_replace('/\s+/u', ' ', $normalized) ?: $normalized;
     }
 }
+

@@ -94,71 +94,65 @@
                 <p class="filter-help">Ahora: incidencias vigentes. 24 h y 7 días: eventos recientes.</p>
             </section>
 
-            <section aria-labelledby="layers-heading">
-                <div class="section-heading">
-                    <h2 id="layers-heading" class="section-title-icon"><span data-app-icon="report" aria-hidden="true"></span>Incidencias</h2>
-                    <button type="button" class="all-categories-button" id="toggle-categories" aria-label="Mostrar todas las incidencias" aria-pressed="true">Todas</button>
-                </div>
-                @php
-                    $orderedCategories = $categories->sortBy(fn ($category) => match ($category->slug) {
-                        'electricity' => 0, 'water' => 1, 'hydrology' => 2, 'weather_flood' => 3, default => 4,
-                    });
-                    $primaryCategories = $orderedCategories->filter(fn ($category) => in_array($category->slug, ['electricity', 'water', 'hydrology'], true));
-                    $additionalCategories = $orderedCategories->reject(fn ($category) => in_array($category->slug, ['electricity', 'water', 'hydrology'], true));
-                @endphp
-                <fieldset class="category-filter" id="category-filter" role="radiogroup" aria-labelledby="layers-heading" aria-describedby="category-selection-help">
-                    <legend class="sr-only">Capas de eventos</legend>
-                    @if ($primaryCategories->isNotEmpty())
-                        <div class="category-list category-list--primary">
-                            @foreach ($primaryCategories as $category)
-                                <label class="category-option category-option--primary category-option--{{ $category->slug }}" style="--category-color: {{ $category->color }}" title="{{ $category->name }}">
-                                    <input type="radio" name="event-category" value="{{ $category->slug }}" aria-label="{{ $category->name }}">
-                                    <span class="category-icon category-icon--{{ $category->slug }}" data-app-icon="{{ $category->slug }}" aria-hidden="true"></span>
-                                    <span class="category-name">{{ match($category->slug) {
-                                        'hydrology' => 'Ríos', default => $category->name,
-                                    } }}</span>
-                                    <small class="category-count" data-category-count="{{ $category->slug }}" aria-hidden="true">—</small>
-                                    <span class="category-selection-mark" aria-hidden="true">✓</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    @endif
-
-                    @if ($additionalCategories->isNotEmpty())
-                        <details class="filter-disclosure category-more" id="more-event-categories">
-                            <summary>
-                                <span data-app-icon="layers" aria-hidden="true"></span>
-                                <span>Otras incidencias</span>
-                                <small class="category-more-status" id="category-more-status">{{ $additionalCategories->count() }} disponibles</small>
-                                <span class="disclosure-chevron" aria-hidden="true">⌄</span>
-                            </summary>
-                            <div class="filter-disclosure-content">
-                                <div class="category-list category-list--secondary">
-                                    @foreach ($additionalCategories as $category)
-                                        <label class="category-option category-option--additional" style="--category-color: {{ $category->color }}" title="{{ $category->name }}">
-                                            <input type="radio" name="event-category" value="{{ $category->slug }}" aria-label="{{ $category->name }}" data-category-extra="true">
-                                            <span class="category-icon category-icon--{{ $category->slug }}" data-app-icon="{{ $category->slug }}" aria-hidden="true"></span>
-                                            <span class="category-name">{{ match($category->slug) {
-                                                'traffic_accident' => 'Tránsito', 'weather_flood' => 'Clima',
-                                                'roads' => 'Rutas y obras', 'borders' => 'Fronteras',
-                                                'health_vector' => 'Salud', 'air_quality' => 'Aire',
-                                                'territorial_news' => 'Territorio', default => $category->name,
-                                            } }}</span>
-                                            <small class="category-count" data-category-count="{{ $category->slug }}" aria-hidden="true">—</small>
-                                            <span class="category-selection-mark" aria-hidden="true">✓</span>
-                                        </label>
-                                    @endforeach
-                                </div>
+            @php
+                $orderedCategories = $categories->sortBy(fn ($category) => match ($category->slug) {
+                    'electricity' => 0, 'water' => 1, 'hydrology' => 2, 'weather_flood' => 3, default => 4,
+                });
+                $primaryCategories = $orderedCategories->filter(fn ($category) => in_array($category->slug, ['electricity', 'water', 'hydrology'], true));
+                $additionalCategories = $orderedCategories->reject(fn ($category) => in_array($category->slug, ['electricity', 'water', 'hydrology'], true));
+            @endphp
+            <details class="filter-disclosure category-more" id="more-event-categories">
+                <summary>
+                    <span data-app-icon="layers" aria-hidden="true"></span>
+                    <span>Más capas de incidencias</span>
+                    <small class="category-more-status" id="category-more-status">{{ $categories->count() }} disponibles</small>
+                    <span class="disclosure-chevron" aria-hidden="true">⌄</span>
+                </summary>
+                <div class="filter-disclosure-content">
+                    <p class="filter-help" id="category-selection-help">Las capas principales están sobre el mapa. Acá podés elegir cualquier otra.</p>
+                    <fieldset class="category-filter" id="category-filter" role="radiogroup" aria-label="Capas de incidencias" aria-describedby="category-selection-help">
+                        <legend class="sr-only">Capas de incidencias disponibles</legend>
+                        @if ($primaryCategories->isNotEmpty())
+                            <div class="category-list category-list--primary">
+                                @foreach ($primaryCategories as $category)
+                                    <label class="category-option category-option--primary category-option--{{ $category->slug }}" style="--category-color: {{ $category->color }}" title="{{ $category->name }}">
+                                        <input type="radio" name="event-category" value="{{ $category->slug }}" aria-label="{{ $category->name }}">
+                                        <span class="category-icon category-icon--{{ $category->slug }}" data-app-icon="{{ $category->slug }}" aria-hidden="true"></span>
+                                        <span class="category-name">{{ match($category->slug) {
+                                            'hydrology' => 'Ríos', default => $category->name,
+                                        } }}</span>
+                                        <small class="category-count" data-category-count="{{ $category->slug }}" aria-hidden="true">—</small>
+                                        <span class="category-selection-mark" aria-hidden="true">✓</span>
+                                    </label>
+                                @endforeach
                             </div>
-                        </details>
-                    @endif
+                        @endif
 
-                    @if ($categories->isEmpty())
-                        <p class="muted">Ejecutá las migraciones y seeders para cargar el catálogo.</p>
-                    @endif
-                </fieldset>
-                <p class="filter-help" id="category-selection-help">Tocá Electricidad, Agua o Ríos para filtrar. «Todas» muestra todo; 0 = sin incidencias en el periodo elegido.</p>
-            </section>
+                        @if ($additionalCategories->isNotEmpty())
+                            <div class="category-list category-list--secondary">
+                                @foreach ($additionalCategories as $category)
+                                    <label class="category-option category-option--additional" style="--category-color: {{ $category->color }}" title="{{ $category->name }}">
+                                        <input type="radio" name="event-category" value="{{ $category->slug }}" aria-label="{{ $category->name }}">
+                                        <span class="category-icon category-icon--{{ $category->slug }}" data-app-icon="{{ $category->slug }}" aria-hidden="true"></span>
+                                        <span class="category-name">{{ match($category->slug) {
+                                            'traffic_accident' => 'Tránsito', 'weather_flood' => 'Clima',
+                                            'roads' => 'Rutas y obras', 'borders' => 'Fronteras',
+                                            'health_vector' => 'Salud', 'air_quality' => 'Aire',
+                                            'territorial_news' => 'Territorio', default => $category->name,
+                                        } }}</span>
+                                        <small class="category-count" data-category-count="{{ $category->slug }}" aria-hidden="true">—</small>
+                                        <span class="category-selection-mark" aria-hidden="true">✓</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if ($categories->isEmpty())
+                            <p class="muted">Ejecutá las migraciones y seeders para cargar el catálogo.</p>
+                        @endif
+                    </fieldset>
+                </div>
+            </details>
 
             <details class="filter-disclosure" id="map-layer-options">
                 <summary><span data-app-icon="layers" aria-hidden="true"></span>Capas del mapa<span class="disclosure-chevron" aria-hidden="true">⌄</span></summary>
@@ -270,11 +264,11 @@
             <div id="map" tabindex="0" aria-label="Mapa interactivo de AlertaPY"></div>
 
             <div class="map-quick-categories" id="quick-categories" role="group" aria-label="Cambiar capa de incidencias">
-                <button type="button" data-quick-category="all" aria-label="Mostrar todas las incidencias" aria-pressed="true">
+                <button type="button" id="toggle-categories" data-quick-category="all" aria-label="Mostrar todas las incidencias" aria-pressed="true">
                     <span data-app-icon="layers" aria-hidden="true"></span><span>Todas</span>
                 </button>
                 <button type="button" data-quick-category="electricity" aria-label="Mostrar incidencias de electricidad" aria-pressed="false">
-                    <span data-app-icon="electricity" aria-hidden="true"></span><span>Energía</span>
+                    <span data-app-icon="electricity" aria-hidden="true"></span><span>Electricidad</span>
                 </button>
                 <button type="button" data-quick-category="water" aria-label="Mostrar incidencias de agua" aria-pressed="false">
                     <span data-app-icon="water" aria-hidden="true"></span><span>Agua</span>
@@ -461,3 +455,4 @@
     <script src="{{ asset('js/alertapy-map.js') }}?v={{ filemtime(public_path('js/alertapy-map.js')) }}" defer></script>
 </body>
 </html>
+

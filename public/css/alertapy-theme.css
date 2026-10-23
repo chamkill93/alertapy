@@ -168,8 +168,9 @@
 
 .map-shell { border: 1px solid #b0c8c1; border-radius: 18px; overflow: hidden; background: #c4dbcd; box-shadow: 0 4px 18px #143d3420; }
 .map-shell::after { position: absolute; inset: 0; z-index: 450; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 60px #153f3d0d; content: ""; }
-.map-quick-categories { position: absolute; z-index: 650; top: 4rem; left: 50%; display: grid; width: min(380px, calc(100% - 1rem)); grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 4px; transform: translateX(-50%); border: 1px solid #66858a; border-radius: 14px; background: #16343fe8; box-shadow: 0 8px 20px #183c3730; backdrop-filter: blur(10px); }
+.map-quick-categories { position: absolute; z-index: 650; top: 4rem; left: 50%; display: grid; width: min(460px, calc(100% - 1rem)); grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 4px; transform: translateX(-50%); border: 1px solid #66858a; border-radius: 14px; background: #16343fe8; box-shadow: 0 8px 20px #183c3730; backdrop-filter: blur(10px); }
 .map-quick-categories button { display: inline-flex; min-width: 0; min-height: 44px; align-items: center; justify-content: center; gap: .25rem; padding: .35rem .2rem; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #d9e9e4; cursor: pointer; font: inherit; font-size: .7rem; font-weight: 800; white-space: nowrap; }
+.map-quick-categories button > span:last-child { min-width: 0; }
 .map-quick-categories button[aria-pressed="true"] { border-color: #d7f2dc; background: #b7eac8; color: #173d30; }
 .map-quick-categories button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .map-quick-categories .app-icon { width: 15px; height: 15px; flex: 0 0 auto; }
@@ -215,8 +216,16 @@
     .brand-home { padding: 0; }
     .developer-credit { font-size: .44rem; }
 }
+
+@media (max-width: 420px) {
+    .map-quick-categories { width: calc(100% - .75rem); gap: 1px; padding: 3px; }
+    .map-quick-categories button { min-height: 50px; flex-direction: column; gap: .1rem; padding: .3rem .1rem; font-size: .62rem; line-height: 1.05; white-space: normal; }
+    .map-quick-categories .app-icon { width: 14px; height: 14px; }
+    .map-quick-categories button > span:last-child { overflow-wrap: anywhere; text-align: center; }
+}
 @media (max-width: 420px) { .developer-credit { font-size: .4rem; } }
 @media (max-width: 359px) {
     .developer-credit { font-size: .43rem; }
     .brand-home { padding-inline: 0; }
 }
+

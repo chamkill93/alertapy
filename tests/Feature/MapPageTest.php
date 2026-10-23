@@ -25,6 +25,13 @@ class MapPageTest extends TestCase
             ->assertSee('id="map"', false)
             ->assertSee('assets/alertapy-ui/css/alertapy-ui-kit.css', false)
             ->assertSee('id="layers-toggle"', false)
+            ->assertSee('id="quick-categories"', false)
+            ->assertSee('id="toggle-categories" data-quick-category="all"', false)
+            ->assertSee('data-quick-category="electricity"', false)
+            ->assertSee('data-quick-category="water"', false)
+            ->assertSee('data-quick-category="hydrology"', false)
+            ->assertSee('>Electricidad</span>', false)
+            ->assertSee('>Más capas de incidencias</span>', false)
             ->assertSee('class="layer-toggle"', false)
             ->assertSee('aria-pressed="true"', false)
             ->assertSee('>Infraestructura</h2>', false)
@@ -47,6 +54,8 @@ class MapPageTest extends TestCase
             ->assertDontSee('id="empty-state"', false)
             ->assertDontSee('Vista técnica de marcadores')
             ->assertDontSee('@vite');
+
+        $this->assertSame(1, substr_count($response->getContent(), 'id="toggle-categories"'), 'The primary Todas action appears once.');
     }
 
     public function test_public_about_dialog_describes_the_platform_without_exposing_the_connection_catalog(): void
@@ -87,3 +96,4 @@ class MapPageTest extends TestCase
             ->assertDontSee('Fuente con enlace no seguro');
     }
 }
+

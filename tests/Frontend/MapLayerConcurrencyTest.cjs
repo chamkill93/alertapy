@@ -165,27 +165,17 @@ test('a single category replaces all categories and Todas restores the complete 
     assert.equal(app.incidentLoads, 3);
 });
 
-test('a collapsed extra category keeps its selected name visible in the layer summary', () => {
+test('the collapsed category filter keeps its selected layer visible in the summary', () => {
     const app = createMapHarness();
-    const extra = {
-        checked: false,
-        closest() { return { querySelector: () => ({ textContent: 'Seguridad' }) }; },
-    };
-    const extraWeather = {
-        checked: false,
-        closest() { return { querySelector: () => ({ textContent: 'Incendios' }) }; },
-    };
-    app.elements.categoryFilter.extraInputs = [extra, extraWeather];
-
     app.syncCategoryToggle();
-    assert.equal(app.elements.categoryMoreStatus.textContent, '2 disponibles');
+    assert.equal(app.elements.categoryMoreStatus.textContent, 'Todas');
 
-    extra.checked = true;
+    app.elements.categoryFilter.select('weather');
     app.state.allCategories = false;
     app.syncCategoryToggle();
-    assert.equal(app.elements.categoryMoreStatus.textContent, 'Activa: Seguridad');
+    assert.equal(app.elements.categoryMoreStatus.textContent, 'Activa: weather');
 
-    extraWeather.checked = true;
+    app.elements.categoryFilter.select('weather', 'works');
     app.elements.combineCategories.checked = true;
     app.syncCategoryToggle();
     assert.equal(app.elements.categoryMoreStatus.textContent, '2 activas');
@@ -260,10 +250,13 @@ test('map quick switches change one incident layer without opening filters and s
     assert.deepEqual(app.selectedCategories(), ['electricity']);
     assert.equal(button('electricity').attrs['aria-pressed'], 'true');
 
+    const loadsBeforeAll = app.incidentLoads;
+    button('all').dispatch('click');
     quick.dispatch('click', { target: button('all') });
     assert.equal(app.state.allCategories, true);
     assert.equal(button('all').attrs['aria-pressed'], 'true');
     assert.deepEqual(app.selectedCategories(), ['electricity', 'water', 'hydrology', 'traffic']);
+    assert.equal(app.incidentLoads - loadsBeforeAll, 1, 'one tap on Todas starts one refresh');
 });
 
 test('primary and precise periods share one selection and a collapsed advanced period stays identifiable', () => {
@@ -282,3 +275,4 @@ test('primary and precise periods share one selection and a collapsed advanced p
     assert.equal(app.elements.advancedFilterIndicator.hidden, true);
     assert.equal(app.state.period, 'now');
 });
+

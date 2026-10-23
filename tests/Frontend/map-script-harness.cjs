@@ -55,17 +55,18 @@ function createMapHarness(categories = ['traffic', 'weather', 'works']) {
     const periodButtons = ['now', '24h', '7d', '1h', '6h'].map(period => ({
         ...status(), dataset: { period }, classList: { toggle() {} }, closest() { return this; },
     }));
+    const quickButtons = ['all', 'electricity', 'water', 'hydrology'].map(value => eventTarget({
+        dataset: { quickCategory: value }, attrs: {},
+        setAttribute(name, content) { this.attrs[name] = content; },
+        closest() { return this; },
+    }));
     const elements = {
         monitoringFilter: filter(['dmh']), monitoringStatus: status(),
         roadFilter: filter(['roads', 'rivers']), roadStatus: status(),
         infrastructureFilter: filter(['health', 'education', 'police']), infrastructureStatus: status(),
-        categoryFilter: filter(categories), toggleCategories: eventTarget(status()),
+        categoryFilter: filter(categories), toggleCategories: quickButtons[0],
         quickCategories: eventTarget({
-            buttons: ['all', 'electricity', 'water', 'hydrology'].map(value => ({
-                dataset: { quickCategory: value }, attrs: {},
-                setAttribute(name, content) { this.attrs[name] = content; },
-                closest() { return this; },
-            })),
+            buttons: quickButtons,
             querySelectorAll() { return this.buttons; },
         }),
         combineCategories: eventTarget({ checked: false }), categorySelectionHelp: status(),
@@ -142,3 +143,4 @@ function createMapHarness(categories = ['traffic', 'weather', 'works']) {
 }
 
 module.exports = { createMapHarness, deferred, eventTarget, sourceSection, flush: () => new Promise(resolve => setImmediate(resolve)) };
+

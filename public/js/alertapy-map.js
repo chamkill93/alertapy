@@ -1418,16 +1418,14 @@
         elements.categoryFilter.classList.toggle('is-all-selected', state.allCategories);
         syncQuickCategoryButtons(inputs);
         if (elements.categoryMoreStatus) {
-            const extraInputs = [...elements.categoryFilter.querySelectorAll('[data-category-extra="true"]')];
-            const selectedExtras = extraInputs.filter(input => input.checked);
-            const activeCount = selectedExtras.length;
+            const selectedInputs = inputs.filter(input => input.checked);
             elements.categoryMoreStatus.textContent = state.allCategories
-                ? `${extraInputs.length} disponibles`
-                : activeCount > 1
-                    ? `${activeCount} activas`
-                    : activeCount === 1
-                        ? `Activa: ${selectedExtras[0].closest('.category-option')?.querySelector('.category-name')?.textContent.trim() || '1 capa'}`
-                        : `${extraInputs.length} disponibles`;
+                ? 'Todas'
+                : selectedInputs.length > 1
+                    ? `${selectedInputs.length} activas`
+                    : selectedInputs.length === 1
+                        ? `Activa: ${selectedInputs[0].closest?.('.category-option')?.querySelector?.('.category-name')?.textContent.trim() || selectedInputs[0].value}`
+                        : `${inputs.length} disponibles`;
         }
         return state.categoriesVisible;
     }
@@ -1469,7 +1467,7 @@
         elements.categoryFilter.setAttribute('role', combine ? 'group' : 'radiogroup');
         elements.categorySelectionHelp.textContent = combine
             ? 'Elegí una o varias categorías. «Todas» vuelve a mostrar todo; 0 = sin incidencias en el periodo elegido.'
-            : 'Tocá Electricidad, Agua o Ríos para filtrar. «Todas» muestra todo; 0 = sin incidencias en el periodo elegido.';
+            : 'Usá el selector sobre el mapa o elegí una categoría acá. «Todas» muestra todo; 0 = sin incidencias en el periodo elegido.';
         syncCategoryToggle();
         syncAdvancedFilterIndicator();
         loadIncidents();
@@ -1517,7 +1515,6 @@
         if (!button) return;
 
         if (button.dataset.quickCategory === 'all') {
-            showAllCategories();
             return;
         }
 
@@ -1885,3 +1882,4 @@
         window.setTimeout(loadCartographyLayers, 180);
     }
 })();
+

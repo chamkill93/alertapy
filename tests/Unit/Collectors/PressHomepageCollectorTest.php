@@ -251,6 +251,33 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertNotSame($candidates[0]->externalIdentifier, $candidates[1]->externalIdentifier);
     }
 
+    public function test_press_scraping_can_fill_the_air_quality_incident_layer_without_faking_station_readings(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-22 15:00:00 America/Asuncion');
+        $source = new Source([
+            'name' => 'Prensa de Paraguay', 'slug' => 'press-air-quality', 'type' => SourceType::Press,
+            'base_url' => 'https://press.test/', 'domain' => 'press.test',
+            'configuration_json' => [
+                'listing_urls' => ['https://press.test/'],
+                'prefilter_requires_location' => true,
+            ],
+        ]);
+        $title = 'Contaminación atmosférica supera límites sanitarios en Asunción';
+        $url = 'https://press.test/contaminacion-atmosferica-asuncion/';
+        Http::preventStrayRequests();
+        Http::fake([
+            'press.test/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="La medición reportó valores superiores a los límites en Asunción."><meta property="article:published_time" content="2026-10-22T12:00:00-03:00">'),
+        ]);
+
+        $candidates = app(PressHomepageCollector::class)->collect($source);
+
+        $this->assertCount(1, $candidates);
+        $this->assertSame('air_quality', $candidates->sole()->metadata['category_slug']);
+        $this->assertSame($url, $candidates->sole()->originalUrl);
+        $this->assertSame('Asunción', $candidates->sole()->metadata['city']);
+    }
+
     public function test_new_sources_do_not_geolocate_a_weather_headline_from_an_incidental_body_mention(): void
     {
         CarbonImmutable::setTestNow('2026-10-22 15:00:00 America/Asuncion');

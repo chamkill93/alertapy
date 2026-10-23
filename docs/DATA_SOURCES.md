@@ -35,7 +35,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | Dirección Nacional de Migraciones | Oficial | 30 min | Cambios operativos, restricciones, cierres y reaperturas de pasos fronterizos |
 | DINAC | Oficial | 60 min | Afectaciones operativas reales en aeropuertos públicos; excluye simulacros y actos institucionales |
 | CONATEL | Oficial | 24 h | Desactivado: no se verificó un feed estable de interrupciones territoriales actuales |
-| MADES - Calidad del Aire | Sensor | 30 min | API oficial; estaciones y series, requiere `MADES_AIR_API_KEY` |
+| MADES - Calidad del Aire | Sensor | 30 min | API oficial; estaciones y series, requiere `MADES_AIR_API_KEY`. Los medios de prensa aportan incidentes ambientales por separado; no se presentan como mediciones. |
 | NASA FIRMS | Sensor | 30 min | CSV oficial con coordenadas nativas, requiere `NASA_FIRMS_MAP_KEY` |
 | GDELT | Discovery | 30 min | Descubre URLs originales; nunca se presenta como fuente final |
 | X | Social | 15 min | Opcional; requiere bearer token y decisión posterior |

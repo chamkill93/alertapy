@@ -18,6 +18,7 @@
         toggleCategories: document.getElementById('toggle-categories'),
         combineCategories: document.getElementById('combine-categories'),
         categorySelectionHelp: document.getElementById('category-selection-help'),
+        categoryMoreStatus: document.getElementById('category-more-status'),
         periodFilter: document.getElementById('period-filter'),
         precisePeriodFilter: document.getElementById('precise-period-filter'),
         precisePeriodStatus: document.getElementById('precise-period-status'),
@@ -1414,6 +1415,18 @@
         state.categoriesVisible = state.allCategories || inputs.some(input => input.checked);
         elements.toggleCategories.setAttribute('aria-pressed', String(state.allCategories));
         elements.categoryFilter.classList.toggle('is-all-selected', state.allCategories);
+        if (elements.categoryMoreStatus) {
+            const extraInputs = [...elements.categoryFilter.querySelectorAll('[data-category-extra="true"]')];
+            const selectedExtras = extraInputs.filter(input => input.checked);
+            const activeCount = selectedExtras.length;
+            elements.categoryMoreStatus.textContent = state.allCategories
+                ? `${extraInputs.length} disponibles`
+                : activeCount > 1
+                    ? `${activeCount} activas`
+                    : activeCount === 1
+                        ? `Activa: ${selectedExtras[0].closest('.category-option')?.querySelector('.category-name')?.textContent.trim() || '1 capa'}`
+                        : `${extraInputs.length} disponibles`;
+        }
         return state.categoriesVisible;
     }
 
@@ -1441,8 +1454,8 @@
         if (!combine && selected.length === 0) state.allCategories = true;
         elements.categoryFilter.setAttribute('role', combine ? 'group' : 'radiogroup');
         elements.categorySelectionHelp.textContent = combine
-            ? 'Activá o quitá las categorías que quieras combinar. 0 indica que no hay incidencias para esta selección.'
-            : 'Un toque muestra solo esa capa. «Todas» vuelve a mostrar todo. 0 indica que no hay incidencias para esta selección.';
+            ? 'Elegí una o varias categorías. «Todas» vuelve a mostrar todo; 0 = sin incidencias en el periodo elegido.'
+            : 'Tocá Electricidad, Agua o Ríos para filtrar. «Todas» muestra todo; 0 = sin incidencias en el periodo elegido.';
         syncCategoryToggle();
         syncAdvancedFilterIndicator();
         loadIncidents();

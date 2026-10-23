@@ -31,10 +31,12 @@ function filter(values) {
     const inputs = values.map(value => ({ value, checked: false, disabled: false }));
     return eventTarget({
         inputs,
+        extraInputs: [],
         attrs: {},
         setAttribute(name, value) { this.attrs[name] = value; },
         classList: { toggle() {} },
         querySelectorAll(selector) {
+            if (selector === '[data-category-extra="true"]') return this.extraInputs;
             if (selector === 'input:checked') return inputs.filter(input => input.checked);
             if (selector === 'input:not(:disabled)') return inputs.filter(input => !input.disabled);
             return inputs;
@@ -59,6 +61,7 @@ function createMapHarness() {
         infrastructureFilter: filter(['health', 'education', 'police']), infrastructureStatus: status(),
         categoryFilter: filter(['traffic', 'weather', 'works']), toggleCategories: eventTarget(status()),
         combineCategories: eventTarget({ checked: false }), categorySelectionHelp: status(),
+        categoryMoreStatus: status(),
         periodFilter: { querySelectorAll: () => periodButtons.slice(0, 3) },
         precisePeriodFilter: { querySelectorAll: () => periodButtons.slice(3) },
         precisePeriodStatus: status(),

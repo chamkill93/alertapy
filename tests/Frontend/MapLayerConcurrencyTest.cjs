@@ -165,6 +165,32 @@ test('a single category replaces all categories and Todas restores the complete 
     assert.equal(app.incidentLoads, 3);
 });
 
+test('a collapsed extra category keeps its selected name visible in the layer summary', () => {
+    const app = createMapHarness();
+    const extra = {
+        checked: false,
+        closest() { return { querySelector: () => ({ textContent: 'Seguridad' }) }; },
+    };
+    const extraWeather = {
+        checked: false,
+        closest() { return { querySelector: () => ({ textContent: 'Incendios' }) }; },
+    };
+    app.elements.categoryFilter.extraInputs = [extra, extraWeather];
+
+    app.syncCategoryToggle();
+    assert.equal(app.elements.categoryMoreStatus.textContent, '2 disponibles');
+
+    extra.checked = true;
+    app.state.allCategories = false;
+    app.syncCategoryToggle();
+    assert.equal(app.elements.categoryMoreStatus.textContent, 'Activa: Seguridad');
+
+    extraWeather.checked = true;
+    app.elements.combineCategories.checked = true;
+    app.syncCategoryToggle();
+    assert.equal(app.elements.categoryMoreStatus.textContent, '2 activas');
+});
+
 test('combining categories preserves the initial selection and reports a partial or empty selection accurately', () => {
     const app = createMapHarness();
     app.elements.combineCategories.checked = true;

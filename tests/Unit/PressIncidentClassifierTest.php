@@ -79,6 +79,17 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('territorial_news', $classifier->classify('Fiscalización ambiental detecta tala ilegal en Caaguazú', ''));
     }
 
+    public function test_air_quality_news_requires_an_explicit_adverse_condition(): void
+    {
+        $classifier = new PressIncidentClassifier;
+
+        $this->assertSame('air_quality', $classifier->classify('Contaminación atmosférica supera límites sanitarios en Asunción', ''));
+        $this->assertSame('air_quality', $classifier->classify('La mala calidad del aire afecta a grupos sensibles en Luque', ''));
+        $this->assertSame('air_quality', $classifier->classify('Calidad del aire supera los límites en Asunción', ''));
+        $this->assertNull($classifier->classify('MADES habilita una estación para monitorear la calidad del aire en Asunción', ''));
+        $this->assertSame('territorial_news', $classifier->classify('Exigen retirar cartelería política por contaminación visual en Pdte. Franco', ''));
+    }
+
     public function test_it_avoids_generic_budget_and_foreign_accusation_headlines_as_security_incidents(): void
     {
         $classifier = new PressIncidentClassifier;

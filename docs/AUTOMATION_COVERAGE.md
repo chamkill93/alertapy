@@ -22,6 +22,7 @@ En la lectura local de las 18:12 del 22/10, la capa de electricidad tenía dos s
 - Los avisos que nombran varios departamentos generan candidatos para cada lugar reconocido por el catálogo. La descripción conserva el alcance completo de la fuente.
 - El ciclo comparte un catálogo con los comandos de recolección, descubrimiento y monitoreo. Incluye estaciones DMH y alertas CAP, respeta frecuencias, registra errores y conserva el punto por donde continuar.
 - La agenda Laravel tiene un único ciclo. La expiración se ejecuta antes de recolectar; un fallo de una fuente no cancela las demás.
+- El selector del mapa mantiene Electricidad, Agua y Ríos visibles para cambiar con un toque; las otras incidencias quedan agrupadas y conservan a la vista cuál categoría adicional quedó seleccionada.
 - La expiración persiste el estado y su evento de auditoría una sola vez; un vencimiento por tiempo se distingue de una resolución confirmada del hecho.
 - Las expiraciones técnicas permanecen en el detalle de cada incidencia, pero no desplazan noticias y cierres reales del panel de novedades. Se probó con 105 vencimientos antiguos procesados a la vez.
 - El panel usa el ciclo de vida para rotular “Vencido” o “Resuelto”; no interpreta automáticamente todo estado finalizado como una resolución confirmada.
@@ -45,7 +46,7 @@ Estas fuentes forman parte del mismo `alertapy:cycle`; las habilitadas se consul
 
 | Capa | Fuentes automáticas | Estado o límite verificado |
 | --- | --- | --- |
-| Electricidad | ANDE; Última Hora, La Nación, ABC, 1000 Noticias, Ñandutí y cinco medios incorporados | ANDE sigue bloqueada. El ciclo automático importó desde Ahora Paraguay un aviso programado conjunto de electricidad y agua, lo separó por capa y lo venció cuando pasó su fecha. Las notas conservan su URL de origen. |
+| Electricidad | ANDE; Última Hora, La Nación, ABC, 1000 Noticias, Ñandutí y cinco medios incorporados | ANDE sigue bloqueada. Los medios sí han importado cortes programados verificables: Ahora Paraguay produjo registros separados para electricidad y agua, y La Nación mantiene un corte futuro del Palacio de Justicia para el 24/10, de 08:00 a 11:00. La consulta del 23/10 encontró que ANDE también publicó una lista de 17 zonas para ese día, pero ni la conexión bloqueada ni los medios consultados la incorporaron. El respaldo periodístico es automático, pero no garantiza cubrir cada aviso que ANDE publique. Se conservan los enlaces originales. |
 | Agua | ESSAP, ERSSAN, SIAGUAPY y medios de prensa | La API de ESSAP puede responder correctamente con cero avisos. El mapa usa noticias de servicio con fecha y zona verificables como respaldo. |
 | Seguridad | Ministerio Público, SENAD y prensa | Titular y ubicación pasan filtros territoriales; los falsos positivos de expresiones figuradas están cubiertos por pruebas. |
 | Accidentes y tránsito | MOPC, municipalidades y prensa | Cierres, desvíos y accidentes se clasifican con reglas distintas para evitar mezclar obras con siniestros. |
@@ -56,7 +57,7 @@ Estas fuentes forman parte del mismo `alertapy:cycle`; las habilitadas se consul
 | Salud y SENEPA | SENEPA, MSPBS, DGVS y prensa | Se filtran brotes y operaciones territoriales; no se convierten estadísticas nacionales en puntos. |
 | Salud animal | SENACSA | Fuente oficial habilitada con categoría propia. |
 | Ríos e hidrología | SIAGUAPY, estaciones DMH y prensa | Los trazos de ríos son cartografía estable; lecturas y noticias son datos separados. El feed de niveles de ríos de DMH y los de embalses están deshabilitados porque su última publicación no era actual. |
-| Calidad del aire | API de estaciones del MADES | Sin clave API la conexión permanece deshabilitada. El MADES exige clave para los endpoints de datos y publica límites de uso; no se evade ese acceso. Se puede solicitar una clave en [Acceso a la API de MADES](https://calidadaire.mades.gov.py/acceso-api). |
+| Calidad del aire | Prensa para incidentes ambientales; API de estaciones del MADES para mediciones | Los titulares con condiciones adversas explícitas se clasifican como incidentes de aire. Las mediciones oficiales requieren clave API; sin ella la conexión de estaciones permanece deshabilitada. El MADES exige clave para los endpoints de datos y publica límites de uso; no se evade ese acceso. Se puede solicitar una clave en [Acceso a la API de MADES](https://calidadaire.mades.gov.py/acceso-api). |
 | Emergencias | SEN, fuentes municipales y prensa | Se admiten hechos localizados como evacuaciones y derrumbes, no comunicados generales sin lugar. |
 | Novedades territoriales | MADES, INFONA, DINAC y prensa | Solo hechos publicados con fecha, categoría y localización reconocibles. |
 

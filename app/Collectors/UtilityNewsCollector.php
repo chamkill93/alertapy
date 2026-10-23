@@ -116,7 +116,7 @@ class UtilityNewsCollector implements CollectorInterface
         if (! in_array($category, ['electricity', 'water'], true)) {
             return null;
         }
-        $location = $this->locationFallback->forPress(
+        $location = $this->locationFallback->forNews(
             $source->type,
             $this->locations->extract($title, $excerpt, mb_substr($body, 0, 5000)),
         );

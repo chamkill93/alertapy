@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\\Unit;
+namespace Tests\Unit;
 
-use App\\Services\\HealthCategoryClassifier;
-use App\\Services\\PressIncidentClassifier;
-use PHPUnit\\Framework\\TestCase;
+use App\Services\HealthCategoryClassifier;
+use App\Services\PressIncidentClassifier;
+use PHPUnit\Framework\TestCase;
 
 class HealthCategoryClassifierTest extends TestCase
 {

@@ -5,6 +5,7 @@ namespace App\Collectors;
 use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
+use App\Services\HealthCategoryClassifier;
 use App\Services\ParaguayLocationExtractor;
 use App\Services\PressIncidentClassifier;
 use App\Services\UtilityScheduleExtractor;
@@ -24,6 +25,7 @@ class PressHomepageCollector implements CollectorInterface
         private readonly ParaguayLocationExtractor $locationExtractor,
         private readonly PressIncidentClassifier $classifier,
         private readonly UtilityScheduleExtractor $schedules,
+        private readonly HealthCategoryClassifier $healthClassifier,
     ) {}
 
     /** @return Collection<int, CandidateDTO> */
@@ -222,7 +224,14 @@ class PressHomepageCollector implements CollectorInterface
         $hasConfiguredCategory = is_string($settings['forced_category_slug'] ?? null);
         $categories = [];
 
-        if ($location !== null && $hasConfiguredCategory) {
+        if ($location !== null && ($settings['category_classifier'] ?? null) === 'health') {
+            // Health notices can also describe a flood, road closure, outage,
+            // or another territorial event. Keep each supported layer visible.
+            $categories = array_values(array_unique([
+                ...$this->healthClassifier->classifyAll($title),
+                ...$this->classifier->classifyAll($title, $contextDescription),
+            ]));
+        } elseif ($location !== null && $hasConfiguredCategory) {
             $configured = $this->configuredCategory($settings, $title, $contextDescription);
             $categories = $configured === null ? [] : [$configured];
         } elseif ($location !== null) {
@@ -515,3 +524,4 @@ class PressHomepageCollector implements CollectorInterface
         }
     }
 }
+

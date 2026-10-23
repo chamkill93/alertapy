@@ -18,7 +18,8 @@ class CategorySeeder extends Seeder
             ['name' => 'Inundaciones y clima', 'slug' => 'weather_flood', 'icon' => '🌧', 'color' => '#2563EB', 'description' => 'Alertas meteorológicas e inundaciones.'],
             ['name' => 'Calles, rutas, bloqueos y obras', 'slug' => 'roads', 'icon' => '🚧', 'color' => '#D97706', 'description' => 'Bloqueos, cierres, desvíos y obras.'],
             ['name' => 'Fronteras y pasos', 'slug' => 'borders', 'icon' => '🛂', 'color' => '#0B6E99', 'description' => 'Cambios operativos, restricciones y cierres de pasos fronterizos.'],
-            ['name' => 'Salud y SENEPA', 'slug' => 'health_vector', 'icon' => '🦟', 'color' => '#16A34A', 'description' => 'Intervenciones territoriales de salud y control vectorial.'],
+            ['name' => 'Salud pública', 'slug' => 'health_public', 'icon' => '✚', 'color' => '#0F766E', 'description' => 'Alertas epidemiológicas, atención y servicios de salud con ubicación territorial.'],
+            ['name' => 'Vectores y SENEPA', 'slug' => 'health_vector', 'icon' => '🦟', 'color' => '#16A34A', 'description' => 'Intervenciones territoriales de salud y control vectorial.'],
             ['name' => 'Salud animal', 'slug' => 'animal_health', 'icon' => '🐾', 'color' => '#00A36C', 'description' => 'Alertas, campañas y operativos oficiales de sanidad animal.'],
             ['name' => 'Ríos e hidrología', 'slug' => 'hydrology', 'icon' => '🌊', 'color' => '#009C98', 'description' => 'Niveles, alertas y novedades hidrológicas.'],
             ['name' => 'Calidad del aire', 'slug' => 'air_quality', 'icon' => '🌫', 'color' => '#7F8C99', 'description' => 'Información territorial sobre la calidad del aire.'],
@@ -34,3 +35,4 @@ class CategorySeeder extends Seeder
         }
     }
 }
+

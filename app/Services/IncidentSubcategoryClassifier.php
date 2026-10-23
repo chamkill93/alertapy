@@ -16,6 +16,7 @@ class IncidentSubcategoryClassifier
         'fire' => ['foco_calor'=>['foco de calor','deteccion termica'], 'vehicular'=>['vehiculo','automovil'], 'forestal'=>['forestal','bosque'], 'vegetacion'=>['pastizal','vegetacion'], 'controlado'=>['controlado'], 'extinguido'=>['extinguido'], 'estructural'=>['vivienda','edificio','deposito']],
         'roads' => ['cierre'=>['cierre','bloqueo'], 'desvio'=>['desvio'], 'habilitacion'=>['habilitado','reabierto'], 'puente'=>['puente'], 'derrumbe'=>['derrumbe','deslizamiento'], 'mantenimiento'=>['mantenimiento'], 'obra'=>['obra','construccion']],
         'health_vector' => ['minga_ambiental'=>['minga ambiental'], 'rastrillaje'=>['rastrillaje'], 'control_quimico'=>['control quimico','bloqueo quimico','fumigacion','rociado'], 'eliminacion_criaderos'=>['eliminacion de criaderos','destruccion de criaderos'], 'vigilancia_entomologica'=>['vigilancia entomologica','monitoreo entomologico'], 'educacion_preventiva'=>['concienciacion','educacion para la salud','prevencion de arbovirosis']],
+        'health_public' => ['alerta_epidemiologica'=>['alerta epidemiologica','brote','amenaza sanitaria','vigilancia epidemiologica'], 'vacunacion'=>['vacunacion','inmunizacion','vacuna'], 'asistencia_medica'=>['asistencia medica','atencion medica','jornada de atencion','asistencia en salud','consultas medicas'], 'servicios_de_salud'=>['servicios de salud','region sanitaria','hospital','usf','atenciones'], 'medicamentos_e_insumos'=>['medicamentos','insumos']],
     ];
 
     public function classify(string $category, string $text): ?string
@@ -27,3 +28,4 @@ class IncidentSubcategoryClassifier
         return null;
     }
 }
+

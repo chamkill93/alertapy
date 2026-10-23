@@ -37,9 +37,9 @@ return [
     'cycle' => [
         // Refresh services, scheduled-outage press backups and live monitoring before slower general news sites.
         // Each source still obeys its own polling interval and error handling.
-        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', 'abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna', '1000noticias', 'nanduti', 'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay'],
+        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', 'abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna', '1000noticias', 'nanduti', 'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'senepa', 'mspbs-health', 'dgvs', 'pai', 'digies'],
         'max_seconds' => (int) env('ALERTAPY_CYCLE_MAX_SECONDS', 180),
-        'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 20),
+        'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 30),
         'max_candidates' => (int) env('ALERTAPY_MAX_CANDIDATES_PER_CYCLE', 100),
         'max_ai_decisions' => (int) env('ALERTAPY_MAX_AI_DECISIONS_PER_CYCLE', 50),
     ],
@@ -296,27 +296,31 @@ return [
         ],
         'mspbs-health' => [
             'enabled' => env('SOURCE_MSPBS_HEALTH_ENABLED', true),
-            'listing_urls' => ['https://www.mspbs.gov.py/index.php'],
+            'listing_urls' => [
+                'https://www.mspbs.gov.py/noticias.php?page=1&url=portal',
+                'https://www.mspbs.gov.py/noticias.php?page=2&url=portal',
+                'https://www.mspbs.gov.py/noticias.php?page=3&url=portal',
+                'https://www.mspbs.gov.py/noticias.php?page=4&url=portal',
+                'https://www.mspbs.gov.py/index.php',
+            ],
             'prefilter_requires_location' => false,
             'summary_title_only' => true,
             'max_age_hours' => 168,
-            'max_links' => 70,
-            'max_candidates' => 20,
-            'forced_category_slug' => 'health_vector',
-            'required_event_pattern' => '/\b(operativo sanitario|cobertura sanitaria|alerta sanitaria|campana de vacunacion|jornada (?:de )?atencion|atencion (?:medica|odontologica) movil|establecimiento\w*.{0,45}(?:afectad|cerrad|suspend))\w*/u',
-            'excluded_event_pattern' => '/\b(concurso|licitacion|capacitacion|taller|reunion|congreso|informe de gestion)\w*/u',
+            'location_search_article_body' => true,
+            'category_classifier' => 'health',
+            'max_links' => 90,
+            'max_candidates' => 30,
         ],
         'dgvs' => [
             'enabled' => env('SOURCE_DGVS_ENABLED', true),
-            'listing_urls' => ['https://dgvs.mspbs.gov.py/noticias/'],
+            'listing_urls' => ['https://dgvs.mspbs.gov.py/', 'https://dgvs.mspbs.gov.py/noticias/'],
             'prefilter_requires_location' => false,
             'summary_title_only' => true,
             'max_age_hours' => 168,
-            'max_links' => 50,
-            'max_candidates' => 15,
-            'forced_category_slug' => 'health_vector',
-            'required_event_pattern' => '/\b(brote|alerta epidemiologica|emergencia de salud publica|circulacion comunitaria|foco de|casos? (?:confirmados?|detectados?))\b/u',
-            'excluded_event_pattern' => '/\b(concurso|beca|capacitacion|reunion|dia nacional|recomendacion|prevencion|riesgo de complicaciones)\w*/u',
+            'location_search_article_body' => true,
+            'category_classifier' => 'health',
+            'max_links' => 70,
+            'max_candidates' => 25,
         ],
         'erssan' => [
             'enabled' => env('SOURCE_ERSSAN_ENABLED', true),
@@ -500,3 +504,4 @@ return [
         ],
     ],
 ];
+

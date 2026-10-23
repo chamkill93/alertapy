@@ -97,6 +97,34 @@ class RegionalPressSourceSeeder extends Seeder
                 'regional_department' => 'Itapúa',
                 'listing_urls' => ['https://capitanmeza.com.py/'],
             ],
+            [
+                'name' => 'Radio Guairá',
+                'slug' => 'radio-guaira',
+                'domain' => 'radioguaira.com',
+                'regional_department' => 'Guairá',
+                'listing_urls' => ['https://www.radioguaira.com/'],
+            ],
+            [
+                'name' => 'Pedro Juan Digital',
+                'slug' => 'pedro-juan-digital',
+                'domain' => 'pedrojuandigital.com.py',
+                'regional_department' => 'Amambay',
+                'listing_urls' => ['https://pedrojuandigital.com.py/', 'https://pedrojuandigital.com.py/category/locales/'],
+            ],
+            [
+                'name' => 'Amambay Digital',
+                'slug' => 'amambay-digital',
+                'domain' => 'amambaydigital.com',
+                'regional_department' => 'Amambay',
+                'listing_urls' => ['https://amambaydigital.com/'],
+            ],
+            [
+                'name' => 'Luque Noticias',
+                'slug' => 'luque-noticias',
+                'domain' => 'luquenoticias.com.py',
+                'regional_department' => 'Central',
+                'listing_urls' => ['https://www.luquenoticias.com.py/'],
+            ],
         ];
 
         return array_map(function (array $publisher): array {
@@ -136,3 +164,4 @@ class RegionalPressSourceSeeder extends Seeder
         }
     }
 }
+

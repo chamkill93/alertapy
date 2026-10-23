@@ -137,7 +137,7 @@
                                         <span class="category-name">{{ match($category->slug) {
                                             'traffic_accident' => 'Tránsito', 'weather_flood' => 'Clima',
                                             'roads' => 'Rutas y obras', 'borders' => 'Fronteras',
-                                            'health_vector' => 'Salud', 'air_quality' => 'Aire',
+                                            'health_public' => 'Salud pública', 'health_vector' => 'Vectores', 'air_quality' => 'Aire',
                                             'territorial_news' => 'Territorio', default => $category->name,
                                         } }}</span>
                                         <small class="category-count" data-category-count="{{ $category->slug }}" aria-hidden="true">—</small>
@@ -455,4 +455,5 @@
     <script src="{{ asset('js/alertapy-map.js') }}?v={{ filemtime(public_path('js/alertapy-map.js')) }}" defer></script>
 </body>
 </html>
+
 

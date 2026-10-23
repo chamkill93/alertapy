@@ -20,10 +20,13 @@ class FavoriteZonesTest extends TestCase
     {
         $this->seed(CategorySeeder::class); $category = Category::query()->where('slug','electricity')->firstOrFail();
         Incident::query()->create(['category_id'=>$category->id,'title'=>'Corte real','summary'=>'Corte','source_type'=>SourceType::Official,'verification_level'=>'official','status'=>IncidentStatus::Active,'severity'=>Severity::Medium,'latitude'=>-25.3,'longitude'=>-57.6,'location_accuracy'=>LocationAccuracy::Exact,'location_text'=>'Central','published_at'=>now(),'expires_at'=>now()->addHour()]);
-        $created = $this->postJson('/api/favorite-zones', ['name'=>'Casa','icon'=>'home','latitude'=>-25.3,'longitude'=>-57.6,'radius_km'=>3,'electricity_enabled'=>true,'water_enabled'=>false]);
+        foreach (['health_public', 'health_vector'] as $healthSlug) {
+            Incident::query()->create(['category_id'=>Category::query()->where('slug', $healthSlug)->value('id'),'title'=>'Aviso de salud','summary'=>'Aviso','source_type'=>SourceType::Official,'verification_level'=>'official','status'=>IncidentStatus::Active,'severity'=>Severity::Medium,'latitude'=>-25.3,'longitude'=>-57.6,'location_accuracy'=>LocationAccuracy::Exact,'location_text'=>'Central','published_at'=>now(),'expires_at'=>now()->addHour()]);
+        }
+        $created = $this->postJson('/api/favorite-zones', ['name'=>'Casa','icon'=>'home','latitude'=>-25.3,'longitude'=>-57.6,'radius_km'=>3,'electricity_enabled'=>true,'water_enabled'=>false,'health_enabled'=>true]);
         $created->assertCreated()->assertJsonPath('data.name','Casa'); $token = $created->getCookie('alertapy_favorite_token', false)->getValue(); $id = $created->json('data.id');
         $this->withHeader('X-AlertaPY-Favorite-Token',$token)->getJson('/api/favorite-zones')->assertOk()->assertJsonCount(1,'data');
-        $this->withHeader('X-AlertaPY-Favorite-Token',$token)->getJson("/api/favorite-zones/{$id}/status")->assertOk()->assertJsonPath('data.incident_count',1)->assertJsonPath('data.activity','ACTIVIDAD BAJA');
+        $this->withHeader('X-AlertaPY-Favorite-Token',$token)->getJson("/api/favorite-zones/{$id}/status")->assertOk()->assertJsonPath('data.incident_count',3)->assertJsonPath('data.activity','ACTIVIDAD MEDIA')->assertJsonFragment(['slug' => 'health_public'])->assertJsonFragment(['slug' => 'health_vector']);
         $this->withHeader('X-AlertaPY-Favorite-Token',$token)->putJson("/api/favorite-zones/{$id}", ['name'=>'Trabajo','radius_km'=>5])->assertOk()->assertJsonPath('data.name','Trabajo');
         $this->withHeaders(['X-AlertaPY-Favorite-Token'=>'invalid'])->getJson("/api/favorite-zones/{$id}/status")->assertNotFound();
         $this->withHeader('X-AlertaPY-Favorite-Token',$token);
@@ -35,3 +38,4 @@ class FavoriteZonesTest extends TestCase
         $this->postJson('/api/favorite-zones',['name'=>'Fuera','latitude'=>0,'longitude'=>0,'radius_km'=>100])->assertUnprocessable()->assertJsonValidationErrors(['latitude','longitude','radius_km']);
     }
 }
+

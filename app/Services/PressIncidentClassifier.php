@@ -14,11 +14,12 @@ class PressIncidentClassifier
         'water' => '/\b((?:cortes?|interrupcion(?:es)?|suspension(?:es)?) (?:programad[oa]s? )?(?:de|del) (?:agua(?: potable)?|servicio de agua|suministro de agua)|cortes? (?:programados? )?(?:de|del) [^.!?]{0,80}?\bagua\b|falta de agua|sin agua|baja presion (?:de|del) agua|rotura (?:de|en) (?:una? )?(?:tuberia|caneria|acueducto)|(?:obras?|trabajos?|reparacion|mantenimiento).{0,100}(?:provision de agua|servicio de agua|suministro de agua|red de agua|tuberias?|canerias?))\b/u',
         'traffic_accident' => '/\b(accidente|choque|colision|vuelco|atropell|embestid|siniestro vial)\w*/u',
         'fire' => '/\b(incendio|incendia|fuego fuera de control)\w*/u',
-        'weather_flood' => '/\b(inundacion|inundad|tormenta|temporal|granizo|desborde)\w*/u',
+        'weather_flood' => '/\b(inundacion|inundad|tormenta|temporal|granizo|desborde|crecida)\w*/u',
         'air_quality' => '/\b(?:contaminacion atmosferica|contaminacion del aire|material particulado|pm\s?2\.?5|pm\s?10)\b.{0,45}\b(?:supera|excede|afecta|deteriora|empeora|provoca|genera|niveles?\s+(?:altos|elevados|criticos)|riesgo)\b|\b(?:mala|deficiente|insalubre|peligrosa|critica|deteriorada)\s+calidad (?:del )?aire\b|\bcalidad (?:del )?aire.{0,40}\b(?:es|esta|continua|sigue|empeora|deteriora|afecta|supera|excede)\b.{0,20}\b(?:mala|deficiente|insalubre|peligrosa|critica|deteriorada|limites?|niveles?|valores?)\b/u',
         'roads' => '/\b(bloqueo|cierres? de (?:calles?|rutas?)|cierre vial|desvios? (?:vehiculares?|de transito|por obras?)|protesta|manifest|manifies|congestion|bacheo|intervencion vial|ruta cerrada|camino\w* intransitable|(?:obra|rehabilitacion|mantenimiento|pavimentacion|reparacion|desague)\w*.{0,55}(?:ruta|avenida|camino|puente|calle|barrio))\w*/u',
         'security' => '/\b(asalto|robo|robamotos|balacera|operativos? (?:policial(?:es)?|antidrogas|de seguridad|de control (?:policial|antidrogas))|allanamiento|incaut|decomis|procedimiento antidrogas|homicid|asesin|feminic|secuestro|captur|detienen|detenido|imputan|imputado|procesan)\w*/u',
-        'health_vector' => '/\b(hantavirus|dengue|chikungunya|zika|brote epidemiologico|minga ambiental|control vectorial|eliminacion de criaderos|fumigacion)\b/u',
+        'health_vector' => '/\b(hantavirus|dengue|chikungunya|zika|arbovirosis|aedes aegypti|brote epidemiologico|minga ambiental|control vectorial|eliminacion de criaderos|fumigacion)\b/u',
+        'health_public' => '/\b(alertas? epidemiologicas?|alertas? sanitarias?|emergencias? sanitarias?|brotes?(?: epidemiologicos?)?|amenazas? sanitarias?|vigilancia (?:epidemiologica|comunitaria)|casos? (?:confirmados?|detectados?|positivos?)|circulacion comunitaria|virus respiratorios?|cuadros respiratorios?|sarampion|influenza|vacunacion|inmunizacion|hospital(?:es)?|servicios? de salud|region sanitaria|unidades? de salud|\busf\b|atenciones? (?:medicas?|especializadas?)?|asistencia (?:medica|en salud)|atencion (?:medica|sanitaria)|jornada de atencion|consultas? medicas?|medicamentos(?: e insumos)?|insumos y medicamentos|terapia intensiva|ambulancias?)\b/u',
         'emergency' => '/\b(derrumbe|arbol caido|colapso estructural|evacuacion)\w*/u',
         'territorial_news' => '/\b(deforestacion|tala ilegal|contaminacion|fiscalizacion ambiental|intervencion ambiental|incumplimiento ambiental)\w*/u',
     ];
@@ -92,3 +93,4 @@ class PressIncidentClassifier
         return array_values(array_unique($matches));
     }
 }
+

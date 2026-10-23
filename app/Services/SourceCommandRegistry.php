@@ -37,6 +37,7 @@ class SourceCommandRegistry
         foreach (Source::query()->get(['slug', 'configuration_json']) as $source) {
             $class = match ($source->configuration_json['collector'] ?? null) {
                 'press_homepage' => Collectors\PressHomepageCollector::class,
+                'health_news' => Collectors\HealthNewsCollector::class,
                 'regional_press' => Collectors\RegionalPressCollector::class,
                 'municipal' => Collectors\MunicipalNewsCollector::class,
                 'utility_news' => Collectors\UtilityNewsCollector::class,
@@ -90,3 +91,4 @@ class SourceCommandRegistry
         return max(3600, (int) config('alertapy.cycle.max_seconds', 180) + 600);
     }
 }
+

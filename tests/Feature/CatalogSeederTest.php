@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Incident;
 use App\Models\Source;
+use App\Collectors\HealthNewsCollector;
 use App\Services\SourceCommandRegistry;
 use Database\Seeders\AdditionalPressSourceSeeder;
 use Database\Seeders\DatabaseSeeder;
@@ -19,8 +20,8 @@ class CatalogSeederTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame(14, Category::query()->count());
-        $this->assertSame(75, Source::query()->count());
+        $this->assertSame(15, Category::query()->count());
+        $this->assertSame(81, Source::query()->count());
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
@@ -30,6 +31,12 @@ class CatalogSeederTest extends TestCase
         }
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-automatic-stations', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-cap', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'pai', 'enabled' => true, 'ingestion_type' => 'html']);
+        $this->assertDatabaseHas('sources', ['slug' => 'digies', 'enabled' => true, 'ingestion_type' => 'html']);
+        $this->assertSame('health', Source::query()->where('slug', 'pai')->sole()->configuration_json['category_classifier']);
+        $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['pai']);
+        $this->assertContains('pai', config('alertapy.cycle.priority_sources'));
+        $this->assertContains('digies', config('alertapy.cycle.priority_sources'));
         $additionalPress = Source::query()->whereIn('slug', [
             'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay',
         ])->get();

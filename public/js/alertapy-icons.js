@@ -15,6 +15,7 @@
         family: '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20c0-4 2-6 5.5-6s5.5 2 5.5 6M14 15c4-.7 7 1.1 7 5"/>',
         borders: '<path d="M4 21v-7h5v7M6.5 14V7M7 8l13-5 1 3L8 11M12 6l1 3m4-5 1 3M12 21h9M18 11v10"/>',
         health_vector: '<ellipse cx="12" cy="14" rx="2" ry="5"/><path d="M12 9V3m-2 8C3 11 2 6 5 6c3 0 4 3 5 5Zm4 0c7 0 8-5 5-5-3 0-4 3-5 5ZM10 14H4m10 0h6M10 17l-4 4m8-4 4 4"/>',
+        health_public: '<path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4"/><path d="M12 2v10m-5-5h10"/>',
         health_facility: '<rect x="4" y="6" width="16" height="15" rx="2"/><path d="M9 6V3h6v3m-3 4v6m-3-3h6M10 21v-3h4v3"/>',
         education: '<path d="m2 8 10-5 10 5-10 5-10-5Zm4 2v7c4 3 8 3 12 0v-7m4-2v9"/>',
         police_station: '<path d="m12 2 8 4v6c0 5-4 8-8 10-4-2-8-5-8-10V6l8-4Z"/><path d="m12 7 1.3 2.6 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4L12 7Z"/>',
@@ -97,3 +98,4 @@
         hydrate();
     }
 })(window);
+

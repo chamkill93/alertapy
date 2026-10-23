@@ -16,7 +16,7 @@ La población censal de un distrito es contexto. Solo se presenta `population_po
 
 ## Prensa local y regional
 
-El 23/10/2026 se amplió el catálogo con once portales cuya actividad reciente y cobertura territorial aparecen en sus propias portadas. La lista documenta dónde se encontró una fuente local; no constituye un censo de medios ni una auditoría de propiedad, independencia societaria o línea editorial. Se les asigna confianza media y se mantienen los filtros de fecha, categoría, ubicación y enlace original.
+El 23/10/2026 se amplió el catálogo con quince portales cuya actividad reciente y cobertura territorial aparecen en sus propias portadas o secciones locales. La lista documenta fuentes encontradas; no constituye un censo de medios ni una auditoría de propiedad, independencia societaria o línea editorial. Se les asigna confianza media y se mantienen los filtros de fecha, categoría, ubicación y enlace original.
 
 | Portal | Cobertura editorial declarada u observada | Listados configurados |
 | --- | --- | --- |
@@ -31,7 +31,12 @@ El 23/10/2026 se amplió el catálogo con once portales cuya actividad reciente 
 | [Tercer Ojo](https://tercerojo.com.py/) | Caacupé y Cordillera | Portada |
 | [Portal de Curuguaty](https://investigacion365.com/) | Curuguaty y Canindeyú | Portada, Locales y Sucesos |
 | [Portal Capitán Meza](https://capitanmeza.com.py/) | Capitán Meza, Itapúa | Portada |
+| [Radio Guairá](https://www.radioguaira.com/) | Guairá | Portada |
+| [Pedro Juan Digital](https://pedrojuandigital.com.py/) | Amambay | Portada y Locales |
+| [Amambay Digital](https://amambaydigital.com/) | Amambay | Portada |
+| [Luque Noticias](https://www.luquenoticias.com.py/) | Luque y Central | Portada |
 
 Las fuentes se consultan cada 30 minutos, aceptan publicaciones de hasta siete días y limitan cada recorrido a 18 enlaces y 12 candidatos. Guardan título y URL original; el texto del artículo se usa solo como evidencia para reconocer lugar y hecho. Los puntos siguen siendo incidencias clasificables, no un espejo de todas las noticias.
 
-La exploración encontró fuentes locales recientes para Amambay (ya existente), Alto Paraná, Caaguazú, Caazapá, Canindeyú, Concepción, Cordillera, Itapúa, Misiones y San Pedro, además de cobertura regional del Chaco. No quedó verificada una fuente local activa para cada uno de los demás departamentos; los portales inactivos o sin publicaciones recientes se dejaron fuera. La lista se debe revisar periódicamente porque el estado de un sitio cambia.
+La exploración encontró fuentes locales recientes para Amambay, Alto Paraná, Caaguazú, Caazapá, Canindeyú, Central, Concepción, Cordillera, Guairá, Itapúa, Misiones y San Pedro, además de cobertura regional del Chaco. La cobertura de un portal puede cruzar límites departamentales, pero no significa que exista una fuente local activa y técnicamente conectable en cada departamento. Ñeembucú, Paraguarí y partes de la región Occidental siguen siendo brechas del inventario. La propiedad e independencia editorial de cada medio no se infieren por ser regional; el estado del sitio y su canal de publicación se deben revisar periódicamente.
+

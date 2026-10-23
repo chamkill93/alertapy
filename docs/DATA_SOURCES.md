@@ -28,8 +28,10 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | INE - Vías principales 2022 | Cartografía pública de referencia | Actualización manual | Copia GeoJSON local de 17.573 tramos nacionales y departamentales; se agrupa y simplifica solo para la capa visual |
 | INE - Hidrografía | Cartografía pública de referencia | Actualización manual | Copia GeoJSON local de 20.486 tramos hidrográficos con nombre, agrupados en 957 ríos, arroyos, riachos, lagos, canales y otros cauces para la capa cartográfica |
 | Secretaría de Emergencia Nacional | Oficial | 10 min | Fase 9 |
-| MSPBS | Oficial | 30 min | Noticias oficiales; solo operativos, campañas o afectaciones territoriales con fecha y ubicación |
-| DGVS | Oficial | 30 min | Noticias y boletines epidemiológicos; no geolocaliza personas ni convierte estadísticas nacionales en casos puntuales |
+| MSPBS | Oficial | 30 min | Listados paginados y portada; separa salud pública, vectores y otras capas mencionadas en el titular. Solo publica notas con ubicación y fecha verificables |
+| DGVS | Oficial | 30 min | Portada y archivo de noticias; clasifica vigilancia, brotes y servicios. No geolocaliza personas ni convierte estadísticas nacionales en casos puntuales |
+| PAI | Oficial | 30 min | Portada y noticias paginadas del Programa Ampliado de Inmunizaciones; campañas y jornadas solo se llevan al mapa cuando la nota identifica un lugar |
+| DIGIES | Oficial | 30 min | Noticias sobre registros, establecimientos y servicios de salud; ubicación extraída de la nota, sin publicar información personal |
 | ERSSAN | Oficial | 30 min | Supervisiones, controles y problemas publicados sobre agua; separado de ESSAP |
 | SENACSA | Oficial | 60 min | Alertas, focos, campañas y restricciones de sanidad animal; categoría propia |
 | Dirección Nacional de Migraciones | Oficial | 30 min | Cambios operativos, restricciones, cierres y reaperturas de pasos fronterizos |
@@ -65,6 +67,10 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | Tercer Ojo | Prensa regional | 30 min | Portada; Caacupé y Cordillera |
 | Portal de Curuguaty | Prensa regional | 30 min | Portada, Locales y Sucesos; Canindeyú |
 | Portal Capitán Meza | Prensa regional | 30 min | Portada; Itapúa |
+| Radio Guairá | Prensa regional | 30 min | Portada; noticias locales de Guairá |
+| Pedro Juan Digital | Prensa regional | 30 min | Portada y Locales; Amambay |
+| Amambay Digital | Prensa regional | 30 min | Portada; Amambay |
+| Luque Noticias | Prensa regional | 30 min | Portada; Luque y Central |
 | Diario HOY | Prensa | 5 min | Fase 4 |
 | Popular | Prensa | 5 min | Fase 4 |
 | Extra | Prensa | 5 min | Fase 4 |
@@ -79,7 +85,9 @@ Canales verificados el 22/10/2026: [API de 1000 Noticias](https://1000noticias.c
 
 Se agregaron cinco medios independientes con scraper HTML y frecuencia de 15 minutos: [Asunción Actual](https://asuncionactual.com/), [Ahora Paraguay](https://ahoraparaguay.com/), [El Nacional](https://elnacional.com.py/), [Diario La Clave](https://laclave.com.py/) y [Ratio Paraguay](https://www.ratioparaguay.com.py/). Sus titulares y notas se evalúan con el clasificador de prensa común; para evitar geolocalizar una ciudad mencionada al pasar, estas cinco fuentes solo aceptan lugares que aparecen en el titular o en la descripción editorial de la nota. Solo una nota aceptada llega al mapa y conserva su enlace de origen. Cuando un titular informa cortes de electricidad y agua, el recolector conserva el mismo enlace y crea un candidato separado por servicio. Son fuentes periodísticas adicionales y no reemplazan la confirmación oficial ni garantizan que haya un aviso cada día. El scraper limita cada portada a ocho notas pertinentes de la última semana para acotar solicitudes y evitar importar toda la portada.
 
-El 23/10/2026 se añadieron once portales locales/regionales a través de `RegionalPressSourceSeeder`. Sus listados pueden incluir notas locales aunque el titular no mencione la ciudad; por eso el collector busca evidencia en el artículo y conserva solo el titular como contenido almacenado junto al enlace fuente. Cada consulta queda limitada a 18 enlaces y 12 candidatos, con recencia máxima de siete días e intervalo de 30 minutos. La región configurada describe el alcance habitual del portal y no reemplaza la localización que debe extraerse de cada nota. Para QAP Chaco News se usa la portada general sin fijar departamento porque cubre el Gran Chaco.
+El 23/10/2026 `RegionalPressSourceSeeder` quedó con quince portales locales/regionales. Sus listados pueden incluir notas locales aunque el titular no mencione la ciudad; por eso el collector busca evidencia en el artículo y conserva solo el titular como contenido almacenado junto al enlace fuente. Cada consulta queda limitada a 18 enlaces y 12 candidatos, con recencia máxima de siete días e intervalo de 30 minutos. La región configurada describe el alcance habitual del portal y no reemplaza la localización que debe extraerse de cada nota. Para QAP Chaco News se usa la portada general sin fijar departamento porque cubre el Gran Chaco.
+
+En salud, la categoría `health_public` agrupa vigilancia epidemiológica, vacunación, atención, servicios e insumos. `health_vector` conserva acciones de SENEPA y enfermedades vectoriales, y `animal_health` sigue separada. Un titular puede aparecer además en una capa relacionada —por ejemplo, asistencia sanitaria durante una crecida— cuando el mismo titular describe ambos hechos. El mapa exige fecha y lugar del acontecimiento: alertas nacionales de DINAVISA o campañas de vacunación sin punto territorial no reciben coordenadas genéricas.
 
 La selección se basó en actividad y cobertura visibles en las portadas durante la revisión; no verifica propiedad, independencia financiera, neutralidad ni exactitud de cada medio. Los portales inactivos o con publicaciones demasiado antiguas se omitieron. El tablero de salud debe confirmar sus respuestas reales después de incorporar la configuración en la base de datos.
 
@@ -138,3 +146,4 @@ La capa de discovery está documentada en `docs/DISCOVERY_SOURCES.md`. Sus halla
 ## Datos reales
 
 Los seeders crean únicamente catálogos. No crean incidentes, ejecuciones exitosas ni cantidades. Los fixtures HTML y RSS inventados existen exclusivamente bajo `tests/Fixtures`.
+

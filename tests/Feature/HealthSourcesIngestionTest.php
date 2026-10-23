@@ -25,6 +25,42 @@ class HealthSourcesIngestionTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_mspbs_health_response_to_floods_is_collected_for_health_and_flood_layers(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        $this->seed([CategorySeeder::class, SourceSeeder::class, LocationSeeder::class]);
+        $source = Source::query()->where('slug', 'mspbs-health')->sole();
+        $title = 'Equipos de salud asisten a comunidades afectadas por inundaciones en Misiones';
+        $articleUrl = 'https://www.mspbs.gov.py/portal/36762/equipos-de-salud-asisten-a-comunidades-afectadas-por-inundaciones-en-misiones.html';
+
+        Http::preventStrayRequests();
+        Http::fake(function ($request) use ($title, $articleUrl) {
+            if (str_contains($request->url(), 'mspbs.gov.py') && $request->url() !== $articleUrl) {
+                return Http::response('<main><h2><a href="'.$articleUrl.'">'.$title.'</a></h2></main>');
+            }
+
+            if ($request->url() === $articleUrl) {
+                return Http::response('<html><head>
+                    <meta property="og:title" content="'.$title.'">
+                    <meta property="og:description" content="Equipos del Ministerio de Salud brindan atención a comunidades afectadas por inundaciones en Misiones.">
+                    <meta property="article:published_time" content="2026-10-23T10:00:00-03:00">
+                    </head><body><main>'.$title.'</main></body></html>');
+            }
+
+            return Http::response('Unexpected URL', 404);
+        });
+
+        $candidates = app(HealthNewsCollector::class)->collect($source);
+        $categories = $candidates->pluck('metadata.category_slug')->all();
+        $healthCandidate = $candidates->firstWhere('metadata.category_slug', 'health_public');
+
+        $this->assertEqualsCanonicalizing(['health_public', 'weather_flood'], $categories);
+        $this->assertCount(2, $candidates->pluck('externalIdentifier')->unique());
+        $this->assertNotNull($healthCandidate);
+        $this->assertTrue($healthCandidate->metadata['category_variant']);
+        $this->assertSame($articleUrl, $healthCandidate->originalUrl);
+    }
+
     public function test_mspbs_featured_listing_collects_recent_health_news_with_its_original_reference(): void
     {
         CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');

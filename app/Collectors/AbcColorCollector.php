@@ -181,7 +181,7 @@ class AbcColorCollector implements CollectorInterface
 
         $content = $this->plainText(implode(' ', $contentParts));
         $category = $this->classifier->classify($title, $content);
-        $location = $this->locationFallback->forPress(
+        $location = $this->locationFallback->forNews(
             $source->type,
             $this->locationExtractor->extract($title, mb_substr($content, 0, 5000)),
         );
@@ -260,7 +260,7 @@ class AbcColorCollector implements CollectorInterface
             }
 
             $category = $this->classifier->classify($title, $content);
-            $location = $this->locationFallback->forPress(
+            $location = $this->locationFallback->forNews(
                 $source->type,
                 $this->locationExtractor->extract($title, mb_substr($content, 0, 3500)),
             );

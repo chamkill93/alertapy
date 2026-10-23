@@ -49,13 +49,20 @@ class UtilityNewsCollectorTest extends TestCase
 
         $result = app(UtilityNewsCollector::class)->collect($this->source());
 
-        $this->assertCount(2, $result);
-        $this->assertSame(['water', 'electricity'], $result->pluck('metadata.category_slug')->all());
+        $this->assertCount(3, $result);
+        $this->assertSame('water', $result->firstWhere('externalIdentifier', 'news-test-wp-1')->metadata['category_slug']);
+        $this->assertSame('electricity', $result->firstWhere('externalIdentifier', 'news-test-wp-2')->metadata['category_slug']);
+        $this->assertSame('water', $result->firstWhere('externalIdentifier', 'news-test-wp-5')->metadata['category_slug']);
         $this->assertSame('news-test-wp-1', $result[0]->externalIdentifier);
         $this->assertSame('https://news.test/noticia-1/', $result[0]->originalUrl);
         $this->assertSame('2026-10-22T10:00:00-03:00', $result[0]->publishedAt->toIso8601String());
         $this->assertSame('Asunción', $result[0]->detectedLocation);
         $this->assertTrue($result[0]->metadata['utility_news_collector']);
+        $unlocated = $result->firstWhere('externalIdentifier', 'news-test-wp-5');
+        $this->assertSame('Asunción', $unlocated->detectedLocation);
+        $this->assertTrue($unlocated->metadata['location_is_fallback']);
+        $this->assertNull($unlocated->metadata['city']);
+        $this->assertNull($unlocated->metadata['department']);
         Http::assertSentCount(2);
         Http::assertSent(fn ($request) => $request['search'] === 'agua' && $request['after'] === '2026-10-15T15:00:00');
         Http::assertSent(fn ($request) => $request['search'] === 'luz' && str_contains($request['_fields'], 'date_gmt'));

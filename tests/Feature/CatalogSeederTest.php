@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(108, Source::query()->count());
+        $this->assertSame(109, Source::query()->count());
         $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
         $this->assertCount(5, config('alertapy.discovery.gdelt.queries'));
         $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);
@@ -67,11 +67,13 @@ class CatalogSeederTest extends TestCase
         $this->assertTrue($agenciaIp->configuration_json['location_search_article_body']);
         $this->assertContains('agencia-ip', config('alertapy.cycle.priority_sources'));
         $this->assertDatabaseHas('sources', ['slug' => 'digies', 'enabled' => true, 'ingestion_type' => 'html']);
-        $healthSources = Source::query()->whereIn('slug', ['dinavisa', 'digesa', 'ins', 'inan', 'dnerhs'])->get();
-        $this->assertCount(5, $healthSources);
+        $healthSources = Source::query()->whereIn('slug', ['dinavisa', 'digesa', 'ins', 'inan', 'dnerhs', 'ips'])->get();
+        $this->assertCount(6, $healthSources);
         $this->assertTrue($healthSources->every(fn (Source $source): bool => $source->enabled
             && ($source->configuration_json['collector'] ?? null) === 'health_news'
             && ($source->configuration_json['category_classifier'] ?? null) === 'health'));
+        $this->assertContains('ips', config('alertapy.cycle.priority_sources'));
+        $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['ips']);
         $dnerhs = Source::query()->where('slug', 'dnerhs')->sole();
         $this->assertSame('health_news', $dnerhs->configuration_json['collector']);
         $this->assertSame([

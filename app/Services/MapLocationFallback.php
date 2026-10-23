@@ -23,13 +23,15 @@ class MapLocationFallback
     /** @param array{text: string, query: string, city: ?string, department: ?string, accuracy: string}|null $location
      *  @return array{text: string, query: string, city: ?string, department: ?string, accuracy: string, is_fallback: bool, latitude?: float, longitude?: float}|null
      */
-    public function forPress(SourceType $sourceType, ?array $location): ?array
+    public function forNews(SourceType $sourceType, ?array $location): ?array
     {
         if ($location !== null) {
             return [...$location, 'is_fallback' => false];
         }
 
-        if ($sourceType !== SourceType::Press) {
+        // News from press and official institutions can use the map reference.
+        // Sensors and community/discovery sources must provide their own location.
+        if (! in_array($sourceType, [SourceType::Press, SourceType::Official], true)) {
             return null;
         }
 

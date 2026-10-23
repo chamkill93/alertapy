@@ -154,6 +154,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://hechosdigital.com.py/'],
             ],
             [
+                'name' => 'TVS Digital',
+                'slug' => 'tvs-digital',
+                'domain' => 'tvs.com.py',
+                'regional_department' => 'Itapúa',
+                'listing_urls' => ['https://tvs.com.py/', 'https://tvs.com.py/category/locales/'],
+            ],
+            [
                 'name' => 'Radio ZP30',
                 'slug' => 'radio-zp30',
                 'domain' => 'zp30.com.py',

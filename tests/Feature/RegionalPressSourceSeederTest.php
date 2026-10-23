@@ -27,7 +27,7 @@ class RegionalPressSourceSeederTest extends TestCase
         $definitions = RegionalPressSourceSeeder::definitions();
         $slugs = array_column($definitions, 'slug');
 
-        $this->assertCount(20, $definitions);
+        $this->assertCount(21, $definitions);
         $this->assertCount(count($slugs), array_unique($slugs));
         $this->assertSame(count($definitions), Source::query()->whereIn('slug', $slugs)->count());
 
@@ -46,6 +46,10 @@ class RegionalPressSourceSeederTest extends TestCase
                 ? PressHomepageCollector::class
                 : RegionalPressCollector::class;
             $this->assertSame($expectedCollector, $registry[$source->slug]);
+            if ($source->slug === 'tvs-digital') {
+                $this->assertSame('Itapúa', $source->configuration_json['regional_department']);
+                $this->assertContains('https://tvs.com.py/category/locales/', $source->configuration_json['listing_urls']);
+            }
         }
     }
 

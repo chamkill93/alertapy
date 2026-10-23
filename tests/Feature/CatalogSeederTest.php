@@ -21,10 +21,12 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(107, Source::query()->count());
+        $this->assertSame(108, Source::query()->count());
         $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
-        $this->assertCount(4, config('alertapy.discovery.gdelt.queries'));
+        $this->assertCount(5, config('alertapy.discovery.gdelt.queries'));
         $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);
+        $gdelt = Source::query()->where('slug', 'gdelt')->sole();
+        $this->assertSame('GDELT descubre URLs originales para revisión; nunca se muestra como fuente final ni publica incidencias automáticamente.', $gdelt->configuration_json['review_policy']);
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
@@ -117,6 +119,7 @@ class CatalogSeederTest extends TestCase
         $this->assertSame([], array_diff($additionalPress->pluck('slug')->all(), config('alertapy.cycle.priority_sources')));
         $this->assertDatabaseHas('sources', ['slug' => 'ultimas-noticias-cde', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'hechos-digital', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'tu-radio-925', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'agr-fm-tv', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'canindeyu-digital', 'enabled' => true]);
         $this->assertSame(0, Incident::query()->count());

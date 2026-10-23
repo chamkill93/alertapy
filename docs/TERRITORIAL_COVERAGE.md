@@ -16,7 +16,7 @@ La población censal de un distrito es contexto. Solo se presenta `population_po
 
 ## Prensa local y regional
 
-El 23/10/2026 se amplió el catálogo con veinticuatro portales locales o regionales cuya actividad reciente y cobertura territorial aparecen en sus propias portadas o secciones locales. La lista documenta fuentes encontradas; no constituye un censo de medios ni una auditoría completa de propiedad o independencia societaria. Se les asigna confianza media y se mantienen los filtros de fecha, categoría, ubicación y enlace original.
+El 23/10/2026 se amplió el catálogo con veinticinco portales locales o regionales cuya actividad reciente y cobertura territorial aparecen en sus propias portadas o secciones locales. La lista documenta fuentes encontradas; no constituye un censo de medios ni una auditoría completa de propiedad o independencia societaria. Se les asigna confianza media y se mantienen los filtros de fecha, categoría, ubicación y enlace original.
 
 | Portal | Cobertura editorial declarada u observada | Listados configurados |
 | --- | --- | --- |
@@ -44,8 +44,9 @@ El 23/10/2026 se amplió el catálogo con veinticuatro portales locales o region
 | [Luque Noticias](https://www.luquenoticias.com.py/) | Luque y Central | Portada |
 | [Últimas Noticias](https://ultimasnoticias.com.py/) | Ciudad del Este, Alto Paraná y otras ciudades del país | Portada con secciones locales y nacionales |
 | [Hechos Digital](https://hechosdigital.com.py/) | Pedro Juan Caballero y Amambay | Portada |
+| [Tu Radio 92.5 FM](https://turadio92.com/) | Amambay y frontera; también publica notas de Canindeyú y Alto Paraná | Portada |
 
-Las fuentes se consultan cada 30 minutos, aceptan publicaciones de hasta siete días y limitan cada recorrido a 18 enlaces y 12 candidatos. Guardan título y URL original; el texto del artículo se usa solo como evidencia para reconocer lugar y hecho. Los puntos siguen siendo incidencias clasificables, no un espejo de todas las noticias.
+Las fuentes se consultan cada 30 minutos, aceptan publicaciones de hasta siete días y limitan cada recorrido a 18 enlaces y 12 candidatos. Guardan título y URL original; el texto del artículo se usa solo como evidencia para reconocer lugar y hecho. Los puntos siguen siendo incidencias clasificables, no un espejo de todas las noticias. Tu Radio 92.5 se incorporó tras verificar noticias locales recientes de Amambay y la frontera.
 
 La exploración encontró fuentes locales recientes para Amambay, Alto Paraná, Caaguazú, Caazapá, Canindeyú, Central, Concepción, Cordillera, Guairá, Itapúa, Misiones y San Pedro, además de Radio ZP30 para el Chaco Central. Última Hora mantiene listados propios para Ñeembucú, Pilar y Paraguarí; el recorrido de La Tribuna suma sus listados públicos de Ñeembucú y Paraguarí, sujetos a la misma ventana de siete días. Son secciones de prensa nacional, no sustitutos de medios locales. Paraguay24Horas publicó notas recientes sobre sucesos en Ñeembucú y otras zonas, por lo que se incorporó como prensa complementaria con ventana de siete días y extracción territorial desde la nota. QAP Chaco News publicó hechos recientes de Presidente Hayes y Alto Paraguay sin que el collector fuerce una única jurisdicción. Aun así, no se encontró un medio local regional con listado técnico verificable para Ñeembucú o Paraguarí; algunas zonas de la región Occidental también mantienen brechas de cobertura local. La inclusión de un sitio no confirma independencia editorial ni convierte una nota en una fuente oficial. La propiedad e independencia editorial se documentan solo cuando el medio lo declara o hay evidencia adicional; el estado del sitio y su canal de publicación se deben revisar periódicamente.
 

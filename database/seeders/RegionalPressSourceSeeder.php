@@ -175,6 +175,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://hechosdigital.com.py/'],
             ],
             [
+                'name' => 'Tu Radio 92.5 FM',
+                'slug' => 'tu-radio-925',
+                'domain' => 'turadio92.com',
+                'regional_department' => 'Amambay',
+                'listing_urls' => ['https://turadio92.com/'],
+            ],
+            [
                 'name' => 'TVS Digital',
                 'slug' => 'tvs-digital',
                 'domain' => 'tvs.com.py',

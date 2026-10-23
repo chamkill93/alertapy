@@ -44,7 +44,7 @@ class HealthSourcesIngestionTest extends TestCase
                 return Http::response('<html><head>
                     <meta property="og:title" content="'.$title.'">
                     <meta property="og:description" content="Equipos del Ministerio de Salud brindan atención a comunidades afectadas por inundaciones en Misiones.">
-                    <meta property="article:published_time" content="2026-10-23T10:00:00-03:00">
+                    <meta property="article:published_time" content="2026-10-09T10:00:00-03:00">
                     </head><body><main>'.$title.'</main></body></html>');
             }
 
@@ -98,7 +98,7 @@ class HealthSourcesIngestionTest extends TestCase
 
     public function test_mspbs_dengue_notice_uses_article_lead_for_public_health_correlation(): void
     {
-        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        CarbonImmutable::setTestNow('2026-10-13 12:00:00 America/Asuncion');
         $this->seed([CategorySeeder::class, SourceSeeder::class, LocationSeeder::class]);
         $source = Source::query()->where('slug', 'mspbs-health')->sole();
         $title = 'Dengue: tras lluvias se insta a reforzar la prevención de criaderos';

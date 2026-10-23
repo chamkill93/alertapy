@@ -32,13 +32,13 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-automatic-stations', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-cap', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'pai', 'enabled' => true, 'ingestion_type' => 'html']);
-$this->assertDatabaseHas('sources', ['slug' => 'agencia-ip', 'enabled' => true, 'ingestion_type' => 'html']);
+        $this->assertDatabaseHas('sources', ['slug' => 'agencia-ip', 'enabled' => true, 'ingestion_type' => 'html']);
         $agenciaIp = Source::query()->where('slug', 'agencia-ip')->sole();
         $this->assertSame('press_homepage', $agenciaIp->configuration_json['collector']);
         $this->assertFalse($agenciaIp->configuration_json['prefilter_requires_location']);
         $this->assertTrue($agenciaIp->configuration_json['location_search_article_body']);
         $this->assertContains('agencia-ip', config('alertapy.cycle.priority_sources'));
-                $this->assertDatabaseHas('sources', ['slug' => 'digies', 'enabled' => true, 'ingestion_type' => 'html']);
+        $this->assertDatabaseHas('sources', ['slug' => 'digies', 'enabled' => true, 'ingestion_type' => 'html']);
         $healthSources = Source::query()->whereIn('slug', ['dinavisa', 'digesa', 'ins', 'inan', 'dnerhs'])->get();
         $this->assertCount(5, $healthSources);
         $this->assertTrue($healthSources->every(fn (Source $source): bool => $source->enabled

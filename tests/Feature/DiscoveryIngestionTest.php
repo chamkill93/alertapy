@@ -63,6 +63,14 @@ class DiscoveryIngestionTest extends TestCase
         Cache::clear();
         $this->seed([CategorySeeder::class, SourceSeeder::class, LocationSeeder::class]);
         Source::query()->where('slug', 'gdelt')->update(['enabled' => true]);
+        GeocodingCache::query()->create([
+            'query' => 'Asunción',
+            'normalized_query' => 'asuncion',
+            'latitude' => -25.2867,
+            'longitude' => -57.3333,
+            'precision' => LocationAccuracy::City,
+            'provider' => 'test',
+        ]);
 
         $sequence = Http::sequence()
             ->push(['articles' => [[
@@ -90,7 +98,10 @@ class DiscoveryIngestionTest extends TestCase
                 'seendate' => '20260819T212000Z',
             ]]]);
 
-        Http::fake(['api.gdeltproject.org/*' => $sequence]);
+        Http::fake([
+            'api.gdeltproject.org/*' => $sequence,
+            '*' => Http::response([]),
+        ]);
 
         $this->artisan('alertapy:discover gdelt --force')->assertSuccessful();
 
@@ -107,7 +118,8 @@ class DiscoveryIngestionTest extends TestCase
             $this->assertDatabaseHas('raw_items', ['original_url' => $url]);
         }
         $this->assertDatabaseHas('content_candidates', ['source_type' => 'discovery', 'status' => 'pending_ai']);
-        Http::assertSentCount(4);
+        $gdeltRequests = Http::recorded(fn ($request, $response): bool => str_contains($request->url(), 'api.gdeltproject.org'))->count();
+        $this->assertSame(4, $gdeltRequests);
     }
 
 }

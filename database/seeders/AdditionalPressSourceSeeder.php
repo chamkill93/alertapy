@@ -86,7 +86,9 @@ class AdditionalPressSourceSeeder extends Seeder
             [
                 'name' => 'Diario Paraguayo',
                 'slug' => 'diario-paraguayo',
-                'domain' => 'diarioparaguayo.com.py',
+                'domain' => 'diarioparaguayo.com',
+                'base_url' => 'https://www.diarioparaguayo.com.py/',
+                'listing_urls' => ['https://www.diarioparaguayo.com.py/'],
                 'polling_minutes' => 30,
                 'prefilter_requires_location' => false,
                 'location_search_article_body' => true,
@@ -106,7 +108,7 @@ class AdditionalPressSourceSeeder extends Seeder
                 'ingestion_type' => IngestionType::Html,
                 'georef_mode' => GeorefMode::ExtractAndGeocode,
                 'trust_level' => TrustLevel::Medium,
-                'base_url' => $baseUrl,
+                'base_url' => $publisher['base_url'] ?? $baseUrl,
                 'polling_minutes' => $publisher['polling_minutes'] ?? 15,
                 'enabled' => true,
                 'configuration_json' => [

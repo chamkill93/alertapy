@@ -147,7 +147,7 @@ class PressHomepageCollector implements CollectorInterface
                 // the article. Keep the event filter, then resolve its place
                 // from the published article instead of losing it here.
                 $category = $location === null
-                    ? $this->classifier->classify($title, '')
+                    ? ($this->classifier->classify($title, '') ?? $this->healthClassifier->classify($title))
                     : $this->category($title, '', $location);
 
                 if ($category === null) {
@@ -235,7 +235,12 @@ class PressHomepageCollector implements CollectorInterface
             $configured = $this->configuredCategory($settings, $title, $contextDescription);
             $categories = $configured === null ? [] : [$configured];
         } elseif ($location !== null) {
-            $categories = $this->classifier->classifyAll($title, $contextDescription);
+            // Independent publishers can also surface public-health events;
+            // retain any separate territorial category from the same headline.
+            $categories = array_values(array_unique([
+                ...$this->classifier->classifyAll($title, $contextDescription),
+                ...$this->healthClassifier->classifyAll($title),
+            ]));
 
             if ($categories === []) {
                 $category = $this->category($title, $contextDescription, $location);
@@ -281,7 +286,8 @@ class PressHomepageCollector implements CollectorInterface
     /** @param array{text: string, query: string, city: ?string, department: ?string, accuracy: string} $location */
     private function category(string $title, string $description, array $location): ?string
     {
-        $category = $this->classifier->classify($title, $description);
+        $category = $this->classifier->classify($title, $description)
+            ?? $this->healthClassifier->classify($title);
 
         if ($category !== null) {
             return $category;

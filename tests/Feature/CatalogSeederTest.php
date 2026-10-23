@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(89, Source::query()->count());
+        $this->assertSame(96, Source::query()->count());
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
@@ -33,6 +33,13 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-cap', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'pai', 'enabled' => true, 'ingestion_type' => 'html']);
         $this->assertDatabaseHas('sources', ['slug' => 'digies', 'enabled' => true, 'ingestion_type' => 'html']);
+        $healthSources = Source::query()->whereIn('slug', ['dinavisa', 'digesa', 'ins', 'inan', 'dnerhs'])->get();
+        $this->assertCount(5, $healthSources);
+        $this->assertTrue($healthSources->every(fn (Source $source): bool => $source->enabled
+            && ($source->configuration_json['collector'] ?? null) === 'health_news'
+            && ($source->configuration_json['category_classifier'] ?? null) === 'health'));
+        $this->assertDatabaseHas('sources', ['slug' => 'rdn', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
         $this->assertSame('health', Source::query()->where('slug', 'pai')->sole()->configuration_json['category_classifier']);
         $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['pai']);
         $this->assertContains('pai', config('alertapy.cycle.priority_sources'));
@@ -95,7 +102,7 @@ class CatalogSeederTest extends TestCase
         $this->assertSame(45, $source->polling_minutes);
         $this->assertSame('Keep this setting', $source->configuration_json['operator_note']);
         $this->assertFalse($source->configuration_json['location_search_article_body']);
-        $this->assertSame(10, Source::query()->count());
+        $this->assertSame(12, Source::query()->count());
     }
 }
 

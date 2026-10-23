@@ -59,6 +59,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://caaguazunoticiasdigital.com.py/', 'https://caaguazunoticiasdigital.com.py/category/locales/'],
             ],
             [
+                'name' => 'OviedoPress',
+                'slug' => 'oviedopress',
+                'domain' => 'oviedopress.com',
+                'regional_department' => 'Caaguazú',
+                'listing_urls' => ['https://oviedopress.com/'],
+            ],
+            [
                 'name' => 'Diario Vanguardia',
                 'slug' => 'diario-vanguardia',
                 'domain' => 'diariovanguardia.com.py',
@@ -110,6 +117,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'domain' => 'capitanmeza.com.py',
                 'regional_department' => 'Itapúa',
                 'listing_urls' => ['https://capitanmeza.com.py/'],
+            ],
+            [
+                'name' => 'Más Encarnación',
+                'slug' => 'mas-encarnacion',
+                'domain' => 'masencarnacion.com',
+                'regional_department' => 'Itapúa',
+                'listing_urls' => ['https://masencarnacion.com/'],
             ],
             [
                 'name' => 'Radio Guairá',

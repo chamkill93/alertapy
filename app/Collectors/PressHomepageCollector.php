@@ -231,7 +231,7 @@ class PressHomepageCollector implements CollectorInterface
             // This lets a new health layer be attached to articles already seen as floods or outages.
             $categories = array_values(array_unique([
                 ...$this->classifier->classifyAll($title, $contextDescription),
-                ...$this->healthClassifier->classifyAll($title),
+                ...$this->healthClassifier->classifyAll($title, $contextDescription),
             ]));
         } elseif ($location !== null && $hasConfiguredCategory) {
             $configured = $this->configuredCategory($settings, $title, $contextDescription);
@@ -241,7 +241,7 @@ class PressHomepageCollector implements CollectorInterface
             // retain any separate territorial category from the same headline.
             $categories = array_values(array_unique([
                 ...$this->classifier->classifyAll($title, $contextDescription),
-                ...$this->healthClassifier->classifyAll($title),
+                ...$this->healthClassifier->classifyAll($title, $contextDescription),
             ]));
 
             if ($categories === []) {
@@ -289,7 +289,7 @@ class PressHomepageCollector implements CollectorInterface
     private function category(string $title, string $description, array $location): ?string
     {
         $category = $this->classifier->classify($title, $description)
-            ?? $this->healthClassifier->classify($title);
+            ?? $this->healthClassifier->classify($title, $description);
 
         if ($category !== null) {
             return $category;

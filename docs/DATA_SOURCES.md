@@ -46,6 +46,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | ABC Color | Prensa | 5 min | RSS incremental + archivo JSON público paginado (`Nacionales` y `Economía`) |
 | Última Hora | Prensa | 5 min | Portada, Chaco y búsquedas públicas ANDE/ESSAP ordenadas por fecha; metadatos de cada nota |
 | La Nación | Prensa | 5 min | Portada, País y etiquetas ANDE/ESSAP; metadatos de cada nota |
+| La Tribuna | Prensa | 10 min | Portada y secciones HTML públicas; artículos de cortes programados con zonas y horarios, enlace original |
 | 1000 Noticias | Prensa | 15 min | Búsquedas de agua y electricidad en la API WordPress pública |
 | Ñandutí | Prensa | 15 min | API WordPress pública y artículos originales en `nanduti.live` |
 | Asunción Actual | Prensa | 15 min | Portada HTML; scraper territorial para cortes, incidentes y alertas con fecha y ubicación reconocibles |

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Incident;
 use App\Models\Source;
+use App\Services\SourceCommandRegistry;
 use Database\Seeders\AdditionalPressSourceSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,6 +24,10 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
+        $this->assertSame(168, config('alertapy.sources.latribuna.max_age_hours'));
+        foreach (['abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna'] as $utilityPressSource) {
+            $this->assertContains($utilityPressSource, config('alertapy.cycle.priority_sources'));
+        }
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-automatic-stations', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-cap', 'enabled' => true]);
         $additionalPress = Source::query()->whereIn('slug', [
@@ -33,6 +38,23 @@ class CatalogSeederTest extends TestCase
             && $source->polling_minutes === 15
             && ($source->configuration_json['location_search_article_body'] ?? null) === false));
         $this->assertSame(0, Incident::query()->count());
+    }
+
+    public function test_every_enabled_catalog_source_is_registered_in_the_automatic_cycle(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $registered = array_keys(app(SourceCommandRegistry::class)->commands());
+        $priorities = (array) config('alertapy.cycle.priority_sources');
+        $this->assertLessThanOrEqual(config('alertapy.cycle.max_sources'), count($priorities));
+        $this->assertSame([], array_values(array_diff($priorities, $registered)), 'Priority sources missing from the master cycle.');
+        $unregistered = Source::query()->where('enabled', true)
+            ->whereNotIn('slug', $registered)
+            ->orderBy('slug')
+            ->pluck('slug')
+            ->all();
+
+        $this->assertSame([], $unregistered, 'Enabled sources missing from the master cycle: '.implode(', ', $unregistered));
     }
 
     public function test_additional_press_seeder_preserves_operator_settings_and_disabled_sources(): void

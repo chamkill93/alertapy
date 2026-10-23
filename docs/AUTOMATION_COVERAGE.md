@@ -46,7 +46,7 @@ Estas fuentes forman parte del mismo `alertapy:cycle`; las habilitadas se consul
 
 | Capa | Fuentes automáticas | Estado o límite verificado |
 | --- | --- | --- |
-| Electricidad | ANDE; Última Hora, La Nación, ABC, 1000 Noticias, Ñandutí y cinco medios incorporados | ANDE sigue bloqueada. Los medios sí han importado cortes programados verificables: Ahora Paraguay produjo registros separados para electricidad y agua, y La Nación mantiene un corte futuro del Palacio de Justicia para el 24/10, de 08:00 a 11:00. La consulta del 23/10 encontró que ANDE también publicó una lista de 17 zonas para ese día, pero ni la conexión bloqueada ni los medios consultados la incorporaron. El respaldo periodístico es automático, pero no garantiza cubrir cada aviso que ANDE publique. Se conservan los enlaces originales. |
+| Electricidad | ANDE; Última Hora, La Nación, ABC, La Tribuna, HOY, 1000 Noticias, Ñandutí y cinco medios incorporados | ANDE sigue bloqueada. Los medios sí han importado cortes programados verificables: Ahora Paraguay produjo registros separados para electricidad y agua, y La Nación mantiene un corte futuro del Palacio de Justicia para el 24/10, de 08:00 a 11:00. La consulta del 23/10 encontró que ANDE también publicó una lista de 17 zonas para ese día, pero ni la conexión bloqueada ni los medios consultados la incorporaron. El respaldo periodístico es automático, pero no garantiza cubrir cada aviso que ANDE publique. Se conservan los enlaces originales. |
 | Agua | ESSAP, ERSSAN, SIAGUAPY y medios de prensa | La API de ESSAP puede responder correctamente con cero avisos. El mapa usa noticias de servicio con fecha y zona verificables como respaldo. |
 | Seguridad | Ministerio Público, SENAD y prensa | Titular y ubicación pasan filtros territoriales; los falsos positivos de expresiones figuradas están cubiertos por pruebas. |
 | Accidentes y tránsito | MOPC, municipalidades y prensa | Cierres, desvíos y accidentes se clasifican con reglas distintas para evitar mezclar obras con siniestros. |
@@ -83,7 +83,7 @@ El listado anterior de Unicanal devuelve 404. Su [portada oficial](https://www.u
 
 `php artisan alertapy:status` muestra base, scheduler y fuentes. En Windows, los comandos sobre la base local deben usar el INI y variables de conexión del runner; el `.env` conserva la configuración MySQL del proyecto. Para comprobaciones automatizadas se usa SQLite **en memoria**; nunca la base real.
 
-La última corrida completa registrada aprobó **330 pruebas PHP (1681 aserciones) y 35 pruebas JavaScript**. También se verificó el rechazo de una segunda instancia del runner mientras la primera mantiene el lock.
+La última corrida completa registrada aprobó **330 pruebas PHP (1681 aserciones) y 35 pruebas JavaScript**. La auditoría actual incorpora una prueba de catálogo que exige un comando de ciclo para cada fuente habilitada. También se verificó el rechazo de una segunda instancia del runner mientras la primera mantiene el lock.
 
 Las capas ignoran respuestas obsoletas después de cambiar la selección. La infraestructura reparte su límite global sin perder colegios al activar salud o policía: en el área de prueba devuelve 2471 de 2471 lugares. Las vistas fuera de cobertura devuelven una colección vacía. Los conteos junto a cada categoría explican cuándo no hay datos; el radio permite elegir un centro y quitar el filtro desde móvil. Las regresiones incluyen cargas tardías, errores de peticiones anteriores, selección manual y permisos de ubicación que llegan después de cancelar.
 

@@ -145,17 +145,22 @@ class AutomaticCycleTest extends TestCase
 
     public function test_priority_sources_run_in_due_order_and_keep_failures_visible(): void
     {
-        config()->set('alertapy.cycle.priority_sources', ['essap', 'siaguapy']);
+        config()->set('alertapy.cycle.priority_sources', ['essap', 'siaguapy', 'latribuna']);
         $this->source('abc');
         $this->source('essap', ['last_run_at' => now()->subMinutes(20)]);
         $this->source('siaguapy', ['last_run_at' => now()->subHour()]);
+        $this->source('latribuna', [
+            'last_run_at' => now()->subHours(2),
+            'configuration_json' => ['collector' => 'press_homepage'],
+        ]);
+        Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'latribuna'])->andReturn(0);
         Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'siaguapy'])->andReturn(1);
         Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'essap'])->andReturn(0);
         Artisan::shouldReceive('call')->once()->ordered()->with('alertapy:scrape', ['source' => 'abc'])->andReturn(0);
-        Artisan::shouldReceive('output')->times(3)->andReturn('ok');
+        Artisan::shouldReceive('output')->times(4)->andReturn('ok');
 
         $this->assertSame(1, $this->runCycle());
-        $this->assertDatabaseHas('scheduler_cycles', ['sources_processed' => 3, 'error_summary' => 'Fuentes con error: siaguapy']);
+        $this->assertDatabaseHas('scheduler_cycles', ['sources_processed' => 4, 'error_summary' => 'Fuentes con error: siaguapy']);
     }
 
     public function test_a_running_cycle_holds_the_lock_and_does_not_create_a_duplicate_cycle(): void

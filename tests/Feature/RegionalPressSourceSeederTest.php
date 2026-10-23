@@ -27,7 +27,9 @@ class RegionalPressSourceSeederTest extends TestCase
         $definitions = RegionalPressSourceSeeder::definitions();
         $slugs = array_column($definitions, 'slug');
 
-        $this->assertCount(22, $definitions);
+        $this->assertCount(24, $definitions);
+        $this->assertContains('oviedopress', $slugs);
+        $this->assertContains('mas-encarnacion', $slugs);
         $this->assertCount(count($slugs), array_unique($slugs));
         $this->assertSame(count($definitions), Source::query()->whereIn('slug', $slugs)->count());
 

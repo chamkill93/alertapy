@@ -66,13 +66,6 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://diariovanguardia.com.py/', 'https://diariovanguardia.com.py/category/locales/'],
             ],
             [
-                'name' => 'CDE HOT',
-                'slug' => 'cde-hot',
-                'domain' => 'www.cdehot.com.py',
-                'regional_department' => null,
-                'listing_urls' => ['https://www.cdehot.com.py/'],
-            ],
-            [
                 'name' => 'Concepción al Día',
                 'slug' => 'concepcion-al-dia',
                 'domain' => 'concepcionaldia.com',

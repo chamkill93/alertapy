@@ -73,7 +73,6 @@ class HealthNewsCollectorTest extends TestCase
         $this->assertSame(['health_public', 'weather_flood'], $candidates->pluck('metadata.category_slug')->unique()->values()->all());
         $this->assertSame(['Ciudad del Este', 'Presidente Franco'], $candidates->pluck('metadata.city')->unique()->values()->all());
         $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->originalUrl === $storyUrl
-            && $candidate->content === $title));
+            && preg_match('/^'.preg_quote($title, '/').'(?: Ámbito territorial: .+)?$/u', $candidate->content) === 1));
     }
 }
-

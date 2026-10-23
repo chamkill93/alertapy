@@ -20,7 +20,7 @@ class CategoryApiTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonCount(13, 'data')
+            ->assertJsonCount(14, 'data')
             ->assertJsonPath('data.0.slug', 'electricity')
             ->assertJsonMissing(['slug' => 'security']);
     }

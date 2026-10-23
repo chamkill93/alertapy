@@ -46,5 +46,16 @@ class HealthCategoryClassifierTest extends TestCase
 
         $this->assertSame(['health_public', 'weather_flood'], $categories);
     }
+
+    public function test_agencia_ip_flood_assistance_story_populates_health_and_flood_layers(): void
+    {
+        $title = 'Más de 200 damnificados reciben asistencia médica en zonas afectadas por inundaciones en Ñeembucú';
+        $categories = array_values(array_unique([
+            ...(new HealthCategoryClassifier)->classifyAll($title),
+            ...(new PressIncidentClassifier)->classifyAll($title, ''),
+        ]));
+
+        $this->assertSame(['health_public', 'weather_flood'], $categories);
+    }
 }
 

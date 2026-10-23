@@ -21,7 +21,8 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(110, Source::query()->count());
+        $this->assertDatabaseHas('categories', ['slug' => 'health_public', 'enabled' => true]);
+        $this->assertSame(111, Source::query()->count());
         $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
         $this->assertCount(5, config('alertapy.discovery.gdelt.queries'));
         $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);
@@ -82,6 +83,13 @@ class CatalogSeederTest extends TestCase
         ], $dnerhs->configuration_json['listing_urls']);
         $this->assertDatabaseHas('sources', ['slug' => 'rdn', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
+        $paraguayEnVivo = Source::query()->where('slug', 'paraguay-en-vivo')->sole();
+        $this->assertTrue($paraguayEnVivo->enabled);
+        $this->assertSame('press_homepage', $paraguayEnVivo->configuration_json['collector']);
+        $this->assertSame(['https://paraguayenvivo.com/'], $paraguayEnVivo->configuration_json['listing_urls']);
+        $this->assertFalse($paraguayEnVivo->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($paraguayEnVivo->configuration_json['location_search_article_body']);
+        $this->assertSame(168, $paraguayEnVivo->configuration_json['max_age_hours']);
         $this->assertDatabaseHas('sources', ['slug' => 'paraguay24horas', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'el-surti', 'enabled' => true]);
         $elSurti = Source::query()->where('slug', 'el-surti')->sole();

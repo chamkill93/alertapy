@@ -45,6 +45,20 @@ class HealthCategoryClassifierTest extends TestCase
         $this->assertNull($classifier->classify('Capacitación administrativa del MSPBS en Asunción'));
     }
 
+    public function test_it_classifies_respiratory_virus_reports_as_public_health(): void
+    {
+        $classifier = new HealthCategoryClassifier;
+
+        foreach (['Rhinovirus', 'Rinovirus', 'Metapneumovirus', 'Adenovirus', 'Parainfluenza', 'Virus sincitial respiratorio', 'VRS', 'RSV'] as $pathogen) {
+            $this->assertSame(['health_public'], $classifier->classifyAll($pathogen));
+        }
+
+        $this->assertSame(
+            ['health_public'],
+            $classifier->classifyAll('Rhinovirus causa más de la mitad de las internaciones por cuadros respiratorios'),
+        );
+    }
+
     public function test_it_uses_the_article_lead_to_correlate_health_topics(): void
     {
         $classifier = new HealthCategoryClassifier;

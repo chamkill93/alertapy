@@ -127,7 +127,19 @@ class AdditionalPressSourceSeeder extends Seeder
                 'location_search_article_body' => true,
                 'max_links' => 30,
                 'max_candidates' => 20,
-            ],        ];
+            ],
+            [
+                'name' => 'Paraguay en Vivo',
+                'slug' => 'paraguay-en-vivo',
+                'domain' => 'paraguayenvivo.com',
+                'listing_urls' => ['https://paraguayenvivo.com/'],
+                'polling_minutes' => 30,
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 60,
+                'max_candidates' => 25,
+            ],
+        ];
 
         return array_map(function (array $publisher): array {
             $baseUrl = 'https://'.$publisher['domain'].'/';

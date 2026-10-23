@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(104, Source::query()->count());
+        $this->assertSame(106, Source::query()->count());
         $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
         $this->assertCount(4, config('alertapy.discovery.gdelt.queries'));
         $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);

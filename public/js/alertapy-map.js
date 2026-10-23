@@ -16,6 +16,7 @@
     const elements = {
         categoryFilter: document.getElementById('category-filter'),
         toggleCategories: document.getElementById('toggle-categories'),
+        quickCategories: document.getElementById('quick-categories'),
         combineCategories: document.getElementById('combine-categories'),
         categorySelectionHelp: document.getElementById('category-selection-help'),
         categoryMoreStatus: document.getElementById('category-more-status'),
@@ -1415,6 +1416,7 @@
         state.categoriesVisible = state.allCategories || inputs.some(input => input.checked);
         elements.toggleCategories.setAttribute('aria-pressed', String(state.allCategories));
         elements.categoryFilter.classList.toggle('is-all-selected', state.allCategories);
+        syncQuickCategoryButtons(inputs);
         if (elements.categoryMoreStatus) {
             const extraInputs = [...elements.categoryFilter.querySelectorAll('[data-category-extra="true"]')];
             const selectedExtras = extraInputs.filter(input => input.checked);
@@ -1428,6 +1430,18 @@
                         : `${extraInputs.length} disponibles`;
         }
         return state.categoriesVisible;
+    }
+
+    function syncQuickCategoryButtons(inputs = [...elements.categoryFilter.querySelectorAll('input:not(:disabled)')]) {
+        if (!elements.quickCategories) return;
+        const checked = inputs.filter(input => input.checked);
+        const allChecked = inputs.length > 0 && checked.length === inputs.length;
+        const activeCategory = state.allCategories || (elements.combineCategories?.checked && allChecked)
+            ? 'all'
+            : !elements.combineCategories?.checked && checked.length === 1 ? checked[0].value : null;
+        elements.quickCategories.querySelectorAll('[data-quick-category]').forEach(button => {
+            button.setAttribute('aria-pressed', String(button.dataset.quickCategory === activeCategory));
+        });
     }
 
     syncCategoryToggle();
@@ -1489,11 +1503,37 @@
     elements.periodFilter.addEventListener('click', selectPeriod);
     elements.precisePeriodFilter?.addEventListener('click', selectPeriod);
 
-    elements.toggleCategories.addEventListener('click', () => {
+    function showAllCategories() {
         state.allCategories = true;
         const combine = Boolean(elements.combineCategories?.checked);
         elements.categoryFilter.querySelectorAll('input:not(:disabled)').forEach(input => { input.checked = combine; });
         syncCategoryToggle();
+        loadIncidents();
+    }
+
+    elements.toggleCategories.addEventListener('click', showAllCategories);
+    elements.quickCategories?.addEventListener('click', event => {
+        const button = event.target.closest('[data-quick-category]');
+        if (!button) return;
+
+        if (button.dataset.quickCategory === 'all') {
+            showAllCategories();
+            return;
+        }
+
+        const inputs = [...elements.categoryFilter.querySelectorAll('input:not(:disabled)')];
+        const selected = inputs.find(input => input.value === button.dataset.quickCategory);
+        if (!selected) return;
+
+        if (elements.combineCategories?.checked) {
+            elements.combineCategories.checked = false;
+            inputs.forEach(input => { input.type = 'radio'; });
+            elements.categoryFilter.setAttribute('role', 'radiogroup');
+        }
+        inputs.forEach(input => { input.checked = input === selected; });
+        state.allCategories = false;
+        syncCategoryToggle();
+        syncAdvancedFilterIndicator();
         loadIncidents();
     });
 

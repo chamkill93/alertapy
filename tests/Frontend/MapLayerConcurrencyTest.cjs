@@ -241,6 +241,31 @@ test('returning to one category from an empty combination restores all categorie
     assert.equal(app.elements.toggleCategories.attrs['aria-pressed'], 'true');
 });
 
+test('map quick switches change one incident layer without opening filters and stay synchronized', () => {
+    const app = createMapHarness(['electricity', 'water', 'hydrology', 'traffic']);
+    const quick = app.elements.quickCategories;
+    const button = value => quick.buttons.find(item => item.dataset.quickCategory === value);
+
+    app.syncCategoryToggle();
+    assert.equal(button('all').attrs['aria-pressed'], 'true');
+    quick.dispatch('click', { target: button('water') });
+    assert.deepEqual(app.selectedCategories(), ['water']);
+    assert.equal(button('water').attrs['aria-pressed'], 'true');
+    assert.equal(button('all').attrs['aria-pressed'], 'false');
+
+    app.elements.combineCategories.checked = true;
+    app.elements.combineCategories.dispatch('change');
+    quick.dispatch('click', { target: button('electricity') });
+    assert.equal(app.elements.combineCategories.checked, false);
+    assert.deepEqual(app.selectedCategories(), ['electricity']);
+    assert.equal(button('electricity').attrs['aria-pressed'], 'true');
+
+    quick.dispatch('click', { target: button('all') });
+    assert.equal(app.state.allCategories, true);
+    assert.equal(button('all').attrs['aria-pressed'], 'true');
+    assert.deepEqual(app.selectedCategories(), ['electricity', 'water', 'hydrology', 'traffic']);
+});
+
 test('primary and precise periods share one selection and a collapsed advanced period stays identifiable', () => {
     const app = createMapHarness();
     for (const button of app.periodButtons) {

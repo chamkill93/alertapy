@@ -269,6 +269,21 @@
         <section class="map-shell" aria-label="Mapa de incidencias de Paraguay">
             <div id="map" tabindex="0" aria-label="Mapa interactivo de AlertaPY"></div>
 
+            <div class="map-quick-categories" id="quick-categories" role="group" aria-label="Cambiar capa de incidencias">
+                <button type="button" data-quick-category="all" aria-label="Mostrar todas las incidencias" aria-pressed="true">
+                    <span data-app-icon="layers" aria-hidden="true"></span><span>Todas</span>
+                </button>
+                <button type="button" data-quick-category="electricity" aria-label="Mostrar incidencias de electricidad" aria-pressed="false">
+                    <span data-app-icon="electricity" aria-hidden="true"></span><span>Energía</span>
+                </button>
+                <button type="button" data-quick-category="water" aria-label="Mostrar incidencias de agua" aria-pressed="false">
+                    <span data-app-icon="water" aria-hidden="true"></span><span>Agua</span>
+                </button>
+                <button type="button" data-quick-category="hydrology" aria-label="Mostrar incidencias de ríos e hidrología" aria-pressed="false">
+                    <span data-app-icon="hydrology" aria-hidden="true"></span><span>Ríos</span>
+                </button>
+            </div>
+
             <button class="report-fab" data-report-open type="button">
                 <span data-app-icon="plus" aria-hidden="true"></span>
                 Reportar

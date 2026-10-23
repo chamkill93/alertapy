@@ -50,7 +50,7 @@ function node() {
     return { children: [], outerHTML: '<div></div>', append(...children) { this.children.push(...children); }, appendChild(child) { this.children.push(child); } };
 }
 
-function createMapHarness() {
+function createMapHarness(categories = ['traffic', 'weather', 'works']) {
     const status = () => ({ textContent: '', dataset: {}, attrs: {}, setAttribute(name, value) { this.attrs[name] = value; } });
     const periodButtons = ['now', '24h', '7d', '1h', '6h'].map(period => ({
         ...status(), dataset: { period }, classList: { toggle() {} }, closest() { return this; },
@@ -59,7 +59,15 @@ function createMapHarness() {
         monitoringFilter: filter(['dmh']), monitoringStatus: status(),
         roadFilter: filter(['roads', 'rivers']), roadStatus: status(),
         infrastructureFilter: filter(['health', 'education', 'police']), infrastructureStatus: status(),
-        categoryFilter: filter(['traffic', 'weather', 'works']), toggleCategories: eventTarget(status()),
+        categoryFilter: filter(categories), toggleCategories: eventTarget(status()),
+        quickCategories: eventTarget({
+            buttons: ['all', 'electricity', 'water', 'hydrology'].map(value => ({
+                dataset: { quickCategory: value }, attrs: {},
+                setAttribute(name, content) { this.attrs[name] = content; },
+                closest() { return this; },
+            })),
+            querySelectorAll() { return this.buttons; },
+        }),
         combineCategories: eventTarget({ checked: false }), categorySelectionHelp: status(),
         categoryMoreStatus: status(),
         periodFilter: { querySelectorAll: () => periodButtons.slice(0, 3) },
@@ -123,7 +131,7 @@ function createMapHarness() {
         + sourceSection('    function syncAdvancedFilterIndicator()', '    function syncCategoryToggle()')
         + sourceSection('    async function loadWeatherStations()', '    function prefetchNationalInfrastructure()')
         + sourceSection('    function syncCategoryToggle()', "    elements.periodFilter.addEventListener(")
-        + sourceSection("    elements.toggleCategories.addEventListener('click'", '    elements.layersToggle?.addEventListener(')
+        + sourceSection('    function showAllCategories()', '    elements.layersToggle?.addEventListener(')
         + '\nreturn {loadWeatherStations, loadCartographyLayers, loadInfrastructureLayers, syncInfrastructureSelection, syncCategoryToggle, selectedCategories, selectPeriod};';
     const functions = new Function(...Object.keys(context), code)(...Object.values(context));
     return {

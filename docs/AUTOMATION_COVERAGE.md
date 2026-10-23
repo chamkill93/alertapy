@@ -22,7 +22,7 @@ En la lectura local de las 18:12 del 22/10, la capa de electricidad tenía dos s
 - Los avisos que nombran varios departamentos generan candidatos para cada lugar reconocido por el catálogo. La descripción conserva el alcance completo de la fuente.
 - El ciclo comparte un catálogo con los comandos de recolección, descubrimiento y monitoreo. Incluye estaciones DMH y alertas CAP, respeta frecuencias, registra errores y conserva el punto por donde continuar.
 - La agenda Laravel tiene un único ciclo. La expiración se ejecuta antes de recolectar; un fallo de una fuente no cancela las demás.
-- El selector del mapa mantiene Electricidad, Agua y Ríos visibles para cambiar con un toque; las otras incidencias quedan agrupadas y conservan a la vista cuál categoría adicional quedó seleccionada.
+- Un selector flotante persistente permite cambiar entre Todas, Electricidad, Agua y Ríos con un toque, incluso en móvil y sin abrir Filtros. Las otras incidencias permanecen agrupadas en el panel avanzado y conservan a la vista cuál categoría adicional quedó seleccionada.
 - La expiración persiste el estado y su evento de auditoría una sola vez; un vencimiento por tiempo se distingue de una resolución confirmada del hecho.
 - Las expiraciones técnicas permanecen en el detalle de cada incidencia, pero no desplazan noticias y cierres reales del panel de novedades. Se probó con 105 vencimientos antiguos procesados a la vez.
 - El panel usa el ciclo de vida para rotular “Vencido” o “Resuelto”; no interpreta automáticamente todo estado finalizado como una resolución confirmada.

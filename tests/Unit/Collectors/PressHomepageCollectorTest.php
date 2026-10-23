@@ -437,12 +437,12 @@ class PressHomepageCollectorTest extends TestCase
         CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
         $source = new Source([
             'name' => 'Prensa local',
-            'slug' => 'independent-health',
+            'slug' => 'diario-paraguayo',
             'type' => SourceType::Press,
-            'base_url' => 'https://press.test/',
-            'domain' => 'press.test',
+            'base_url' => 'https://www.diarioparaguayo.com.py/',
+            'domain' => 'diarioparaguayo.com',
             'configuration_json' => [
-                'listing_urls' => ['https://press.test/'],
+                'listing_urls' => ['https://www.diarioparaguayo.com.py/'],
                 'prefilter_requires_location' => false,
                 'max_age_hours' => 168,
                 'max_links' => 20,
@@ -451,10 +451,10 @@ class PressHomepageCollectorTest extends TestCase
             ],
         ]);
         $title = 'Equipos de salud asisten a comunidades afectadas por inundaciones en Misiones';
-        $url = 'https://press.test/equipos-de-salud-misiones/';
+        $url = 'https://diarioparaguayo.com/noticia/equipos-de-salud-misiones/';
         Http::preventStrayRequests();
         Http::fake([
-            'press.test/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            'www.diarioparaguayo.com.py/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
             $url => Http::response('<meta property="og:title" content="'.$title.'">
                 <meta property="article:published_time" content="2026-10-22T09:00:00-03:00">
                 <article><p>Los equipos brindan asistencia a familias afectadas en Misiones.</p></article>'),

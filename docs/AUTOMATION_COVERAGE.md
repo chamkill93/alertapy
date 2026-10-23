@@ -6,6 +6,8 @@ Revisión operativa: 22 de octubre de 2026, zona `America/Asuncion`.
 
 La instancia local usa la base real `storage/framework/alertapy-local.sqlite`, con respaldos privados previos a la actualización. La recolección de noticias se ejecuta mediante `alertapy:cycle`; el navegador consulta la base cada minuto mientras está activo. Desplegar código desde GitHub no actualiza noticias por sí solo.
 
+En Hostinger, un único cron por minuto debe invocar `scripts/run-cycle.sh`. El wrapper ejecuta `schedule:run`, que activa `alertapy:cycle` y también las sincronizaciones semanales de territorios y mensuales de infraestructura. Las fuentes siguen sus intervalos propios dentro del ciclo; no se debe crear otro cron paralelo para los mismos eventos.
+
 El catálogo contiene **64 fuentes, 44 habilitadas**. Una auditoría de solo lectura comparó las 44 habilitadas con el registro de comandos y encontró un collector para cada una. El ciclo maestro elige las fuentes vencidas, respeta la frecuencia de cada una y avanza el resto mediante checkpoint; el 22/10 un ciclo completó 19 fuentes en 119 segundos. Una fuente puede responder sin novedades, estar bloqueada o necesitar reparación. El backoffice privado `/admin/connections` distingue estado, última consulta, último éxito y salud del ciclo. `/api/sources/status` requiere sesión administrativa; el mapa público ya no consulta ni muestra estos diagnósticos.
 
 En la lectura local de las 18:12 del 22/10, la capa de electricidad tenía dos señales vigentes de los últimos siete días, agua una e hidrología una; el resto de las capas también se consulta, aunque no todas tenían una incidencia vigente. Son conteos de ese momento, no cuotas ni datos simulados. La lista de capas y fuentes activas se detalla abajo.

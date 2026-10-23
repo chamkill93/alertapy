@@ -56,7 +56,18 @@ jobs:
           node --check public/js/alertapy-map.js
           node --test tests/Frontend/*Test.cjs
       - name: Validate deployment scripts
-        run: bash -n scripts/deploy-hostinger.sh scripts/run-cycle.sh
+        run: |
+          bash -n scripts/deploy-hostinger.sh scripts/run-cycle.sh
+          fake_php="$(mktemp)"
+          schedule_capture="$(mktemp)"
+          trap 'rm -f "$fake_php" "$schedule_capture"' EXIT
+          cat > "$fake_php" <<'FAKE_PHP'
+          #!/usr/bin/env bash
+          printf '%s\n' "$*" > "$SCHEDULE_CAPTURE"
+          FAKE_PHP
+          chmod +x "$fake_php"
+          SCHEDULE_CAPTURE="$schedule_capture" bash scripts/run-cycle.sh "$fake_php"
+          grep -Fqx "artisan schedule:run --no-interaction" "$schedule_capture"
 
   mysql:
     name: MySQL migration smoke test

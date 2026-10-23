@@ -37,6 +37,7 @@ class CatalogSeederTest extends TestCase
         $this->assertTrue($additionalPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 15
             && ($source->configuration_json['location_search_article_body'] ?? null) === false));
+        $this->assertSame([], array_diff($additionalPress->pluck('slug')->all(), config('alertapy.cycle.priority_sources')));
         $this->assertSame(0, Incident::query()->count());
     }
 

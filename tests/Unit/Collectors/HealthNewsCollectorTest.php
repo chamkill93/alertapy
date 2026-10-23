@@ -74,8 +74,12 @@ class HealthNewsCollectorTest extends TestCase
 
         $this->assertSame(['weather_flood', 'health_public'], $candidates->pluck('metadata.category_slug')->unique()->values()->all());
         $this->assertSame(['Ciudad del Este', 'Presidente Franco'], $candidates->pluck('metadata.city')->filter()->unique()->values()->all());
-        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->originalUrl === $storyUrl
-            && preg_match('/^'.preg_quote($title, '/').'(?: Ámbito territorial: .+)?$/u', $candidate->content) === 1));
+        $localized = $candidates->where('originalUrl', $storyUrl);
+        $this->assertNotEmpty($localized);
+        $this->assertTrue($localized->every(fn ($candidate): bool => preg_match('/^'.preg_quote($title, '/').'(?: Ámbito territorial: .+)?$/u', $candidate->content) === 1));
+        $this->assertTrue($candidates->contains(fn ($candidate): bool => $candidate->originalUrl === $nationalUrl
+            && $candidate->metadata['location_is_fallback']
+            && $candidate->detectedLocation === 'Asunción'));
     }
 
     public function test_dnerhs_latest_regional_health_report_is_collected_across_all_six_regions(): void

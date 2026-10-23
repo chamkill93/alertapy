@@ -71,7 +71,7 @@
 .filters .text-button { color: #bee9cc; }
 .filters .text-button:hover { color: #e3f5dc; text-decoration: underline; text-underline-offset: 3px; }
 .filters .filter-help, .filters .muted, .filters .optional-layer-help { color: #afc4c8; }
-.filters .period-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); border-color: #3a5964; background: #0e2832; padding: .35rem; gap: .3rem; }
+.filters .period-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); border-color: #3a5964; background: #0e2832; padding: .35rem; gap: .3rem; }
 .filters .period-grid button[data-period="now"] { grid-column: 1 / -1; }
 .filters .period-grid button:not([data-period="now"]) { font-size: .68rem; gap: .2rem; padding-inline: .1rem; }
 .filters .period-grid button { color: #bed0d4; font-weight: 600; background: transparent; }

@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(101, Source::query()->count());
+        $this->assertSame(103, Source::query()->count());
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
@@ -33,6 +33,14 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-cap', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'pai', 'enabled' => true, 'ingestion_type' => 'html']);
         $this->assertDatabaseHas('sources', ['slug' => 'agencia-ip', 'enabled' => true, 'ingestion_type' => 'html']);
+        $this->assertDatabaseHas('sources', ['slug' => 'gobernacion-neembucu', 'enabled' => true, 'type' => 'official']);
+        $neembucuGovernment = Source::query()->where('slug', 'gobernacion-neembucu')->sole();
+        $this->assertSame('press_homepage', $neembucuGovernment->configuration_json['collector']);
+        $this->assertSame('Ñeembucú', $neembucuGovernment->configuration_json['regional_department']);
+        $this->assertSame([
+            'https://xn--eembucu-3za.gov.py/noticias/',
+            'https://xn--eembucu-3za.gov.py/category/gacetilla-de-prensa/',
+        ], $neembucuGovernment->configuration_json['listing_urls']);
         $agenciaIp = Source::query()->where('slug', 'agencia-ip')->sole();
         $this->assertSame('press_homepage', $agenciaIp->configuration_json['collector']);
         $this->assertFalse($agenciaIp->configuration_json['prefilter_requires_location']);

@@ -37,9 +37,9 @@ return [
     'cycle' => [
         // Refresh services, scheduled-outage press backups and live monitoring before slower general news sites.
         // Each source still obeys its own polling interval and error handling.
-        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', 'abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna', '1000noticias', 'nanduti', 'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo', 'ultimas-noticias-cde', 'hechos-digital', 'senepa', 'mspbs-health', 'dgvs', 'agencia-ip', 'pai', 'digies'],
+        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', 'abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna', '1000noticias', 'nanduti', 'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo', 'ultimas-noticias-cde', 'hechos-digital', 'senepa', 'mspbs-health', 'dgvs', 'agencia-ip', 'pai', 'digies', 'dinavisa', 'digesa', 'ins', 'inan', 'dnerhs', 'ips'],
         'max_seconds' => (int) env('ALERTAPY_CYCLE_MAX_SECONDS', 180),
-        'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 32),
+        'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 38),
         'max_candidates' => (int) env('ALERTAPY_MAX_CANDIDATES_PER_CYCLE', 100),
         'max_ai_decisions' => (int) env('ALERTAPY_MAX_AI_DECISIONS_PER_CYCLE', 50),
     ],

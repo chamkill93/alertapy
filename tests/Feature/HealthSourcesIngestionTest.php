@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Collectors\HealthNewsCollector;
+use App\Collectors\MspbsCollector;
 use App\Enums\LocationAccuracy;
 use App\Models\GeocodingCache;
 use App\Models\Source;
@@ -93,6 +94,38 @@ class HealthSourcesIngestionTest extends TestCase
         $this->assertSame('health_public', $candidates[0]->metadata['category_slug']);
         $this->assertSame('San Lorenzo, Central', $candidates[0]->detectedLocation);
         $this->assertSame('2026-10-19T12:00:00-03:00', $candidates[0]->publishedAt?->toIso8601String());
+    }
+
+    public function test_mspbs_dengue_notice_uses_article_lead_for_public_health_correlation(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        $this->seed([CategorySeeder::class, SourceSeeder::class, LocationSeeder::class]);
+        $source = Source::query()->where('slug', 'mspbs-health')->sole();
+        $title = 'Dengue: tras lluvias se insta a reforzar la prevención de criaderos';
+        $articleUrl = 'https://www.mspbs.gov.py/portal/36653/dengue-tras-lluvias-se-insta-a-reforzar-la-prevencion-de-criaderos.html';
+
+        Http::preventStrayRequests();
+        Http::fake(function ($request) use ($title, $articleUrl) {
+            if ($request->url() === $articleUrl) {
+                return Http::response('<html><head>
+                    <meta property="og:title" content="'.$title.'">
+                    <meta property="og:description" content="En Misiones, el reporte de vigilancia epidemiológica actualiza la situación sanitaria del dengue, con notificaciones de casos sospechosos y sin brotes confirmados.">
+                    <meta property="article:published_time" content="2026-10-23T10:00:00-03:00">
+                    </head><body><main>'.$title.'</main></body></html>');
+            }
+
+            if (str_contains($request->url(), 'mspbs.gov.py')) {
+                return Http::response('<main><h2><a href="'.$articleUrl.'">'.$title.'</a></h2></main>');
+            }
+
+            return Http::response('Unexpected URL', 404);
+        });
+
+        $candidates = app(MspbsCollector::class)->collect($source);
+
+        $this->assertSame(['health_vector', 'health_public'], $candidates->pluck('metadata.category_slug')->all());
+        $this->assertSame('Misiones', $candidates->first()->metadata['department']);
+        $this->assertSame($articleUrl, $candidates->first()->originalUrl);
     }
 
     public function test_erssan_multi_department_updates_become_one_incident_per_department(): void

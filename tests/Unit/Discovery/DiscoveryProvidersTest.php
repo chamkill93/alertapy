@@ -105,6 +105,48 @@ class DiscoveryProvidersTest extends TestCase
         app(MastodonDiscoveryProvider::class)->discover($this->source('mastodon', SourceType::Social));
     }
 
+
+    public function test_gdelt_queries_all_configured_groups_and_keeps_original_urls(): void
+    {
+        config()->set('alertapy.discovery.gdelt.query', null);
+        config()->set('alertapy.discovery.gdelt.queries', [
+            'sourcecountry:paraguay storm',
+            'sourcecountry:paraguay animal-health',
+        ]);
+
+        Http::fake(function ($request) {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $parameters);
+
+            $articles = str_contains((string) ($parameters['query'] ?? ''), 'animal-health')
+                ? [[
+                    'url' => 'https://medio.example/alerta-aftosa-san-pedro',
+                    'title' => 'Confirman fiebre aftosa en bovinos de San Pedro',
+                    'seendate' => '20261023T120000Z',
+                ], [
+                    'url' => 'https://medio.example/temporal-pilar',
+                    'title' => 'Temporal afecta viviendas de Pilar',
+                    'seendate' => '20261023T110000Z',
+                ]]
+                : [[
+                    'url' => 'https://medio.example/temporal-pilar',
+                    'title' => 'Temporal afecta viviendas de Pilar',
+                    'seendate' => '20261023T110000Z',
+                ]];
+
+            return Http::response(['articles' => $articles]);
+        });
+
+        $items = app(GdeltDiscoveryProvider::class)->discover($this->source('gdelt', SourceType::Discovery));
+
+        $this->assertCount(2, $items);
+        $this->assertSame([
+            'https://medio.example/temporal-pilar',
+            'https://medio.example/alerta-aftosa-san-pedro',
+        ], $items->pluck('originalUrl')->all());
+        Http::assertSentCount(2);
+    }
+
+
     private function source(string $slug, SourceType $type): Source
     {
         return Source::query()->create([

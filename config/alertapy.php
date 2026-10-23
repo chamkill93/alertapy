@@ -311,6 +311,17 @@ return [
             'max_links' => 90,
             'max_candidates' => 30,
         ],
+        'mspbs-health-featured' => [
+            'enabled' => env('SOURCE_MSPBS_HEALTH_FEATURED_ENABLED', true),
+            'listing_urls' => ['https://www.mspbs.gov.py/buscar.php?modo=0&page=669&q=&url=portal'],
+            'prefilter_requires_location' => false,
+            'summary_title_only' => true,
+            'max_age_hours' => 168,
+            'location_search_article_body' => true,
+            'category_classifier' => 'health',
+            'max_links' => 60,
+            'max_candidates' => 20,
+        ],
         'dgvs' => [
             'enabled' => env('SOURCE_DGVS_ENABLED', true),
             'listing_urls' => ['https://dgvs.mspbs.gov.py/', 'https://dgvs.mspbs.gov.py/noticias/'],

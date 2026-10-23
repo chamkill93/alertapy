@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(103, Source::query()->count());
+        $this->assertSame(104, Source::query()->count());
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
@@ -31,6 +31,15 @@ class CatalogSeederTest extends TestCase
         }
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-automatic-stations', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-cap', 'enabled' => true]);
+        $featuredHealth = Source::query()->where('slug', 'mspbs-health-featured')->sole();
+        $this->assertTrue($featuredHealth->enabled);
+        $this->assertSame('official', $featuredHealth->type->value);
+        $this->assertSame('health_news', $featuredHealth->configuration_json['collector']);
+        $this->assertSame(
+            ['https://www.mspbs.gov.py/buscar.php?modo=0&page=669&q=&url=portal'],
+            config('alertapy.sources.mspbs-health-featured.listing_urls'),
+        );
+        $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['mspbs-health-featured']);
         $this->assertDatabaseHas('sources', ['slug' => 'pai', 'enabled' => true, 'ingestion_type' => 'html']);
         $this->assertDatabaseHas('sources', ['slug' => 'agencia-ip', 'enabled' => true, 'ingestion_type' => 'html']);
         $this->assertDatabaseHas('sources', ['slug' => 'cde-hot', 'enabled' => true, 'ingestion_type' => 'html']);

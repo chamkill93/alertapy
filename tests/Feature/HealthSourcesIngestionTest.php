@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Collectors\HealthNewsCollector;
 use App\Enums\LocationAccuracy;
 use App\Models\GeocodingCache;
+use App\Models\Source;
 use Carbon\CarbonImmutable;
 use Database\Seeders\CategorySeeder;
 use Database\Seeders\LocationSeeder;
@@ -21,6 +23,40 @@ class HealthSourcesIngestionTest extends TestCase
     {
         CarbonImmutable::setTestNow();
         parent::tearDown();
+    }
+
+    public function test_mspbs_featured_listing_collects_recent_health_news_with_its_original_reference(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        $this->seed([CategorySeeder::class, SourceSeeder::class, LocationSeeder::class]);
+        $source = Source::query()->where('slug', 'mspbs-health-featured')->sole();
+        $title = 'Más de 27 mil atenciones especializadas registra el Hospital General San Lorenzo';
+        $articleUrl = 'https://www.mspbs.gov.py/hospital-general-san-lorenzo-atenciones';
+        Http::preventStrayRequests();
+        Http::fake(function ($request) use ($title, $articleUrl) {
+            if (str_contains($request->url(), '/buscar.php?')) {
+                return Http::response('<main><h3><a href="'.$articleUrl.'">'.$title.'</a></h3></main>');
+            }
+
+            if ($request->url() === $articleUrl) {
+                return Http::response('<html><head>
+                    <meta property="og:title" content="'.$title.'">
+                    <meta property="og:description" content="El Hospital General San Lorenzo registró atenciones especializadas en San Lorenzo, departamento Central.">
+                    <meta property="article:published_time" content="2026-10-19T12:00:00-03:00">
+                    </head><body><main>'.$title.'</main></body></html>');
+            }
+
+            return Http::response('Unexpected URL', 404);
+        });
+
+        $candidates = app(HealthNewsCollector::class)->collect($source);
+
+        $this->assertCount(1, $candidates);
+        $this->assertSame($title, $candidates[0]->title);
+        $this->assertSame($articleUrl, $candidates[0]->originalUrl);
+        $this->assertSame('health_public', $candidates[0]->metadata['category_slug']);
+        $this->assertSame('San Lorenzo', $candidates[0]->detectedLocation);
+        $this->assertSame('2026-10-19T12:00:00-03:00', $candidates[0]->publishedAt?->toIso8601String());
     }
 
     public function test_erssan_multi_department_updates_become_one_incident_per_department(): void

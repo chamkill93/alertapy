@@ -30,6 +30,7 @@ class MapPageTest extends TestCase
             ->assertSee('data-quick-category="electricity"', false)
             ->assertSee('data-quick-category="water"', false)
             ->assertSee('data-quick-category="hydrology"', false)
+            ->assertSee('data-quick-category="health"', false)
             ->assertSee('>Electricidad</span>', false)
             ->assertSee('>Más capas de incidencias</span>', false)
             ->assertSee('class="layer-toggle"', false)

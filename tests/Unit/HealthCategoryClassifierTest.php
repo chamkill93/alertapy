@@ -19,6 +19,9 @@ class HealthCategoryClassifierTest extends TestCase
             'Equipos de salud asisten a comunidades afectadas por inundaciones en Misiones',
         ));
         $this->assertSame(['health_public'], $classifier->classifyAll(
+            'Coronel Bogado realizó jornada de concienciación y reconocimiento en el marco de Octubre Rosa',
+        ));
+        $this->assertSame(['health_public'], $classifier->classifyAll(
             'Servicios de salud de Amambay registran más de 53 mil atenciones en septiembre',
         ));
         $this->assertSame(['health_public'], $classifier->classifyAll(

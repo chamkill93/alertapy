@@ -96,7 +96,8 @@ class DiscoveryIngestionTest extends TestCase
                 'url' => 'https://medio.example/ruta-bloqueada-caaguazu',
                 'title' => 'Ruta bloqueada por derrumbe en Caaguazú',
                 'seendate' => '20260819T212000Z',
-            ]]]);
+            ]]])
+            ->push(['articles' => []]);
 
         Http::fake([
             'api.gdeltproject.org/*' => $sequence,
@@ -119,7 +120,7 @@ class DiscoveryIngestionTest extends TestCase
         }
         $this->assertDatabaseHas('content_candidates', ['source_type' => 'discovery', 'status' => 'pending_ai']);
         $gdeltRequests = Http::recorded(fn ($request, $response): bool => str_contains($request->url(), 'api.gdeltproject.org'))->count();
-        $this->assertSame(4, $gdeltRequests);
+        $this->assertSame(5, $gdeltRequests);
     }
 
 }

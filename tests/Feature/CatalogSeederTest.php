@@ -41,6 +41,11 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'rdn', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'paraguay24horas', 'enabled' => true]);
+        $paraguay24Horas = Source::query()->where('slug', 'paraguay24horas')->sole();
+        $this->assertSame(30, $paraguay24Horas->polling_minutes);
+        $this->assertSame('https://paraguay24horas.com/', $paraguay24Horas->base_url);
+        $this->assertFalse($paraguay24Horas->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($paraguay24Horas->configuration_json['location_search_article_body']);
         $diarioParaguayo = Source::query()->where('slug', 'diario-paraguayo')->sole();
         $this->assertSame('diarioparaguayo.com', $diarioParaguayo->domain);
         $this->assertSame('https://www.diarioparaguayo.com.py/', $diarioParaguayo->base_url);
@@ -50,15 +55,15 @@ class CatalogSeederTest extends TestCase
         $this->assertContains('digies', config('alertapy.cycle.priority_sources'));
         $additionalPress = Source::query()->whereIn('slug', [
             'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya',
-            'el-independiente', 'parametro', 'pulso-paraguayo', 'paraguay24horas',
+            'el-independiente', 'parametro', 'pulso-paraguayo',
         ])->get();
-        $this->assertCount(11, $additionalPress);
+        $this->assertCount(10, $additionalPress);
         $originalPress = $additionalPress->whereIn('slug', ['asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay']);
         $this->assertTrue($originalPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 15
             && ($source->configuration_json['location_search_article_body'] ?? null) === false));
         $territorialPress = $additionalPress->whereIn('slug', [
-            'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo', 'paraguay24horas',
+            'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo',
         ]);
         $this->assertTrue($territorialPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 30

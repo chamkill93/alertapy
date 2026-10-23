@@ -30,6 +30,20 @@ class AdditionalHealthSourceSeeder extends Seeder
                 'max_candidates' => 18,
             ],
             [
+                'name' => 'Instituto de Previsión Social',
+                'slug' => 'ips',
+                'domain' => 'portal.ips.gov.py',
+                'base_url' => 'https://portal.ips.gov.py/sistemas/ipsportal/',
+                'listing_urls' => [
+                    'https://portal.ips.gov.py/sistemas/ipsportal/noticias.php',
+                    'https://portal.ips.gov.py/sistemas/ipsportal/noticias.php?p=2',
+                    'https://portal.ips.gov.py/sistemas/ipsportal/noticias.php?p=3',
+                ],
+                'polling_minutes' => 30,
+                'max_links' => 60,
+                'max_candidates' => 24,
+            ],
+            [
                 'name' => 'Dirección General de Salud Ambiental',
                 'slug' => 'digesa',
                 'domain' => 'digesa.mspbs.gov.py',

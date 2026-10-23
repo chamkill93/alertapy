@@ -27,7 +27,7 @@ class RegionalPressSourceSeederTest extends TestCase
         $definitions = RegionalPressSourceSeeder::definitions();
         $slugs = array_column($definitions, 'slug');
 
-        $this->assertCount(22, $definitions);
+        $this->assertCount(23, $definitions);
         $this->assertCount(count($slugs), array_unique($slugs));
         $this->assertSame(count($definitions), Source::query()->whereIn('slug', $slugs)->count());
 
@@ -50,10 +50,15 @@ class RegionalPressSourceSeederTest extends TestCase
                 $this->assertSame('Itapúa', $source->configuration_json['regional_department']);
                 $this->assertContains('https://tvs.com.py/category/locales/', $source->configuration_json['listing_urls']);
             }
-            if ($source->slug === 'frontera-seca-news') {
+            if ($source->slug === 'portal-amambay') {
                 $this->assertSame('Amambay', $source->configuration_json['regional_department']);
-                $this->assertSame(['https://fronterasecanews.com/'], $source->configuration_json['listing_urls']);
+                $this->assertSame(['https://portalamambay.com.py/'], $source->configuration_json['listing_urls']);
                 $this->assertTrue($source->configuration_json['location_search_article_body']);
+            }
+            if ($source->slug === 'cde-hot') {
+                $this->assertNull($source->configuration_json['regional_department']);
+                $this->assertSame(['https://www.cdehot.com.py/'], $source->configuration_json['listing_urls']);
+                $this->assertSame(PressHomepageCollector::class, $registry[$source->slug]);
             }
         }
     }

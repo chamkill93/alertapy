@@ -359,7 +359,7 @@
             }
 
             const markerNode = document.createElement('div');
-            markerNode.className = 'map-pin';
+            markerNode.className = `map-pin${incident.location.is_fallback ? ' map-pin--fallback' : ''}`;
             markerNode.setAttribute('aria-hidden', 'true');
             markerNode.style.setProperty('--marker-color', incident.category.color);
             const markerBody = document.createElement('div');
@@ -572,6 +572,13 @@
         }
 
         fragment.append(category, title, place, badges, createTextElement('p', incident.summary, 'detail-summary'));
+        if (incident.location.is_fallback) {
+            fragment.appendChild(createIconLabel(
+                'warning',
+                incident.location.fallback_label || 'Ubicación no informada; marcador de referencia en Asunción.',
+                'detail-location-fallback',
+            ));
+        }
 
         if (mapGroup?.count > 1) {
             const dateRange = mapGroup.from && mapGroup.to

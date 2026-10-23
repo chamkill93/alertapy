@@ -223,7 +223,7 @@ class PressHomepageCollector implements CollectorInterface
             $locationEvidence = mb_substr($articleText, 0, 5000);
             $location = $this->locationExtractor->extract($title, $locationEvidence);
         }
-        $location = $this->locationFallback->forPress($source->type, $location);
+        $location = $this->locationFallback->forNews($source->type, $location);
         if (($location['is_fallback'] ?? false) && $this->locationFallback->isClearlyEditorial($title, $contextDescription, $content)) {
             return collect();
         }

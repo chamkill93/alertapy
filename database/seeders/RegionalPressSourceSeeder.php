@@ -126,6 +126,20 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://www.luquenoticias.com.py/'],
             ],
             [
+                'name' => 'Últimas Noticias',
+                'slug' => 'ultimas-noticias-cde',
+                'domain' => 'ultimasnoticias.com.py',
+                'regional_department' => 'Alto Paraná',
+                'listing_urls' => ['https://ultimasnoticias.com.py/'],
+            ],
+            [
+                'name' => 'Hechos Digital',
+                'slug' => 'hechos-digital',
+                'domain' => 'hechosdigital.com.py',
+                'regional_department' => 'Amambay',
+                'listing_urls' => ['https://hechosdigital.com.py/'],
+            ],
+            [
                 'name' => 'Radio ZP30',
                 'slug' => 'radio-zp30',
                 'domain' => 'zp30.com.py',
@@ -171,3 +185,4 @@ class RegionalPressSourceSeeder extends Seeder
         }
     }
 }
+

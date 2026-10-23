@@ -50,15 +50,15 @@ class CatalogSeederTest extends TestCase
         $this->assertContains('digies', config('alertapy.cycle.priority_sources'));
         $additionalPress = Source::query()->whereIn('slug', [
             'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya',
-            'el-independiente', 'parametro', 'pulso-paraguayo', 'rdn', 'diario-paraguayo', 'paraguay24horas',
+            'el-independiente', 'parametro', 'pulso-paraguayo', 'paraguay24horas',
         ])->get();
-        $this->assertCount(13, $additionalPress);
+        $this->assertCount(11, $additionalPress);
         $originalPress = $additionalPress->whereIn('slug', ['asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay']);
         $this->assertTrue($originalPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 15
             && ($source->configuration_json['location_search_article_body'] ?? null) === false));
         $territorialPress = $additionalPress->whereIn('slug', [
-            'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo', 'rdn', 'diario-paraguayo', 'paraguay24horas',
+            'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo', 'paraguay24horas',
         ]);
         $this->assertTrue($territorialPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 30

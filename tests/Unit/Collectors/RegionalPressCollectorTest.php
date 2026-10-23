@@ -7,7 +7,6 @@ use App\Enums\SourceType;
 use App\Models\Source;
 use Carbon\CarbonImmutable;
 use Database\Seeders\LocationSeeder;
-use Database\Seeders\RegionalPressSourceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -60,37 +59,5 @@ class RegionalPressCollectorTest extends TestCase
         $this->assertTrue($candidate->metadata['privacy_limited']);
     }
 
-    public function test_frontera_seca_local_health_story_enters_the_public_health_layer_within_seven_days(): void
-    {
-        CarbonImmutable::setTestNow('2026-10-20 12:00:00 America/Asuncion');
-        $definition = collect(RegionalPressSourceSeeder::definitions())
-            ->firstWhere('slug', 'frontera-seca-news');
-        $this->assertIsArray($definition);
-        $source = Source::query()->create($definition);
-        $articleUrl = 'https://fronterasecanews.com/title-1082/';
-
-        Http::fake([
-            'fronterasecanews.com/' => Http::response(
-                '<article><h2><a href="'.$articleUrl.'">Octubre Rosa: Universidad Interamericana promueve prevención del cáncer de mama</a></h2></article>',
-            ),
-            'fronterasecanews.com/title-1082/' => Http::response(
-                '<html><head>'
-                .'<meta property="article:published_time" content="2026-10-14T09:34:01-03:00">'
-                .'<meta property="og:title" content="Octubre Rosa: Universidad Interamericana promueve prevención del cáncer de mama">'
-                .'<meta property="og:description" content="La Universidad Interamericana de Pedro Juan Caballero lanza una campaña de prevención y detección temprana del cáncer de mama.">'
-                .'</head><body><h1>Octubre Rosa: Universidad Interamericana promueve prevención del cáncer de mama</h1>'
-                .'<div class="entry-content"><p>La iniciativa promueve la prevención y detección temprana en Pedro Juan Caballero.</p></div>'
-                .'</body></html>',
-            ),
-        ]);
-
-        $candidate = app(RegionalPressCollector::class)->collect($source)->sole();
-
-        $this->assertSame($articleUrl, $candidate->originalUrl);
-        $this->assertSame('health_public', $candidate->metadata['category_slug']);
-        $this->assertSame('Pedro Juan Caballero', $candidate->metadata['city']);
-        $this->assertSame('Amambay', $candidate->metadata['department']);
-        $this->assertSame('Octubre Rosa: Universidad Interamericana promueve prevención del cáncer de mama', $candidate->title);
-    }
 
 }

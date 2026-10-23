@@ -9,7 +9,7 @@ use App\Enums\TrustLevel;
 use App\Models\Source;
 use Illuminate\Database\Seeder;
 
-/** Adds five independently operated press sources without overwriting local changes. */
+/** Adds independently operated and regional press sources without overwriting local changes. */
 class AdditionalPressSourceSeeder extends Seeder
 {
     /** @return array<int, array<string, mixed>> */
@@ -21,28 +21,52 @@ class AdditionalPressSourceSeeder extends Seeder
             ['name' => 'El Nacional', 'slug' => 'elnacional', 'domain' => 'elnacional.com.py'],
             ['name' => 'Diario La Clave', 'slug' => 'la-clave', 'domain' => 'laclave.com.py'],
             ['name' => 'Ratio Paraguay', 'slug' => 'ratio-paraguay', 'domain' => 'ratioparaguay.com.py'],
+            [
+                'name' => 'Ahendu',
+                'slug' => 'ahendu',
+                'domain' => 'ahendu.com.py',
+                'polling_minutes' => 30,
+                'listing_urls' => ['https://ahendu.com.py/', 'https://ahendu.com.py/ciudad/', 'https://ahendu.com.py/sociedad/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 18,
+                'max_candidates' => 12,
+            ],
+            [
+                'name' => 'La Verdad Paraguaya',
+                'slug' => 'la-verdad-paraguaya',
+                'domain' => 'laverdadparaguaya.com',
+                'polling_minutes' => 30,
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 18,
+                'max_candidates' => 12,
+            ],
         ];
 
         return array_map(function (array $publisher): array {
             $baseUrl = 'https://'.$publisher['domain'].'/';
 
             return [
-                ...$publisher,
+                'name' => $publisher['name'],
+                'slug' => $publisher['slug'],
+                'domain' => $publisher['domain'],
                 'type' => SourceType::Press,
                 'ingestion_type' => IngestionType::Html,
                 'georef_mode' => GeorefMode::ExtractAndGeocode,
                 'trust_level' => TrustLevel::Medium,
                 'base_url' => $baseUrl,
-                'polling_minutes' => 15,
+                'polling_minutes' => $publisher['polling_minutes'] ?? 15,
                 'enabled' => true,
                 'configuration_json' => [
                     'collector' => 'press_homepage',
-                    'listing_urls' => [$baseUrl],
-                    'prefilter_requires_location' => true,
+                    'listing_urls' => $publisher['listing_urls'] ?? [$baseUrl],
+                    'prefilter_requires_location' => $publisher['prefilter_requires_location'] ?? true,
                     'max_age_hours' => 168,
-                    'max_links' => 8,
-                    'max_candidates' => 8,
-                    'location_search_article_body' => false,
+                    'max_links' => $publisher['max_links'] ?? 8,
+                    'max_candidates' => $publisher['max_candidates'] ?? 8,
+                    'location_search_article_body' => $publisher['location_search_article_body'] ?? false,
+                    'summary_title_only' => true,
                 ],
             ];
         }, $publishers);
@@ -68,3 +92,4 @@ class AdditionalPressSourceSeeder extends Seeder
         }
     }
 }
+

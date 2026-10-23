@@ -56,6 +56,23 @@ class DiscoveryProvidersTest extends TestCase
         $this->assertSame('medio.example', $items[0]->originalDomain);
     }
 
+    public function test_gdelt_keeps_respiratory_virus_reports_for_editorial_review(): void
+    {
+        config()->set('alertapy.discovery.gdelt.query', null);
+        config()->set('alertapy.discovery.gdelt.queries', ['sourcecountry:paraguay rhinovirus']);
+        config()->set('alertapy.discovery.gdelt.request_interval_seconds', 0);
+        Http::fake(['api.gdeltproject.org/*' => Http::response(['articles' => [[
+            'url' => 'https://dgvs.mspbs.gov.py/rhinovirus-circulacion',
+            'title' => 'Rhinovirus causa más de la mitad de las internaciones por cuadros respiratorios',
+            'seendate' => '20261023T100000Z',
+        ]]])]);
+
+        $items = app(GdeltDiscoveryProvider::class)->discover($this->source('gdelt', SourceType::Discovery));
+
+        $this->assertCount(1, $items);
+        $this->assertSame('https://dgvs.mspbs.gov.py/rhinovirus-circulacion', $items[0]->originalUrl);
+    }
+
     public function test_bluesky_parses_public_posts_as_unverified_social_discovery(): void
     {
         Http::fake(['public.api.bsky.app/*' => Http::response(['posts' => [[

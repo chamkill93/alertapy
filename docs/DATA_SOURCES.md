@@ -44,7 +44,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | CONATEL | Oficial | 24 h | Desactivado: no se verificó un feed estable de interrupciones territoriales actuales |
 | MADES - Calidad del Aire | Sensor | 30 min | API oficial; estaciones y series, requiere `MADES_AIR_API_KEY`. Los medios de prensa aportan incidentes ambientales por separado; no se presentan como mediciones. |
 | NASA FIRMS | Sensor | 30 min | CSV oficial con coordenadas nativas, requiere `NASA_FIRMS_MAP_KEY` |
-| GDELT | Discovery | 30 min | Descubre URLs originales; nunca se presenta como fuente final |
+| GDELT | Discovery | 30 min | Cuatro búsquedas públicas separan servicios, salud animal/humana, clima/hidrología/ambiente y seguridad/vial/fronteras; conserva URL y dominio originales, hasta 100 resultados por ciclo. Los hallazgos quedan pendientes de revisión y nunca se publican solos |
 | X | Social | 15 min | Opcional; requiere bearer token y decisión posterior |
 | Bluesky | Social | 15 min | Búsqueda pública opcional; resultados no verificados |
 | Mastodon | Social | 30 min | Instancias y hashtags explícitos; no existe búsqueda global |
@@ -171,3 +171,9 @@ La capa de discovery está documentada en `docs/DISCOVERY_SOURCES.md`. Sus halla
 
 Los seeders crean únicamente catálogos. No crean incidentes, ejecuciones exitosas ni cantidades. Los fixtures HTML y RSS inventados existen exclusivamente bajo `tests/Fixtures`.
 
+
+
+### Descubrimiento abierto de noticias
+GDELT se activa por defecto con cuatro grupos de búsqueda cada 30 minutos para reducir el sesgo de una consulta única hacia los temas de mayor volumen. Busca señales de electricidad y agua, salud pública y animal, ríos/clima/ambiente, seguridad, rutas, emergencias y pasos fronterizos en noticias que mencionan Paraguay. Conserva el enlace original y el dominio editorial. Su rol es ampliar la cola del backoffice: los artículos no se convierten en incidencias del mapa hasta pasar las reglas de relevancia, fecha y lugar y la revisión editorial. Se puede apagar con `GDELT_ENABLED=false` o reemplazar los grupos con `GDELT_QUERY`.
+
+“Medio independiente” no es una señal de veracidad ni una etiqueta automática. La inclusión de un medio sigue su disponibilidad técnica y la URL que publica; la corroboración de un hecho necesita fuentes distintas. Hay un directorio público de medios paraguayos ([Más Ciudadanía, Menos Corrupción](https://masciudadania.org.py/directorio-de-medios-de-comunicacion/)), pero registra emisoras y sitios, no feeds verificables ni actividad reciente de todos ellos. Las fuentes locales no conectables, caídas o que bloquean consultas permanecen como candidatas documentadas y no se presentan como cobertura automática.

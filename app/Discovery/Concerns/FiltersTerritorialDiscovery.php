@@ -10,7 +10,7 @@ trait FiltersTerritorialDiscovery
     {
         $normalized = Str::lower(Str::ascii(strip_tags($text)));
 
-        return preg_match('/\b(sin luz|corte de (?:luz|energia|agua)|sin agua|accidente|choque|asalto|robo|incendio|inundacion|temporal|calle bloqueada|ruta bloqueada|derrumbe|evacuacion|emergencia)\w*/u', $normalized) === 1;
+        return preg_match('/\b(sin luz|apag[oó]n|corte de (?:luz|energia|agua)|sin agua|agua potable|falta de agua|servicio electrico|accidente|choque|siniestro|asalto|homicidio|robo|abigeato|incendio|dengue|chikungunya|zika|malaria|sarampion|brote|epidemia|alerta sanitaria|fiebre aftosa|rabia|intoxicacion|hospital|crecida|desborde|inundacion|temporal|tormenta|granizada|sequ[ií]a|nivel del rio|humo|contaminacion|calidad del aire|derrame|calle bloqueada|ruta bloqueada|puente cortado|derrumbe|evacuacion|rescate|paso fronterizo|emergencia)\w*/u', $normalized) === 1;
     }
 
     private function validPublicUrl(string $url): bool

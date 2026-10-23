@@ -477,12 +477,20 @@ return [
 
     'discovery' => [
         'gdelt' => [
-            'enabled' => env('GDELT_ENABLED', false),
+            // Public multilingual news discovery is on by default. A custom GDELT_QUERY
+            // can replace these balanced groups without changing the collector.
+            'enabled' => env('GDELT_ENABLED', true),
             'endpoint' => env('GDELT_API_URL', 'https://api.gdeltproject.org/api/v2/doc/doc'),
-            'query' => env('GDELT_QUERY', 'Paraguay ("sin luz" OR "sin agua" OR accidente OR choque OR incendio OR inundacion OR temporal OR "ruta bloqueada")'),
+            'query' => env('GDELT_QUERY'),
+            'queries' => [
+                env('GDELT_QUERY_UTILITIES', 'Paraguay ("sin luz" OR apagón OR apagon OR "corte de energía" OR "corte de agua" OR "sin agua" OR "agua potable" OR "falta de agua" OR "servicio eléctrico" OR "servicio electrico")'),
+                env('GDELT_QUERY_HEALTH', 'Paraguay (dengue OR chikungunya OR zika OR malaria OR sarampión OR sarampion OR "brote" OR epidemia OR "alerta sanitaria" OR hospital OR "fiebre aftosa" OR rabia OR intoxicación OR intoxicacion)'),
+                env('GDELT_QUERY_WEATHER', 'Paraguay (crecida OR desborde OR inundación OR inundacion OR temporal OR tormenta OR granizada OR sequía OR sequia OR "nivel del río" OR "nivel del rio" OR humo OR "incendio forestal" OR contaminación OR contaminacion OR "calidad del aire" OR derrame)'),
+                env('GDELT_QUERY_SAFETY', 'Paraguay (accidente OR choque OR siniestro OR incendio OR homicidio OR asalto OR robo OR abigeato OR derrumbe OR "ruta bloqueada" OR "puente cortado" OR evacuación OR evacuacion OR rescate OR "paso fronterizo" OR emergencia)'),
+            ],
             'timespan' => env('GDELT_TIMESPAN', '24h'),
-            'max_results' => (int) env('GDELT_MAX_RESULTS', 50),
-            'timeout' => (int) env('GDELT_TIMEOUT', 30),
+            'max_results' => (int) env('GDELT_MAX_RESULTS', 25),
+            'timeout' => (int) env('GDELT_TIMEOUT', 12),
         ],
         'x' => [
             'enabled' => env('X_DISCOVERY_ENABLED', false) && trim((string) env('X_BEARER_TOKEN', '')) !== '',

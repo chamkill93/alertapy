@@ -73,7 +73,16 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('roads', $classifier->classify('Cierres de calles causan caos vehicular en Asunción', ''));
         $this->assertSame('roads', $classifier->classify('Pobladores se manifiestan en Ypacaraí', ''));
         $this->assertSame('security', $classifier->classify('Detienen a presuntos robamotos en Villa Elisa', ''));
-        $this->assertSame('health_vector', $classifier->classify('Confirman casos de hantavirus en Boquerón', ''));
+        $this->assertSame('health_public', $classifier->classify('Confirman casos de hantavirus en Boquerón', ''));
+        $this->assertSame('health_public', $classifier->classify('Confirman brote epidemiológico de influenza en Asunción', ''));
+        $this->assertSame('health_public', $classifier->classify(
+            'Salud Pública provee servicio médico a familias rurales de Presidente Hayes',
+            '',
+        ));
+        $this->assertSame('health_public', $classifier->classify(
+            'Paciente recibe alta tras trasplante renal en Clínicas',
+            '',
+        ));
         $this->assertSame('health_vector', $classifier->classify('SENEPA realiza minga ambiental en Luque', ''));
         $this->assertSame('roads', $classifier->classify('Obra de rehabilitación de la Ruta PY08 avanza por tramos', ''));
         $this->assertSame('territorial_news', $classifier->classify('Fiscalización ambiental detecta tala ilegal en Caaguazú', ''));

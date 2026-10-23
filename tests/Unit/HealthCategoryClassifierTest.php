@@ -18,6 +18,18 @@ class HealthCategoryClassifierTest extends TestCase
         $this->assertSame(['health_public'], $classifier->classifyAll(
             'Equipos de salud asisten a comunidades afectadas por inundaciones en Misiones',
         ));
+        $this->assertSame(['health_public'], $classifier->classifyAll(
+            'Servicios de salud de Amambay registran más de 53 mil atenciones en septiembre',
+        ));
+        $this->assertSame(['health_public'], $classifier->classifyAll(
+            'Salud Pública provee servicio médico a más de 400 familias de comunidades rurales de Presidente Hayes',
+        ));
+        $this->assertSame(['health_public'], $classifier->classifyAll(
+            'Confirman casos de hantavirus en Boquerón',
+        ));
+        $this->assertSame(['health_public'], $classifier->classifyAll(
+            'Paciente recibe alta tras trasplante renal número 211 en Clínicas',
+        ));
         $this->assertSame(['health_vector', 'health_public'], $classifier->classifyAll(
             'Salud reporta diez semanas sin dengue, pero en tres regiones aumentan las sospechas',
         ));

@@ -21,7 +21,7 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(96, Source::query()->count());
+        $this->assertSame(97, Source::query()->count());
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
@@ -40,6 +40,7 @@ class CatalogSeederTest extends TestCase
             && ($source->configuration_json['category_classifier'] ?? null) === 'health'));
         $this->assertDatabaseHas('sources', ['slug' => 'rdn', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'paraguay24horas', 'enabled' => true]);
         $diarioParaguayo = Source::query()->where('slug', 'diario-paraguayo')->sole();
         $this->assertSame('diarioparaguayo.com', $diarioParaguayo->domain);
         $this->assertSame('https://www.diarioparaguayo.com.py/', $diarioParaguayo->base_url);
@@ -49,15 +50,15 @@ class CatalogSeederTest extends TestCase
         $this->assertContains('digies', config('alertapy.cycle.priority_sources'));
         $additionalPress = Source::query()->whereIn('slug', [
             'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya',
-            'el-independiente', 'parametro', 'pulso-paraguayo',
+            'el-independiente', 'parametro', 'pulso-paraguayo', 'rdn', 'diario-paraguayo', 'paraguay24horas',
         ])->get();
-        $this->assertCount(10, $additionalPress);
+        $this->assertCount(13, $additionalPress);
         $originalPress = $additionalPress->whereIn('slug', ['asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay']);
         $this->assertTrue($originalPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 15
             && ($source->configuration_json['location_search_article_body'] ?? null) === false));
         $territorialPress = $additionalPress->whereIn('slug', [
-            'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo',
+            'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo', 'rdn', 'diario-paraguayo', 'paraguay24horas',
         ]);
         $this->assertTrue($territorialPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 30
@@ -105,7 +106,7 @@ class CatalogSeederTest extends TestCase
         $this->assertSame(45, $source->polling_minutes);
         $this->assertSame('Keep this setting', $source->configuration_json['operator_note']);
         $this->assertFalse($source->configuration_json['location_search_article_body']);
-        $this->assertSame(12, Source::query()->count());
+        $this->assertSame(13, Source::query()->count());
     }
 }
 

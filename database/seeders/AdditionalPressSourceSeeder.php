@@ -95,6 +95,17 @@ class AdditionalPressSourceSeeder extends Seeder
                 'max_links' => 30,
                 'max_candidates' => 20,
             ],
+            [
+                'name' => 'Paraguay24Horas',
+                'slug' => 'paraguay24horas',
+                'domain' => 'paraguay24horas.com',
+                'polling_minutes' => 30,
+                'listing_urls' => ['https://paraguay24horas.com/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_links' => 30,
+                'max_candidates' => 20,
+            ],
         ];
 
         return array_map(function (array $publisher): array {

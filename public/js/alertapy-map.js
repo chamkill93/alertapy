@@ -1434,9 +1434,15 @@
         if (!elements.quickCategories) return;
         const checked = inputs.filter(input => input.checked);
         const allChecked = inputs.length > 0 && checked.length === inputs.length;
+        const healthCategories = new Set(['health_public', 'health_vector', 'animal_health']);
+        const availableHealth = inputs.filter(input => healthCategories.has(input.value));
+        const healthSelected = availableHealth.length > 0
+            && checked.length === availableHealth.length
+            && checked.every(input => healthCategories.has(input.value));
         const activeCategory = state.allCategories || (elements.combineCategories?.checked && allChecked)
             ? 'all'
-            : !elements.combineCategories?.checked && checked.length === 1 ? checked[0].value : null;
+            : healthSelected ? 'health'
+                : !elements.combineCategories?.checked && checked.length === 1 ? checked[0].value : null;
         elements.quickCategories.querySelectorAll('[data-quick-category]').forEach(button => {
             button.setAttribute('aria-pressed', String(button.dataset.quickCategory === activeCategory));
         });
@@ -1519,6 +1525,26 @@
         }
 
         const inputs = [...elements.categoryFilter.querySelectorAll('input:not(:disabled)')];
+        const healthCategories = new Set(['health_public', 'health_vector', 'animal_health']);
+
+        if (button.dataset.quickCategory === 'health') {
+            const availableHealth = inputs.filter(input => healthCategories.has(input.value));
+            if (!availableHealth.length) return;
+
+            if (elements.combineCategories && !elements.combineCategories.checked) {
+                elements.combineCategories.checked = true;
+                inputs.forEach(input => { input.type = 'checkbox'; });
+                elements.categoryFilter.setAttribute('role', 'group');
+                elements.categorySelectionHelp.textContent = 'Elegí una o varias categorías. «Todas» vuelve a mostrar todo; 0 = sin incidencias en el periodo elegido.';
+            }
+            inputs.forEach(input => { input.checked = healthCategories.has(input.value); });
+            state.allCategories = false;
+            syncCategoryToggle();
+            syncAdvancedFilterIndicator();
+            loadIncidents();
+            return;
+        }
+
         const selected = inputs.find(input => input.value === button.dataset.quickCategory);
         if (!selected) return;
 

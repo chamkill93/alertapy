@@ -6,6 +6,7 @@ use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
 use App\Services\HealthCategoryClassifier;
+use App\Services\MapLocationFallback;
 use App\Services\ParaguayLocationExtractor;
 use App\Services\PressIncidentClassifier;
 use App\Services\UtilityScheduleExtractor;
@@ -26,6 +27,7 @@ class PressHomepageCollector implements CollectorInterface
         private readonly PressIncidentClassifier $classifier,
         private readonly UtilityScheduleExtractor $schedules,
         private readonly HealthCategoryClassifier $healthClassifier,
+        private readonly MapLocationFallback $locationFallback,
     ) {}
 
     /** @return Collection<int, CandidateDTO> */
@@ -221,6 +223,10 @@ class PressHomepageCollector implements CollectorInterface
             $locationEvidence = mb_substr($articleText, 0, 5000);
             $location = $this->locationExtractor->extract($title, $locationEvidence);
         }
+        $location = $this->locationFallback->forPress($source->type, $location);
+        if (($location['is_fallback'] ?? false) && $this->locationFallback->isClearlyEditorial($title, $contextDescription, $content)) {
+            return collect();
+        }
         $hasConfiguredCategory = is_string($settings['forced_category_slug'] ?? null);
         $categories = [];
 
@@ -265,6 +271,8 @@ class PressHomepageCollector implements CollectorInterface
             content: $content,
             publishedAt: $publishedAt,
             detectedLocation: $location['query'],
+            latitude: $location['latitude'] ?? null,
+            longitude: $location['longitude'] ?? null,
             metadata: [
                 'category_slug' => $category,
                 'category_variant' => $index > 0,
@@ -272,6 +280,7 @@ class PressHomepageCollector implements CollectorInterface
                 'city' => $location['city'],
                 'department' => $location['department'],
                 'location_accuracy' => $location['accuracy'],
+                'location_is_fallback' => $location['is_fallback'],
                 'original_title' => $title,
                 'homepage_collector' => true,
                 'regional_department' => $settings['regional_department'] ?? null,

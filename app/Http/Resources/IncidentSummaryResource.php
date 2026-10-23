@@ -59,6 +59,8 @@ class IncidentSummaryResource extends JsonResource
                 'accuracy' => $this->location_accuracy->value,
                 'accuracy_label' => $this->location_accuracy->label(),
                 'is_approximate' => $this->location_accuracy->isApproximate(),
+                'is_fallback' => $this->usesReferenceLocation(),
+                'fallback_label' => $this->usesReferenceLocation() ? 'Punto de referencia en Asunción; el lugar del hecho no fue informado.' : null,
                 'method' => $this->location_method?->value,
                 'quality' => $this->location_quality?->value,
                 'quality_label' => $this->location_quality?->label(),

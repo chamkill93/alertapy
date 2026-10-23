@@ -5,6 +5,7 @@ namespace App\Collectors;
 use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
+use App\Services\MapLocationFallback;
 use App\Services\ParaguayLocationExtractor;
 use App\Services\PressIncidentClassifier;
 use App\Services\UtilityScheduleExtractor;
@@ -20,6 +21,7 @@ class UtilityNewsCollector implements CollectorInterface
         private readonly ParaguayLocationExtractor $locations,
         private readonly PressIncidentClassifier $classifier,
         private readonly UtilityScheduleExtractor $schedules,
+        private readonly MapLocationFallback $locationFallback,
     ) {}
 
     /** @return Collection<int, CandidateDTO> */
@@ -114,7 +116,13 @@ class UtilityNewsCollector implements CollectorInterface
         if (! in_array($category, ['electricity', 'water'], true)) {
             return null;
         }
-        $location = $this->locations->extract($title, $excerpt, mb_substr($body, 0, 5000));
+        $location = $this->locationFallback->forPress(
+            $source->type,
+            $this->locations->extract($title, $excerpt, mb_substr($body, 0, 5000)),
+        );
+        if (($location['is_fallback'] ?? false) && $this->locationFallback->isClearlyEditorial($title, $excerpt, $body)) {
+            return null;
+        }
         if ($location === null) {
             return null;
         }
@@ -128,12 +136,15 @@ class UtilityNewsCollector implements CollectorInterface
             content: $excerpt !== '' ? $excerpt : mb_substr($body ?: $title, 0, 1200),
             publishedAt: $publishedAt,
             detectedLocation: $location['query'],
+            latitude: $location['latitude'] ?? null,
+            longitude: $location['longitude'] ?? null,
             metadata: [
                 'category_slug' => $category,
                 'location_text' => $location['text'],
                 'city' => $location['city'],
                 'department' => $location['department'],
                 'location_accuracy' => $location['accuracy'],
+                'location_is_fallback' => $location['is_fallback'],
                 'location_evidence' => mb_substr($excerpt.' '.$body, 0, 2000),
                 'original_title' => $title,
                 'utility_news_collector' => true,

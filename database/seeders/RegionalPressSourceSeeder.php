@@ -66,6 +66,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://diariovanguardia.com.py/', 'https://diariovanguardia.com.py/category/locales/'],
             ],
             [
+                'name' => 'CDE HOT',
+                'slug' => 'cde-hot',
+                'domain' => 'www.cdehot.com.py',
+                'regional_department' => null,
+                'listing_urls' => ['https://www.cdehot.com.py/'],
+            ],
+            [
                 'name' => 'Concepción al Día',
                 'slug' => 'concepcion-al-dia',
                 'domain' => 'concepcionaldia.com',
@@ -133,6 +140,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://amambaydigital.com/'],
             ],
             [
+                'name' => 'Portal Amambay',
+                'slug' => 'portal-amambay',
+                'domain' => 'portalamambay.com.py',
+                'regional_department' => 'Amambay',
+                'listing_urls' => ['https://portalamambay.com.py/'],
+            ],
+            [
                 'name' => 'Luque Noticias',
                 'slug' => 'luque-noticias',
                 'domain' => 'luquenoticias.com.py',
@@ -159,13 +173,6 @@ class RegionalPressSourceSeeder extends Seeder
                 'domain' => 'tvs.com.py',
                 'regional_department' => 'Itapúa',
                 'listing_urls' => ['https://tvs.com.py/', 'https://tvs.com.py/category/locales/'],
-            ],
-            [
-                'name' => 'Frontera Seca News',
-                'slug' => 'frontera-seca-news',
-                'domain' => 'fronterasecanews.com',
-                'regional_department' => 'Amambay',
-                'listing_urls' => ['https://fronterasecanews.com/'],
             ],
             [
                 'name' => 'Radio ZP30',

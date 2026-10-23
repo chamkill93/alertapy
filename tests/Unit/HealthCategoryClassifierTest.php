@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\\Unit;
 
-use App\Services\HealthCategoryClassifier;
-use App\Services\PressIncidentClassifier;
-use PHPUnit\Framework\TestCase;
+use App\\Services\\HealthCategoryClassifier;
+use App\\Services\\PressIncidentClassifier;
+use PHPUnit\\Framework\\TestCase;
 
 class HealthCategoryClassifierTest extends TestCase
 {
@@ -57,5 +57,15 @@ class HealthCategoryClassifierTest extends TestCase
 
         $this->assertSame(['health_public', 'weather_flood'], $categories);
     }
-}
 
+    public function test_tvs_itapua_health_story_during_floods_populates_both_layers(): void
+    {
+        $title = 'VII Región Sanitaria coordina atención médica y fumigaciones para familias afectadas por inundaciones';
+        $categories = array_values(array_unique([
+            ...(new HealthCategoryClassifier)->classifyAll($title),
+            ...(new PressIncidentClassifier)->classifyAll($title, ''),
+        ]));
+
+        $this->assertSame(['health_public', 'weather_flood'], $categories);
+    }
+}

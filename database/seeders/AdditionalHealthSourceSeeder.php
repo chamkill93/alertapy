@@ -64,7 +64,10 @@ class AdditionalHealthSourceSeeder extends Seeder
                 'slug' => 'dnerhs',
                 'domain' => 'dnerhs.mspbs.gov.py',
                 'base_url' => 'https://dnerhs.mspbs.gov.py/',
-                'listing_urls' => ['https://dnerhs.mspbs.gov.py/index.php/category/noticias/'],
+                'listing_urls' => [
+                    'https://dnerhs.mspbs.gov.py/index.php/category/dnerhs/noticias/',
+                    'https://dnerhs.mspbs.gov.py/index.php/category/dnerhs/dn/dgprhs/eqips/',
+                ],
                 'polling_minutes' => 60,
                 'max_links' => 30,
                 'max_candidates' => 12,

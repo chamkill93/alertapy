@@ -13,6 +13,10 @@ Los proveedores guardan la URL original, título, contenido disponible, autor/ca
 | Telegram | `https://api.telegram.org/bot…/getUpdates` | Social | Bot API | 5 min | `DISABLED_CONFIGURATION` | Solo canales configurados/autorizados que agregaron el bot. No se scrapea Telegram completo. El token nunca se guarda en la base. |
 | YouTube | `https://www.googleapis.com/youtube/v3/search` | Discovery | Data API v3 | 60 min | `DISABLED_CONFIGURATION` | Requiere API key y IDs de canales aprobados. Usa título, descripción, fecha y URL; no transcribe videos. Consume cuota. |
 
+## Agregadores revisados
+
+El 23/10/2026 se probó Google News RSS con una búsqueda de cortes programados de ANDE en Paraguay. Respondió HTTP 200, pero los artículos enlazaban primero a `news.google.com`, la consulta incluía resultados antiguos y el propio feed limita el uso a un lector personal no comercial. No se integra al ciclo público: no sustituye el enlace directo de la noticia ni ofrece una fuente estructurada para confirmar zonas y horarios. Para este mapa se priorizan los recolectores directos de medios y se conserva la URL original de cada nota. La advertencia de uso figura en el [feed consultado](https://news.google.com/rss/search?q=%22cortes+programados%22+ANDE+Paraguay&hl=es-419&gl=PY&ceid=PY%3Aes-419).
+
 ## Configuración
 
 Todas las integraciones están apagadas por defecto. Las variables están documentadas en `.env.example`:

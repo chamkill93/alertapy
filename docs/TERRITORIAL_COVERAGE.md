@@ -16,7 +16,7 @@ La población censal de un distrito es contexto. Solo se presenta `population_po
 
 ## Prensa local y regional
 
-El 23/10/2026 se amplió el catálogo con veintidós portales locales o regionales cuya actividad reciente y cobertura territorial aparecen en sus propias portadas o secciones locales. La lista documenta fuentes encontradas; no constituye un censo de medios ni una auditoría completa de propiedad o independencia societaria. Se les asigna confianza media y se mantienen los filtros de fecha, categoría, ubicación y enlace original.
+El 23/10/2026 se amplió el catálogo con veinticuatro portales locales o regionales cuya actividad reciente y cobertura territorial aparecen en sus propias portadas o secciones locales. La lista documenta fuentes encontradas; no constituye un censo de medios ni una auditoría completa de propiedad o independencia societaria. Se les asigna confianza media y se mantienen los filtros de fecha, categoría, ubicación y enlace original.
 
 | Portal | Cobertura editorial declarada u observada | Listados configurados |
 | --- | --- | --- |
@@ -26,6 +26,7 @@ El 23/10/2026 se amplió el catálogo con veintidós portales locales o regional
 | [Digital Misiones](https://digitalmisiones.com.py/) | Misiones y localidades del sur | Portada |
 | [QAP Chaco News](https://qapchaconews.com/) | Gran Chaco y noticias nacionales; no se fuerza un único departamento | Portada |
 | [Caaguazú Noticias Digital](https://caaguazunoticiasdigital.com.py/) | Caaguazú y cobertura nacional | Portada y Locales |
+| [OviedoPress](https://oviedopress.com/) | Coronel Oviedo y Caaguazú | Portada |
 | [Diario Vanguardia](https://diariovanguardia.com.py/) | Alto Paraná | Portada y Locales |
 | [Concepción al Día](https://www.concepcionaldia.com/) | Concepción y departamentos vecinos | Portada |
 | [Tercer Ojo](https://tercerojo.com.py/) | Caacupé y Cordillera | Portada |
@@ -33,6 +34,7 @@ El 23/10/2026 se amplió el catálogo con veintidós portales locales o regional
 | [AGR 101.3 FM / Revista Unión](https://www.agrfmtv.com.py/) | Cobertura periodística local en Canindeyú, con notas de sucesos e infraestructura | Portada |
 | [Canindeyú Digital](https://www.canindeyudigital.com/canindeyu) | Sección de Canindeyú; combina notas locales con republicaciones nacionales | Sección Canindeyú |
 | [Portal Capitán Meza](https://capitanmeza.com.py/) | Capitán Meza, Itapúa | Portada |
+| [Más Encarnación](https://masencarnacion.com/) | Encarnación e Itapúa | Portada |
 | [TVS Digital](https://tvs.com.py/) | Itapúa y sus distritos | Portada y Locales |
 | [Radio ZP30](https://www.zp30.com.py/es/category/noticias/noticias-locales/) | Chaco Central y localidades del Occidente | Noticias locales |
 | [Radio Guairá](https://www.radioguaira.com/) | Guairá | Portada |

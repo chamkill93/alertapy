@@ -5,6 +5,7 @@ namespace App\Collectors;
 use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
+use App\Services\HealthCategoryClassifier;
 use App\Services\ParaguayLocationExtractor;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -14,7 +15,10 @@ use RuntimeException;
 
 class SenepaCollector implements CollectorInterface
 {
-    public function __construct(private readonly ParaguayLocationExtractor $locationExtractor) {}
+    public function __construct(
+        private readonly ParaguayLocationExtractor $locationExtractor,
+        private readonly HealthCategoryClassifier $healthClassifier,
+    ) {}
 
     /** @return Collection<int, CandidateDTO> */
     public function collect(Source $source): Collection
@@ -54,8 +58,9 @@ class SenepaCollector implements CollectorInterface
 
             foreach ($posts as $post) {
                 if (! is_array($post)) continue;
-                $candidate = $this->candidate($source, $post, $cutoff);
-                if ($candidate !== null) $candidates->push($candidate);
+                foreach ($this->candidates($source, $post, $cutoff) as $candidate) {
+                    $candidates->push($candidate);
+                }
                 if ($candidates->count() >= $maximumCandidates) return $candidates;
             }
 
@@ -67,7 +72,7 @@ class SenepaCollector implements CollectorInterface
     }
 
     /** @param array<string, mixed> $post */
-    private function candidate(Source $source, array $post, CarbonImmutable $cutoff): ?CandidateDTO
+    private function candidates(Source $source, array $post, CarbonImmutable $cutoff): array
     {
         $id = $post['id'] ?? null;
         $url = trim((string) ($post['link'] ?? ''));
@@ -75,28 +80,36 @@ class SenepaCollector implements CollectorInterface
         $excerpt = $this->plainText((string) data_get($post, 'excerpt.rendered', ''));
         $content = $this->plainText((string) data_get($post, 'content.rendered', ''));
         $publishedAt = $this->date((string) ($post['date'] ?? ''));
-        if ($id === null || $url === '' || $title === '' || $publishedAt === null || $publishedAt->lt($cutoff)) return null;
+        if ($id === null || $url === '' || $title === '' || $publishedAt === null || $publishedAt->lt($cutoff)) return [];
 
         $evidence = Str::lower(Str::ascii($title.' '.$excerpt.' '.mb_substr($content, 0, 5000)));
         $required = (string) config('alertapy.sources.senepa.required_event_pattern');
         $excluded = (string) config('alertapy.sources.senepa.excluded_event_pattern');
-        if ($required === '' || @preg_match($required, $evidence) !== 1) return null;
-        if ($excluded !== '' && @preg_match($excluded, $evidence) === 1) return null;
+        if ($required === '' || @preg_match($required, $evidence) !== 1) return [];
+        if ($excluded !== '' && @preg_match($excluded, $evidence) === 1) return [];
 
         $location = $this->locationExtractor->extract($title, $excerpt, mb_substr($content, 0, 5000));
-        if ($location === null) return null;
+        if ($location === null) return [];
 
-        return new CandidateDTO(
+        // Keep SENEPA prevention campaigns in the vector layer, and also
+        // surface disease reports in public health when the headline supports it.
+        $categories = $this->healthClassifier->classifyAll($title);
+        if (! in_array('health_vector', $categories, true)) {
+            array_unshift($categories, 'health_vector');
+        }
+
+        return array_map(fn (string $category, int $index): CandidateDTO => new CandidateDTO(
             sourceSlug: $source->slug,
             sourceType: $source->type,
-            externalIdentifier: 'senepa-'.$id,
+            externalIdentifier: $index === 0 ? 'senepa-'.$id : 'senepa-'.$id.'-'.$category,
             title: $title,
             originalUrl: $url,
             content: trim($excerpt.' '.$content) ?: $title,
             publishedAt: $publishedAt,
             detectedLocation: $location['query'],
             metadata: [
-                'category_slug' => 'health_vector',
+                'category_slug' => $category,
+                'category_variant' => $index > 0,
                 'location_text' => $location['text'],
                 'city' => $location['city'],
                 'department' => $location['department'],
@@ -104,7 +117,7 @@ class SenepaCollector implements CollectorInterface
                 'original_title' => $title,
                 'official_api' => true,
             ],
-        );
+        ), $categories, array_keys($categories));
     }
 
     private function plainText(string $html): string
@@ -122,3 +135,4 @@ class SenepaCollector implements CollectorInterface
         }
     }
 }
+

@@ -212,5 +212,20 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('traffic_accident', $classifier->classify('Dirigente político sufre accidente de tránsito en Central', ''));
         $this->assertSame('traffic_accident', $classifier->classify('Después del choque de opiniones, un vehículo volcó en un accidente vial', ''));
     }
+
+    public function test_it_classifies_independent_animal_health_alerts_and_campaigns(): void
+    {
+        $classifier = new PressIncidentClassifier;
+
+        $this->assertSame('animal_health', $classifier->classify('Confirman un foco de fiebre aftosa en bovinos de San Pedro', ''));
+        $this->assertSame('animal_health', $classifier->classify('Detectan influenza aviar en aves de corral en Alto Paraná', ''));
+        $this->assertSame('animal_health', $classifier->classify('SENACSA inicia vacunación contra la fiebre aftosa en Misiones', ''));
+        $this->assertSame(
+            ['health_public', 'animal_health'],
+            $classifier->classifyAll('Confirman brote de rabia canina en Villarrica', ''),
+        );
+        $this->assertNull($classifier->classify('Ganadería paraguaya aumenta sus exportaciones durante el año', ''));
+    }
+
 }
 

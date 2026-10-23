@@ -221,7 +221,7 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('animal_health', $classifier->classify('Detectan influenza aviar en aves de corral en Alto Paraná', ''));
         $this->assertSame('animal_health', $classifier->classify('SENACSA inicia vacunación contra la fiebre aftosa en Misiones', ''));
         $this->assertSame(
-            ['health_public', 'animal_health'],
+            ['animal_health', 'health_public'],
             $classifier->classifyAll('Confirman brote de rabia canina en Villarrica', ''),
         );
         $this->assertNull($classifier->classify('Ganadería paraguaya aumenta sus exportaciones durante el año', ''));

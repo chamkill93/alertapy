@@ -432,4 +432,42 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertSame($archiveUrl, $candidates[1]->originalUrl);
         $this->assertSame('health_vector', $candidates[1]->metadata['category_slug']);
     }
+    public function test_independent_press_correlates_health_and_flood_layers(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        $source = new Source([
+            'name' => 'Prensa local',
+            'slug' => 'independent-health',
+            'type' => SourceType::Press,
+            'base_url' => 'https://press.test/',
+            'domain' => 'press.test',
+            'configuration_json' => [
+                'listing_urls' => ['https://press.test/'],
+                'prefilter_requires_location' => false,
+                'max_age_hours' => 168,
+                'max_links' => 20,
+                'max_candidates' => 10,
+                'location_search_article_body' => true,
+            ],
+        ]);
+        $title = 'Equipos de salud asisten a comunidades afectadas por inundaciones en Misiones';
+        $url = 'https://press.test/equipos-de-salud-misiones/';
+        Http::preventStrayRequests();
+        Http::fake([
+            'press.test/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'">
+                <meta property="article:published_time" content="2026-10-22T09:00:00-03:00">
+                <article><p>Los equipos brindan asistencia a familias afectadas en Misiones.</p></article>'),
+        ]);
+
+        $candidates = app(PressHomepageCollector::class)->collect($source);
+
+        $this->assertSame(
+            ['weather_flood', 'health_public'],
+            $candidates->pluck('metadata.category_slug')->all(),
+        );
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->originalUrl === $url));
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->metadata['department'] === 'Misiones'));
+    }
+
 }

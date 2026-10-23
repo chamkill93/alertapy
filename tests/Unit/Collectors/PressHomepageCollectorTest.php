@@ -394,13 +394,18 @@ class PressHomepageCollectorTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(function ($request) use ($listingUrl, $articleUrl, $title, $description) {
             return match ($request->url()) {
-                $listingUrl => Http::response('<div><h2><a href="'.$articleUrl.'">'.$title.'</a></h2><span>hace 3 horas 1 min de lectura</span></div>'),
+                $listingUrl => Http::response('<div><h2><a href="'.$articleUrl.'">'.$title.'</a><span>hace 3 horas 1 min de lectura</span></h2></div>'),
                 $articleUrl => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="'.$description.'"><article><p>'.$description.'</p></article>'),
                 default => Http::response('Unexpected request: '.$request->url(), 404),
             };
         });
 
-        $candidates = app(PressHomepageCollector::class)->collect($source);
+        $collector = app(PressHomepageCollector::class);
+        $dateParser = new \\ReflectionMethod($collector, 'dateFromText');
+        $relativeDate = $dateParser->invoke($collector, 'hace 3 horas 1 min de lectura');
+        $this->assertSame('2026-10-23T09:00:00-03:00', $relativeDate->toIso8601String());
+
+        $candidates = $collector->collect($source);
 
         $this->assertCount(2, Http::recorded());
         $this->assertCount(1, $candidates);

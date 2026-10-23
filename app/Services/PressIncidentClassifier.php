@@ -57,20 +57,28 @@ class PressIncidentClassifier
         // nominal restoration must not become a newly active service incident.
         $restoration = $restorationMention && ($this->closing ?? new ClosingRuleEngine)->containsClosingLanguage($evidence);
 
-        if (preg_match('/\b(?:rio|arroyo)\b/u', $evidence) === 1
-            && preg_match('/\b(?:crecida|desborde|bajante|sube)\b/u', $evidence) === 1) {
-            if (preg_match('/\b(?:no|sin)\b.{0,45}\b(?:afecta\w*|inunda\w*|anega\w*|aisla\w*|danos?|riesgo|evacu\w*)\b/u', $evidence) === 1) {
-                return [];
-            }
+        $matches = [];
+        $riverEvent = preg_match('/\b(?:rio|arroyo)\b/u', $evidence) === 1
+            && preg_match('/\b(?:crecida|desborde|bajante|sube)\b/u', $evidence) === 1;
+        $suppressUnconfirmedRiverFlood = false;
 
-            if (preg_match('/\b(?:arrasa|afecta|inunda|anega|aisla|evacuan|evacuacion|cierran? compuertas|cierre de compuertas)\b/u', $evidence) === 1) {
-                return ['hydrology'];
+        if ($riverEvent) {
+            $negativeImpact = preg_match('/\b(?:no|sin)\b.{0,45}\b(?:afecta\w*|inunda\w*|anega\w*|aisla\w*|danos?|riesgo|evacu\w*)\b/u', $evidence) === 1;
+            $concreteImpact = preg_match('/\b(?:arrasa|afecta|inunda|anega|aisla|evacuan|evacuacion|desaloj\w*|reubic\w*|traslad\w*|mudan familias|cierran? compuertas|cierre de compuertas)\b/u', $evidence) === 1;
+
+            if ($negativeImpact || ! $concreteImpact) {
+                // A river level mention alone is not a flood incident.
+                $suppressUnconfirmedRiverFlood = true;
+            } else {
+                $matches[] = 'hydrology';
             }
         }
 
-        $matches = [];
-
         foreach (self::CATEGORY_PATTERNS as $category => $pattern) {
+            if ($category === 'weather_flood' && $suppressUnconfirmedRiverFlood) {
+                continue;
+            }
+
             $restoredService = $restoration && match ($category) {
                 'electricity' => preg_match('/\b(?:energia electrica|electricidad|(?:servicio|suministro) (?:electrico|de energia)|luz)\b/u', $evidence) === 1,
                 'water' => preg_match('/\b(?:agua potable|(?:servicio|suministro|abastecimiento|provision) (?:de )?agua)\b/u', $evidence) === 1,
@@ -80,13 +88,7 @@ class PressIncidentClassifier
                 ? (preg_replace('/\b(?:obras?|trabajos?|reparacion|mantenimiento)\b/u', '', $evidence) ?? $evidence)
                 : $evidence;
             if ($restoredService || preg_match($pattern, $categoryEvidence) === 1) {
-                if (in_array($category, ['electricity', 'water'], true)) {
-                    $matches[] = $category;
-
-                    continue;
-                }
-
-                return $matches === [] ? [$category] : $matches;
+                $matches[] = $category;
             }
         }
 

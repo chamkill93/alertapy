@@ -98,7 +98,9 @@ En el ciclo automático siguiente, iniciado a las 08:07:39, las estaciones DMH e
 
 Hubo un timeout de 15 segundos al abrir una nota de Diario HOY en el ciclo de las 08:07. El runner registró el fallo y continuó con las otras fuentes; ANDE volvió a reportar el bloqueo anti-bot en el ciclo iniciado a las 08:10. Estos errores quedan visibles y sujetos a reintento, no se convierten en una falsa confirmación.
 
-Para esta actualización, las 37 pruebas JavaScript pasaron y la plantilla Blade compiló sin errores. PHPUnit no pudo arrancar en este PHP local porque falta `mbstring`; por eso el resultado previo de la suite completa no se presenta como una ejecución de esta revisión.
+También se evaluó [RDN](https://www.rdn.com.py/2026/10/18/ande-anuncia-cortes-de-luz-este-domingo-zonas-y-horarios/) como posible respaldo adicional: su nota del 18/10 detalla cortes con zonas y horarios, pero declara como fuente a ABC Color, ya habilitado en el ciclo. Se descartó agregar RDN como fuente independiente para no duplicar el mismo aviso ni inflar la cobertura.
+
+Para esta actualización, las 37 pruebas JavaScript pasaron y la plantilla Blade compiló sin errores. El PHP local carece de `mbstring`, por lo que PHPUnit no pudo iniciar allí; el CI de GitHub para el commit `748b6c9ee273eb4ce5a059b29f1620b1bc678027` pasó los trabajos PHP 8.2/8.3 con SQLite, prueba de interacciones del mapa, validación de scripts y smoke test de migración MySQL.
 
 ## Comprobación pendiente en Hostinger
 

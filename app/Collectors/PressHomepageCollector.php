@@ -227,9 +227,11 @@ class PressHomepageCollector implements CollectorInterface
         if ($location !== null && ($settings['category_classifier'] ?? null) === 'health') {
             // Health notices can also describe a flood, road closure, outage,
             // or another territorial event. Keep each supported layer visible.
+            // Preserve the existing territorial category as the primary raw-item ID.
+            // This lets a new health layer be attached to articles already seen as floods or outages.
             $categories = array_values(array_unique([
-                ...$this->healthClassifier->classifyAll($title),
                 ...$this->classifier->classifyAll($title, $contextDescription),
+                ...$this->healthClassifier->classifyAll($title),
             ]));
         } elseif ($location !== null && $hasConfiguredCategory) {
             $configured = $this->configuredCategory($settings, $title, $contextDescription);

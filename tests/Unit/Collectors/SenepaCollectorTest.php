@@ -52,6 +52,36 @@ class SenepaCollectorTest extends TestCase
         $this->assertSame(['senepa-11382', 'senepa-11360'], $candidates->pluck('externalIdentifier')->all());
     }
 
+    public function test_dengue_outbreak_is_correlated_with_public_health_and_vector_layers(): void
+    {
+        $source = Source::query()->create([
+            'name'=>'SENEPA', 'slug'=>'senepa', 'type'=>SourceType::Official,
+            'base_url'=>'https://senepa.gov.py/', 'domain'=>'senepa.gov.py',
+            'enabled'=>true, 'polling_minutes'=>30,
+        ]);
+        $title = 'Confirman brote de dengue en Villarrica';
+        $storyUrl = 'https://senepa.gov.py/2026/08/20/brote-dengue-villarrica/';
+        Http::preventStrayRequests();
+        Http::fake([
+            'senepa.gov.py/wp-json/wp/v2/posts*' => Http::response([
+                [
+                    'id'=>11390, 'date'=>'2026-08-20T10:00:00', 'link'=>$storyUrl,
+                    'title'=>['rendered'=>$title],
+                    'excerpt'=>['rendered'=>'La vigilancia epidemiológica confirmó casos de dengue en Villarrica, Guairá.'],
+                    'content'=>['rendered'=>'La vigilancia epidemiológica confirmó casos de dengue en Villarrica, Guairá.'],
+                ],
+            ], 200, ['X-WP-TotalPages' => '1']),
+        ]);
+
+        $candidates = app(SenepaCollector::class)->collect($source);
+
+        $this->assertSame(['health_vector', 'health_public'], $candidates->pluck('metadata.category_slug')->all());
+        $this->assertSame(['senepa-11390', 'senepa-11390-health_public'], $candidates->pluck('externalIdentifier')->all());
+        $this->assertSame([false, true], $candidates->pluck('metadata.category_variant')->all());
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->originalUrl === $storyUrl));
+        $this->assertSame(['Villarrica', 'Villarrica'], $candidates->pluck('metadata.city')->all());
+    }
+
     /** @return array<string, mixed> */
     private function postData(int $id, string $date, string $title, string $content): array
     {
@@ -61,3 +91,4 @@ class SenepaCollectorTest extends TestCase
         ];
     }
 }
+

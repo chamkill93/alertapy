@@ -131,6 +131,10 @@ class PressIncidentClassifierTest extends TestCase
             $classifier->classifyAll('Temporal derriba postes y deja barrios sin electricidad en Alto Paraná', ''),
         );
         $this->assertSame(
+            ['electricity', 'weather_flood'],
+            $classifier->classifyAll('TEMPORAL DAÑÓ UNA COMISARÍA Y DEJÓ ZONAS SIN LUZ', ''),
+        );
+        $this->assertSame(
             ['hydrology', 'weather_flood'],
             $classifier->classifyAll('Evacuan familias por crecida del río Paraguay en Humaitá', ''),
         );

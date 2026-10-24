@@ -195,7 +195,8 @@ class HealthNewsCollectorTest extends TestCase
         $candidate = app(MspbsCollector::class)->collect($source)->sole();
 
         $this->assertSame('health_public', $candidate->metadata['category_slug']);
-        $this->assertSame('Caaguazú', $candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertSame('Caaguazú', $candidate->metadata['department']);
         $this->assertSame($url, $candidate->originalUrl);
         $this->assertSame($title, $candidate->content);
     }

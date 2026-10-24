@@ -15,6 +15,17 @@ class HealthCategoryClassifierTest extends TestCase
         $this->assertSame(['health_vector'], $classifier->classifyAll('SENEPA realiza minga ambiental en Luque'));
         $this->assertSame(['health_vector', 'health_public'], $classifier->classifyAll('Confirman brote de dengue en Boquerón'));
         $this->assertSame(['health_public'], $classifier->classifyAll('Asistencia en salud llega a familias afectadas en Alto Paraguay'));
+        // Labor disputes that threaten laboratory or clinical coverage are
+        // health-service events even when a headline omits the hospital name.
+        $this->assertSame(
+            ['health_public'],
+            $classifier->classifyAll('Bioquímicos confirman huelga de tres días tras fracasar la mesa tripartita con Salud y Trabajo'),
+        );
+        $this->assertSame(
+            ['health_public'],
+            $classifier->classifyAll('Huelga de médicos suspenderá consultas ambulatorias en hospitales públicos'),
+        );
+        $this->assertNull($classifier->classify('Huelga de funcionarios del transporte público'));
         $this->assertSame(['health_public'], $classifier->classifyAll(
             'Equipos de salud asisten a comunidades afectadas por inundaciones en Misiones',
         ));

@@ -164,7 +164,7 @@ return [
             'prefilter_requires_location' => false,
             'forced_category_slug' => 'health_vector',
             'required_event_pattern' => '/\b(arbovirosis|dengue|chikungunya|zika|chagas|paludismo|malaria|leishmaniasis|mosquitos?|aedes|minga ambiental|rastrillaje|control (?:fisico|quimico|vectorial)|bloqueo quimico|eliminacion de criaderos|destruccion de criaderos|vigilancia entomologica|fumigacion|rociado|insecticida)\w*/u',
-            'excluded_event_pattern' => '/\b(mecip|acuerdos? y compromisos? eticos|rendicion de cuentas|conferencia internacional|acto protocolar)\b/u',
+            'excluded_event_pattern' => '/\b(mecip|acuerdos? y compromisos? eticos|rendicion de cuentas|conferencia internacional|acto protocolar|dia mundial del mosquito)\b/u',
             'max_age_hours' => (int) env('SOURCE_SENEPA_MAX_AGE_HOURS', 168),
             'max_links' => 100,
             'max_candidates' => 50,

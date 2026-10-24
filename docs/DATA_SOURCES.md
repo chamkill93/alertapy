@@ -29,6 +29,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | INE - Hidrografía | Cartografía pública de referencia | Actualización manual | Copia GeoJSON local de 20.486 tramos hidrográficos con nombre, agrupados en 957 ríos, arroyos, riachos, lagos, canales y otros cauces para la capa cartográfica |
 | Secretaría de Emergencia Nacional | Oficial | 10 min | Fase 9 |
 | MSPBS | Oficial | 30 min | Listados paginados y portada; separa salud pública, vectores y otras capas mencionadas en el titular. Solo publica notas con ubicación y fecha verificables |
+| [Gobernación de Alto Paraguay (G.A.P.)](https://arturomendez.org/) | Oficial | 30 min | Canal institucional regional; historias recientes sobre salud, agua, drenaje y caminos. Solo se mapean hechos clasificables con fecha y ubicación; conserva URL original y ventana de siete días |
 | DGVS | Oficial | 30 min | Portada y archivo de noticias; clasifica vigilancia, brotes y servicios. No geolocaliza personas ni convierte estadísticas nacionales en casos puntuales |
 | PAI | Oficial | 30 min | Portada y noticias paginadas del Programa Ampliado de Inmunizaciones; campañas y jornadas solo se llevan al mapa cuando la nota identifica un lugar |
 | DIGIES | Oficial | 30 min | Noticias sobre registros, establecimientos y servicios de salud; ubicación extraída de la nota, sin publicar información personal |
@@ -61,7 +62,7 @@ El catálogo registra configuración, dominio y frecuencia. Las filas con collec
 | El Nacional | Prensa | 15 min | Portada HTML; noticias nacionales y territoriales con el enlace de publicación original |
 | Diario La Clave | Prensa | 15 min | Portada HTML; cobertura local de Alto Paraná y Ciudad del Este |
 | Ratio Paraguay | Prensa | 15 min | Portada HTML; noticias nacionales con cobertura operativa de ANDE y temporales |
-| Ahendu | Prensa | 30 min | Portada, Ciudades y Sociedad; noticias con contexto de clima, salud, servicios e incidentes territoriales. Usa el cuerpo del artículo para extraer lugares y conserva el enlace original |
+| Ahendu | Prensa | 30 min | Portada, Ciudades, Sociedad y feed temático de Ñeembucú; noticias con contexto de clima, salud, servicios e incidentes territoriales. Usa el cuerpo del artículo para extraer lugares y conserva el enlace original |
 | La Verdad Paraguaya | Prensa | 30 min | Portada bilingüe y secciones; cobertura nacional de sociedad, seguridad, salud, ambiente e infraestructura con publicación y ubicación verificables |
 | El Independiente | Prensa | 30 min | Portada nacional con secciones de salud, meteorología y medio ambiente; guarda el titular y el enlace original si reconoce un hecho y un lugar |
 | Parámetro | Prensa | 30 min | Portada de investigación y noticias; el medio se declara independiente y aporta notas territoriales cuando están dentro de la ventana de siete días |

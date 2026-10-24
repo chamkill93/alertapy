@@ -6,6 +6,7 @@ use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
 use App\Services\ParaguayLocationExtractor;
+use App\Services\MapLocationFallback;
 use App\Services\PressIncidentClassifier;
 use Carbon\CarbonImmutable;
 use DOMDocument;
@@ -21,6 +22,7 @@ class MinisterioPublicoCollector implements CollectorInterface
     public function __construct(
         private readonly ParaguayLocationExtractor $locationExtractor,
         private readonly PressIncidentClassifier $classifier,
+        private readonly MapLocationFallback $locationFallback,
     ) {}
 
     /** @return Collection<int, CandidateDTO> */
@@ -100,7 +102,7 @@ class MinisterioPublicoCollector implements CollectorInterface
                 continue;
             }
 
-            $location = $this->locationExtractor->extract($title);
+            $location = $this->locationFallback->forNews($source->type, $this->locationExtractor->extract($title));
             $category = $this->classifier->classify($title, '');
 
             if ($location === null || $category === null) {
@@ -122,12 +124,15 @@ class MinisterioPublicoCollector implements CollectorInterface
                 content: $title,
                 publishedAt: $publishedAt,
                 detectedLocation: $location['query'],
+                latitude: $location['latitude'] ?? null,
+                longitude: $location['longitude'] ?? null,
                 metadata: [
                     'category_slug' => $category,
                     'location_text' => $location['text'],
                     'city' => $location['city'],
                     'department' => $location['department'],
                     'location_accuracy' => $location['accuracy'],
+                    'location_is_fallback' => $location['is_fallback'],
                     'original_title' => $title,
                     'privacy_limited' => true,
                 ],
@@ -159,3 +164,4 @@ class MinisterioPublicoCollector implements CollectorInterface
         return trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?: '');
     }
 }
+

@@ -203,6 +203,7 @@ class PressHomepageCollector implements CollectorInterface
         $articleText = $this->articleText($xpath);
         $description = $this->plainText((string) ($metadata['og:description'] ?? $metadata['description'] ?? ''));
         $contextDescription = $description !== '' ? $description : $articleText;
+        $classificationContext = trim($contextDescription.' '.mb_substr($articleText, 0, 2000));
         $content = (bool) ($settings['summary_title_only'] ?? false)
             ? $title
             : ($contextDescription !== '' ? $contextDescription : $title);
@@ -213,16 +214,43 @@ class PressHomepageCollector implements CollectorInterface
         ) ?? $this->date((string) ($link['published_at'] ?? ''), (string) config('app.timezone'))
             ?? $this->dateFromText($articleText);
 
-        if ($publishedAt === null || $publishedAt->lt($cutoff) || $publishedAt->isFuture()) {
+        $updatedValue = (string) ($metadata['article:modified_time']
+            ?? $metadata['og:updated_time']
+            ?? $this->jsonLdValue($xpath, 'dateModified')
+            ?? '');
+        $updatedAt = $this->date(
+            $updatedValue,
+            (string) config("alertapy.sources.{$source->slug}.published_timezone", config('app.timezone')),
+        );
+        $originalPublishedAt = $publishedAt;
+        $freshnessAt = $publishedAt;
+        $freshnessBasis = 'published';
+
+        // An explicit, recent publisher update can keep a report current within
+        // the retention window; future update timestamps are never trusted.
+        if ($updatedAt !== null && ! $updatedAt->isFuture()
+            && ($freshnessAt === null || $updatedAt->gt($freshnessAt))) {
+            $freshnessAt = $updatedAt;
+            $freshnessBasis = 'updated';
+        }
+
+        if ($freshnessAt === null || $freshnessAt->lt($cutoff) || $freshnessAt->isFuture()) {
             return collect();
         }
 
+        // Preserve the original publication time for audit while freshness
+        // and seven-day retention follow the latest verified update.
+        $publishedAt = $freshnessAt;
+
         $locationEvidence = $description;
         $location = $this->locationExtractor->extract($title, $description);
-        if ($location === null && (bool) ($settings['location_search_article_body'] ?? true) && $articleText !== '') {
-            $locationEvidence = mb_substr($articleText, 0, 5000);
-            $location = $this->locationExtractor->extract($title, $locationEvidence);
+        if ((bool) ($settings['location_search_article_body'] ?? true) && $articleText !== '') {
+            $locationEvidence = trim($description.' '.mb_substr($articleText, 0, 5000));
+            if ($location === null) {
+                $location = $this->locationExtractor->extract($title, $locationEvidence);
+            }
         }
+        $hasReportedLocation = $location !== null;
         $location = $this->locationFallback->forNews($source->type, $location);
         if (($location['is_fallback'] ?? false) && $this->locationFallback->isClearlyEditorial($title, $contextDescription, $content)) {
             return collect();
@@ -235,10 +263,9 @@ class PressHomepageCollector implements CollectorInterface
             // or another territorial event. Keep each supported layer visible.
             // Preserve the existing territorial category as the primary raw-item ID.
             // This lets a new health layer be attached to articles already seen as floods or outages.
-            $healthContext = trim($description.' '.mb_substr($articleText, 0, 2000));
             $categories = array_values(array_unique([
                 ...$this->classifier->classifyAll($title, $contextDescription),
-                ...$this->healthClassifier->classifyAll($title, $healthContext),
+                ...$this->healthClassifier->classifyAll($title, $classificationContext),
             ]));
         } elseif ($location !== null && $hasConfiguredCategory) {
             $configured = $this->configuredCategory($settings, $title, $contextDescription);
@@ -248,11 +275,11 @@ class PressHomepageCollector implements CollectorInterface
             // retain any separate territorial category from the same headline.
             $categories = array_values(array_unique([
                 ...$this->classifier->classifyAll($title, $contextDescription),
-                ...$this->healthClassifier->classifyAll($title, $contextDescription),
+                ...$this->healthClassifier->classifyAll($title, $classificationContext),
             ]));
 
-            if ($categories === []) {
-                $category = $this->category($title, $contextDescription, $location);
+            if ($categories === [] && $hasReportedLocation) {
+                $category = $this->category($title, $classificationContext, $location);
                 $categories = $category === null ? [] : [$category];
             }
         }
@@ -287,6 +314,9 @@ class PressHomepageCollector implements CollectorInterface
                 'regional_department' => $settings['regional_department'] ?? null,
                 'privacy_limited' => (bool) ($settings['summary_title_only'] ?? false),
                 'location_evidence' => Str::limit($title.' '.$locationEvidence, 2000, '…'),
+                'article_published_at' => $originalPublishedAt?->toIso8601String(),
+                'article_updated_at' => $updatedAt?->toIso8601String(),
+                'freshness_basis' => $freshnessBasis,
                 'force_multi_location_department' => (bool) ($settings['force_multi_location_department'] ?? false),
                 'dedup_window_hours' => (int) ($settings['dedup_window_hours'] ?? 12),
                 'dedup_source_only' => (bool) ($settings['dedup_source_only'] ?? false),

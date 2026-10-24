@@ -71,7 +71,7 @@ class CatalogSeederTest extends TestCase
         $this->assertSame('Alto Paraguay', $altoParaguayGovernment->configuration_json['regional_department']);
         $this->assertSame(['https://arturomendez.org/'], $altoParaguayGovernment->configuration_json['listing_urls']);
         $this->assertSame(30, $altoParaguayGovernment->polling_minutes);
-        $this->assertSame(\\App\\Collectors\\RegionalPressCollector::class, app(SourceCommandRegistry::class)->scrapers()['gobernacion-alto-paraguay']);
+        $this->assertSame(\App\Collectors\RegionalPressCollector::class, app(SourceCommandRegistry::class)->scrapers()['gobernacion-alto-paraguay']);
         $agenciaIp = Source::query()->where('slug', 'agencia-ip')->sole();
         $this->assertSame('press_homepage', $agenciaIp->configuration_json['collector']);
         $this->assertFalse($agenciaIp->configuration_json['prefilter_requires_location']);

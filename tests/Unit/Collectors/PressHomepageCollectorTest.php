@@ -66,6 +66,47 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertSame('2026-08-18T20:08:42-03:00', $candidates[0]->publishedAt?->toIso8601String());
     }
 
+    public function test_it_extracts_itapua_places_and_correlates_weather_and_electricity_from_local_press(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        Http::preventStrayRequests();
+        $source = Source::query()->create([
+            'name' => 'Itapúa Noticias',
+            'slug' => 'itapua-noticias',
+            'type' => SourceType::Press,
+            'base_url' => 'https://itapuanoticias.tv/',
+            'domain' => 'itapuanoticias.tv',
+            'enabled' => true,
+            'polling_minutes' => 30,
+            'configuration_json' => [
+                'listing_urls' => ['https://itapuanoticias.tv/'],
+                'regional_department' => 'Itapúa',
+                'location_search_article_body' => true,
+                'summary_title_only' => true,
+            ],
+        ]);
+        $url = 'https://itapuanoticias.tv/temporal-dano-una-comisaria-y-dejo-zonas-sin-luz/';
+        $title = 'TEMPORAL DAÑÓ UNA COMISARÍA Y DEJÓ ZONAS SIN LUZ';
+
+        Http::fake([
+            'itapuanoticias.tv/' => Http::response('<a href="'.$url.'"><h2>'.$title.'</h2></a>'),
+            'itapuanoticias.tv/temporal-dano-*' => Http::response('<html><head>
+                <meta property="og:title" content="'.$title.'">
+                <meta property="og:description" content="El temporal afectó a Coronel Bogado y General Delgado. Reportaron daños y zonas sin energía.">
+                <meta property="article:published_time" content="2026-10-23T15:00:00-03:00">
+            </head><body><p>El temporal afectó a Coronel Bogado y General Delgado.</p></body></html>'),
+        ]);
+
+        $candidates = app(PressHomepageCollector::class)->collect($source);
+
+        $this->assertSame(['electricity', 'weather_flood'], $candidates->pluck('metadata.category_slug')->all());
+        $this->assertSame([$url, $url], $candidates->pluck('originalUrl')->all());
+        $this->assertSame(['Coronel Bogado', 'Coronel Bogado'], $candidates->pluck('metadata.city')->all());
+        $this->assertSame(['Itapúa', 'Itapúa'], $candidates->pluck('metadata.department')->all());
+        $this->assertSame([false, true], $candidates->pluck('metadata.category_variant')->all());
+        $this->assertTrue($candidates->every(fn ($candidate): bool => ! $candidate->metadata['location_is_fallback']));
+    }
+
     public function test_unlocated_press_incidents_use_asuncion_only_as_a_map_reference(): void
     {
         CarbonImmutable::setTestNow('2026-08-18 21:00:00 America/Asuncion');

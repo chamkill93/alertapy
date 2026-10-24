@@ -26,7 +26,7 @@ class AdditionalPressSourceSeeder extends Seeder
                 'slug' => 'ahendu',
                 'domain' => 'ahendu.com.py',
                 'polling_minutes' => 30,
-                'listing_urls' => ['https://ahendu.com.py/', 'https://ahendu.com.py/ciudad/', 'https://ahendu.com.py/sociedad/'],
+                'listing_urls' => ['https://ahendu.com.py/', 'https://ahendu.com.py/ciudad/', 'https://ahendu.com.py/sociedad/', 'https://ahendu.com.py/tema/neembucu/'],
                 'prefilter_requires_location' => false,
                 'location_search_article_body' => true,
                 'max_links' => 18,

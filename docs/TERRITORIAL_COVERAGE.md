@@ -16,7 +16,7 @@ La población censal de un distrito es contexto. Solo se presenta `population_po
 
 ## Prensa local y regional
 
-El 23/10/2026 se amplió el catálogo con veintisiete portales locales o regionales cuya actividad reciente y cobertura territorial aparecen en sus propias portadas o secciones locales. La lista documenta fuentes encontradas; no constituye un censo de medios ni una auditoría completa de propiedad o independencia societaria. Se les asigna confianza media y se mantienen los filtros de fecha, categoría, ubicación y enlace original.
+El 24/10/2026 se verificó el catálogo de veintisiete portales locales o regionales cuya actividad reciente y cobertura territorial aparecen en sus propias portadas o secciones locales. La lista documenta fuentes encontradas; no constituye un censo de medios ni una auditoría completa de propiedad o independencia societaria. Se les asigna confianza media y se mantienen los filtros de fecha, categoría, ubicación y enlace original.
 
 | Portal | Cobertura editorial declarada u observada | Listados configurados |
 | --- | --- | --- |

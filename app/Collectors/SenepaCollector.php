@@ -6,6 +6,7 @@ use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
 use App\Services\HealthCategoryClassifier;
+use App\Services\MapLocationFallback;
 use App\Services\ParaguayLocationExtractor;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -18,6 +19,7 @@ class SenepaCollector implements CollectorInterface
     public function __construct(
         private readonly ParaguayLocationExtractor $locationExtractor,
         private readonly HealthCategoryClassifier $healthClassifier,
+        private readonly MapLocationFallback $locationFallback,
     ) {}
 
     /** @return Collection<int, CandidateDTO> */
@@ -88,7 +90,10 @@ class SenepaCollector implements CollectorInterface
         if ($required === '' || @preg_match($required, $evidence) !== 1) return [];
         if ($excluded !== '' && @preg_match($excluded, $evidence) === 1) return [];
 
-        $location = $this->locationExtractor->extract($title, $excerpt, mb_substr($content, 0, 5000));
+        $location = $this->locationFallback->forNews(
+            $source->type,
+            $this->locationExtractor->extract($title, $excerpt, mb_substr($content, 0, 5000)),
+        );
         if ($location === null) return [];
 
         // Keep SENEPA prevention campaigns in the vector layer, and also
@@ -107,6 +112,8 @@ class SenepaCollector implements CollectorInterface
             content: trim($excerpt.' '.$content) ?: $title,
             publishedAt: $publishedAt,
             detectedLocation: $location['query'],
+            latitude: $location['latitude'] ?? null,
+            longitude: $location['longitude'] ?? null,
             metadata: [
                 'category_slug' => $category,
                 'category_variant' => $index > 0,
@@ -114,6 +121,7 @@ class SenepaCollector implements CollectorInterface
                 'city' => $location['city'],
                 'department' => $location['department'],
                 'location_accuracy' => $location['accuracy'],
+                'location_is_fallback' => $location['is_fallback'],
                 'original_title' => $title,
                 'official_api' => true,
             ],

@@ -485,7 +485,7 @@ class PressHomepageCollector implements CollectorInterface
         $node = $anchor;
 
         for ($depth = 0; $depth < 4 && $node instanceof DOMElement; $depth++) {
-            $date = $this->dateFromText($this->plainText((string) $node->textContent));
+            $date = $this->dateFromText($this->textContentWithSeparators($node));
 
             if ($date !== null) {
                 return $date;
@@ -501,6 +501,27 @@ class PressHomepageCollector implements CollectorInterface
         }
 
         return null;
+    }
+
+    private function textContentWithSeparators(DOMElement $element): string
+    {
+        $textNodes = (new DOMXPath($element->ownerDocument))->query('.//text()', $element);
+
+        if ($textNodes === false) {
+            return $this->plainText((string) $element->textContent);
+        }
+
+        $parts = [];
+
+        foreach ($textNodes as $textNode) {
+            $text = $this->plainText((string) $textNode->nodeValue);
+
+            if ($text !== '') {
+                $parts[] = $text;
+            }
+        }
+
+        return implode(' ', $parts);
     }
 
     private function nestedValue(mixed $payload, string $key): ?string

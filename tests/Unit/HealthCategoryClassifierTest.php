@@ -53,6 +53,8 @@ class HealthCategoryClassifierTest extends TestCase
         $this->assertSame(['health_public'], $classifier->classifyAll(
             'Realizan charla de concienciación sobre la prevención del cáncer de mama en la DNERHS',
         ));
+        $this->assertSame(['health_public'], $classifier->classifyAll('Máquina de rayos X para Puerto Casado'));
+        $this->assertSame(['health_public'], $classifier->classifyAll('Traslado de pacientes para estudios de mamografía en Alto Paraguay'));
         $this->assertNull($classifier->classify('Capacitación administrativa del MSPBS en Asunción'));
     }
 

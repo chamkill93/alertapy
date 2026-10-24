@@ -401,7 +401,7 @@ class PressHomepageCollectorTest extends TestCase
         });
 
         $collector = app(PressHomepageCollector::class);
-        $dateParser = new \\ReflectionMethod($collector, 'dateFromText');
+        $dateParser = new \ReflectionMethod($collector, 'dateFromText');
         $relativeDate = $dateParser->invoke($collector, 'hace 3 horas 1 min de lectura');
         $this->assertSame('2026-10-23T09:00:00-03:00', $relativeDate->toIso8601String());
 

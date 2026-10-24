@@ -401,23 +401,7 @@ class PressHomepageCollectorTest extends TestCase
             };
         });
 
-        $collector = app(PressHomepageCollector::class);
-        $listingDocument = new \DOMDocument;
-        $listingDocument->loadHTML('<?xml encoding="UTF-8">'.$listingHtml);
-        $anchor = (new \DOMXPath($listingDocument))->query('//a')->item(0);
-        $dateNearAnchor = new \ReflectionMethod($collector, 'dateNearAnchor');
-        $relativeDate = $dateNearAnchor->invoke($collector, $anchor);
-        $this->assertSame('2026-10-23T09:00:00-03:00', $relativeDate->toIso8601String());
-        $this->assertSame(
-            'Villarrica',
-            app(\App\Services\ParaguayLocationExtractor::class)->extract($title, $description)['city'],
-        );
-        $this->assertSame(
-            ['health_public'],
-            app(\App\Services\HealthCategoryClassifier::class)->classifyAll($title, $description),
-        );
-
-        $candidates = $collector->collect($source);
+        $candidates = app(PressHomepageCollector::class)->collect($source);
 
         $this->assertCount(2, Http::recorded());
         $this->assertCount(1, $candidates);

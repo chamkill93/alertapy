@@ -391,19 +391,31 @@ class PressHomepageCollectorTest extends TestCase
                 'regional_department' => 'Guairá',
             ],
         ]);
+        $listingHtml = '<div><h2><a href="'.$articleUrl.'">'.$title.'</a><span>hace 3 horas 1 min de lectura</span></h2></div>';
         Http::preventStrayRequests();
-        Http::fake(function ($request) use ($listingUrl, $articleUrl, $title, $description) {
+        Http::fake(function ($request) use ($listingUrl, $articleUrl, $listingHtml, $title, $description) {
             return match ($request->url()) {
-                $listingUrl => Http::response('<div><h2><a href="'.$articleUrl.'">'.$title.'</a><span>hace 3 horas 1 min de lectura</span></h2></div>'),
+                $listingUrl => Http::response($listingHtml),
                 $articleUrl => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="'.$description.'"><article><p>'.$description.'</p></article>'),
                 default => Http::response('Unexpected request: '.$request->url(), 404),
             };
         });
 
         $collector = app(PressHomepageCollector::class);
-        $dateParser = new \ReflectionMethod($collector, 'dateFromText');
-        $relativeDate = $dateParser->invoke($collector, 'hace 3 horas 1 min de lectura');
+        $listingDocument = new \DOMDocument;
+        $listingDocument->loadHTML('<?xml encoding="UTF-8">'.$listingHtml);
+        $anchor = (new \DOMXPath($listingDocument))->query('//a')->item(0);
+        $dateNearAnchor = new \ReflectionMethod($collector, 'dateNearAnchor');
+        $relativeDate = $dateNearAnchor->invoke($collector, $anchor);
         $this->assertSame('2026-10-23T09:00:00-03:00', $relativeDate->toIso8601String());
+        $this->assertSame(
+            'Villarrica',
+            app(\App\Services\ParaguayLocationExtractor::class)->extract($title, $description)['city'],
+        );
+        $this->assertSame(
+            ['health_public'],
+            app(\App\Services\HealthCategoryClassifier::class)->classifyAll($title, $description),
+        );
 
         $candidates = $collector->collect($source);
 

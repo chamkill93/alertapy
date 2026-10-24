@@ -98,6 +98,29 @@ class EssapCollectorTest extends TestCase
         $this->assertSame('essap-3', $candidates->first()->externalIdentifier);
     }
 
+    public function test_unlocated_water_notice_uses_asuncion_as_an_explicit_map_reference(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-22 15:00:00 America/Asuncion');
+        Http::fake(['www.essap.com.py/wp-json/wp/v2/posts*' => Http::response([[
+            'id' => 70100,
+            'date' => '2026-10-22T10:00:00',
+            'link' => 'https://www.essap.com.py/reparacion-tuberia-principal/',
+            'title' => ['rendered' => 'Corte de agua potable por reparación de tubería principal'],
+            'excerpt' => ['rendered' => 'El servicio se restablecerá al concluir los trabajos.'],
+            'content' => ['rendered' => '<p>Cuadrillas realizan la reparación.</p>'],
+            'categories' => [6],
+        ]])]);
+
+        $candidate = app(EssapCollector::class)->collect(new Source(['slug' => 'essap', 'type' => SourceType::Official]))->sole();
+
+        $this->assertSame('Asunción', $candidate->detectedLocation);
+        $this->assertSame(-25.2800459, $candidate->latitude);
+        $this->assertSame(-57.6343814, $candidate->longitude);
+        $this->assertTrue($candidate->metadata['location_is_fallback']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['department']);
+    }
+
     public function test_gmt_date_preserves_recent_boundary_and_rejects_invalid_dates_or_reference_links(): void
     {
         CarbonImmutable::setTestNow('2026-10-22 15:00:00 America/Asuncion');
@@ -146,3 +169,4 @@ class EssapCollectorTest extends TestCase
         $this->assertCount(0, app(EssapCollector::class)->collect(new Source(['slug' => 'essap', 'type' => SourceType::Official])));
     }
 }
+

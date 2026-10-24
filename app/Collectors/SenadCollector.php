@@ -5,6 +5,7 @@ namespace App\Collectors;
 use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
+use App\Services\MapLocationFallback;
 use App\Services\ParaguayLocationExtractor;
 use Carbon\CarbonImmutable;
 use DOMDocument;
@@ -17,7 +18,10 @@ use RuntimeException;
 
 class SenadCollector implements CollectorInterface
 {
-    public function __construct(private readonly ParaguayLocationExtractor $locationExtractor) {}
+    public function __construct(
+        private readonly ParaguayLocationExtractor $locationExtractor,
+        private readonly MapLocationFallback $locationFallback,
+    ) {}
 
     /** @return Collection<int, CandidateDTO> */
     public function collect(Source $source): Collection
@@ -78,7 +82,7 @@ class SenadCollector implements CollectorInterface
                 continue;
             }
 
-            $location = $this->locationExtractor->extract($title, $summary);
+            $location = $this->locationFallback->forNews($source->type, $this->locationExtractor->extract($title, $summary));
             $originalUrl = trim($anchor->getAttribute('href'));
 
             if ($location === null || ! str_starts_with($originalUrl, 'https://senad.gov.py/')) {
@@ -94,12 +98,15 @@ class SenadCollector implements CollectorInterface
                 content: $title,
                 publishedAt: $publishedAt,
                 detectedLocation: $location['query'],
+                latitude: $location['latitude'] ?? null,
+                longitude: $location['longitude'] ?? null,
                 metadata: [
                     'category_slug' => 'security',
                     'location_text' => $location['text'],
                     'city' => $location['city'],
                     'department' => $location['department'],
                     'location_accuracy' => $location['accuracy'],
+                    'location_is_fallback' => $location['is_fallback'],
                     'original_title' => $title,
                     'privacy_limited' => true,
                 ],
@@ -114,3 +121,4 @@ class SenadCollector implements CollectorInterface
         return trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?: '');
     }
 }
+

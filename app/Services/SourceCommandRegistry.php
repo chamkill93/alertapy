@@ -37,6 +37,7 @@ class SourceCommandRegistry
         foreach (Source::query()->get(['slug', 'configuration_json']) as $source) {
             $class = match ($source->configuration_json['collector'] ?? null) {
                 'press_homepage' => Collectors\PressHomepageCollector::class,
+                'territorial_press' => Collectors\TerritorialPressCollector::class,
                 'health_news' => Collectors\HealthNewsCollector::class,
                 'regional_press' => Collectors\RegionalPressCollector::class,
                 'municipal' => Collectors\MunicipalNewsCollector::class,

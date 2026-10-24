@@ -82,6 +82,30 @@ class SenepaCollectorTest extends TestCase
         $this->assertSame(['Villarrica', 'Villarrica'], $candidates->pluck('metadata.city')->all());
     }
 
+    public function test_unlocated_vector_notice_uses_asuncion_as_an_explicit_map_reference(): void
+    {
+        $source = new Source(['name' => 'SENEPA', 'slug' => 'senepa', 'type' => SourceType::Official]);
+        Http::fake([
+            'senepa.gov.py/wp-json/wp/v2/posts*' => Http::response([[
+                'id' => 11400,
+                'date' => '2026-08-20T10:00:00',
+                'link' => 'https://senepa.gov.py/2026/08/20/operativo-prevencion-arbovirosis/',
+                'title' => ['rendered' => 'Operativo de prevención de arbovirosis'],
+                'excerpt' => ['rendered' => 'El operativo incluye fumigación y eliminación de criaderos.'],
+                'content' => ['rendered' => 'SENEPA realiza control vectorial y eliminación de criaderos.'],
+            ]], 200, ['X-WP-TotalPages' => '1']),
+        ]);
+
+        $candidate = app(SenepaCollector::class)->collect($source)->sole();
+
+        $this->assertSame('Asunción', $candidate->detectedLocation);
+        $this->assertSame(-25.2800459, $candidate->latitude);
+        $this->assertSame(-57.6343814, $candidate->longitude);
+        $this->assertTrue($candidate->metadata['location_is_fallback']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['department']);
+    }
+
     /** @return array<string, mixed> */
     private function postData(int $id, string $date, string $title, string $content): array
     {

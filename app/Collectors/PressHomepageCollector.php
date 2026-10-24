@@ -237,7 +237,8 @@ class PressHomepageCollector implements CollectorInterface
             // This lets a new health layer be attached to articles already seen as floods or outages.
             $categories = array_values(array_unique([
                 ...$this->classifier->classifyAll($title, $contextDescription),
-                ...$this->healthClassifier->classifyAll($title, $contextDescription),
+                $healthContext = trim($description.' '.mb_substr($articleText, 0, 2000));
+                ...$this->healthClassifier->classifyAll($title, $healthContext),
             ]));
         } elseif ($location !== null && $hasConfiguredCategory) {
             $configured = $this->configuredCategory($settings, $title, $contextDescription);

@@ -126,6 +126,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://masencarnacion.com/'],
             ],
             [
+                'name' => 'Itapúa Noticias',
+                'slug' => 'itapua-noticias',
+                'domain' => 'itapuanoticias.tv',
+                'regional_department' => 'Itapúa',
+                'listing_urls' => ['https://itapuanoticias.tv/'],
+            ],
+            [
                 'name' => 'Radio Guairá',
                 'slug' => 'radio-guaira',
                 'domain' => 'radioguaira.com',

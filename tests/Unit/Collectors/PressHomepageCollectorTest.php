@@ -3,6 +3,7 @@
 namespace Tests\Unit\Collectors;
 
 use App\Collectors\PressHomepageCollector;
+use App\Collectors\TerritorialPressCollector;
 use App\Enums\SourceType;
 use App\Models\Source;
 use Carbon\CarbonImmutable;
@@ -64,6 +65,183 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertSame('Boquerón', $candidates[0]->metadata['department']);
         $this->assertSame('approximate', $candidates[0]->metadata['location_accuracy']);
         $this->assertSame('2026-08-18T20:08:42-03:00', $candidates[0]->publishedAt?->toIso8601String());
+    }
+
+    public function test_it_extracts_itapua_places_and_correlates_weather_and_electricity_from_local_press(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        Http::preventStrayRequests();
+        $source = Source::query()->create([
+            'name' => 'Itapúa Noticias',
+            'slug' => 'itapua-noticias',
+            'type' => SourceType::Press,
+            'base_url' => 'https://itapuanoticias.tv/',
+            'domain' => 'itapuanoticias.tv',
+            'enabled' => true,
+            'polling_minutes' => 30,
+            'configuration_json' => [
+                'listing_urls' => ['https://itapuanoticias.tv/'],
+                'regional_department' => 'Itapúa',
+                'location_search_article_body' => true,
+                'summary_title_only' => true,
+            ],
+        ]);
+        $url = 'https://itapuanoticias.tv/temporal-dano-una-comisaria-y-dejo-zonas-sin-luz/';
+        $title = 'TEMPORAL DAÑÓ UNA COMISARÍA Y DEJÓ ZONAS SIN LUZ';
+
+        Http::fake([
+            'itapuanoticias.tv/' => Http::response('<a href="'.$url.'"><h2>'.$title.'</h2></a>'),
+            'itapuanoticias.tv/temporal-dano-*' => Http::response('<html><head>
+                <meta property="og:title" content="'.$title.'">
+                <meta property="og:description" content="El temporal afectó a Coronel Bogado y General Delgado. Reportaron daños y zonas sin energía.">
+                <meta property="article:published_time" content="2026-10-23T15:00:00-03:00">
+            </head><body><p>El temporal afectó a Coronel Bogado y General Delgado.</p></body></html>'),
+        ]);
+
+        $candidates = app(PressHomepageCollector::class)->collect($source);
+
+        $this->assertSame(['electricity', 'weather_flood'], $candidates->pluck('metadata.category_slug')->all());
+        $this->assertSame([$url, $url], $candidates->pluck('originalUrl')->all());
+        $this->assertSame(['Coronel Bogado', 'Coronel Bogado'], $candidates->pluck('metadata.city')->all());
+        $this->assertSame(['Itapúa', 'Itapúa'], $candidates->pluck('metadata.department')->all());
+        $this->assertSame([false, true], $candidates->pluck('metadata.category_variant')->all());
+        $this->assertTrue($candidates->every(fn ($candidate): bool => ! $candidate->metadata['location_is_fallback']));
+    }
+
+    public function test_unlocated_press_incidents_use_asuncion_only_as_a_map_reference(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-18 21:00:00 America/Asuncion');
+        config()->set('alertapy.sources.ultimahora.listing_urls', ['https://www.ultimahora.com/']);
+        $source = new Source([
+            'name' => 'Última Hora', 'slug' => 'ultimahora', 'type' => SourceType::Press,
+            'base_url' => 'https://www.ultimahora.com/', 'domain' => 'ultimahora.com',
+        ]);
+        $title = 'Incendio deja daños materiales y varias familias evacuadas';
+        Http::fake([
+            'www.ultimahora.com/' => Http::response('<h2><a href="https://www.ultimahora.com/incendio-sin-lugar">'.$title.'</a></h2>'),
+            'www.ultimahora.com/incendio-sin-lugar' => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="Bomberos controlaron las llamas y asistieron a las familias afectadas."><meta property="article:published_time" content="2026-08-18T22:00:00Z">'),
+        ]);
+
+        $candidate = app(PressHomepageCollector::class)->collect($source)->sole();
+
+        $this->assertSame('Asunción', $candidate->detectedLocation);
+        $this->assertSame('fire', $candidate->metadata['category_slug']);
+        $this->assertTrue($candidate->metadata['location_is_fallback']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['department']);
+        $this->assertSame('approximate', $candidate->metadata['location_accuracy']);
+        $this->assertStringContainsString('Ubicación no informada', $candidate->metadata['location_text']);
+        $this->assertSame(-25.2800459, $candidate->latitude);
+        $this->assertSame(-57.6343814, $candidate->longitude);
+    }
+
+    public function test_it_keeps_a_recently_updated_health_report_and_maps_all_reported_departments(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        $source = Source::query()->create([
+            'name' => 'Ahendu',
+            'slug' => 'ahendu',
+            'type' => SourceType::Press,
+            'base_url' => 'https://ahendu.com.py/',
+            'domain' => 'ahendu.com.py',
+            'enabled' => true,
+            'polling_minutes' => 30,
+            'configuration_json' => [
+                'collector' => 'territorial_press',
+                'listing_urls' => ['https://ahendu.com.py/sociedad/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'summary_title_only' => true,
+                'max_age_hours' => 168,
+                'max_links' => 18,
+                'max_candidates' => 12,
+            ],
+        ]);
+        $url = 'https://ahendu.com.py/sociedad/dengue-paraguay-octubre-2026';
+        $title = 'Dengue: Paraguay suma diez semanas sin casos y crecen las sospechas en tres regiones';
+        Http::preventStrayRequests();
+        Http::fake([
+            'ahendu.com.py/sociedad/' => Http::response('<article><h2><a href="'.$url.'">'.$title.'</a></h2></article>'),
+            $url => Http::response('<html><head>'
+                .'<meta property="og:title" content="'.$title.'">'
+                .'<meta property="og:description" content="Central, San Pedro y Presidente Hayes notificaron más pacientes con síntomas compatibles.">'
+                .'<meta property="article:published_time" content="2026-10-06T12:40:00-03:00">'
+                .'<meta property="article:modified_time" content="2026-10-23T17:28:00-03:00">'
+                .'</head><body><main><article><p>El último reporte epidemiológico fue actualizado con los datos de las semanas 39 a 41.</p>'
+                .'<p>Central, San Pedro y Presidente Hayes notificaron más pacientes con síntomas compatibles durante las últimas semanas.</p></article></main></body></html>'),
+        ]);
+
+        $candidates = app(TerritorialPressCollector::class)->collect($source);
+
+        $healthPublic = $candidates->where('metadata.category_slug', 'health_public');
+        $healthVector = $candidates->where('metadata.category_slug', 'health_vector');
+        $expectedDepartments = ['Central', 'San Pedro', 'Presidente Hayes'];
+        $this->assertSame($expectedDepartments, $healthPublic->pluck('metadata.department')->values()->all());
+        $this->assertSame($expectedDepartments, $healthVector->pluck('metadata.department')->values()->all());
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->publishedAt?->toIso8601String() === '2026-10-23T17:28:00-03:00'
+            && $candidate->metadata['article_published_at'] === '2026-10-06T12:40:00-03:00'
+            && $candidate->metadata['article_updated_at'] === '2026-10-23T17:28:00-03:00'
+            && $candidate->metadata['freshness_basis'] === 'updated'
+            && $candidate->originalUrl === $url));
+    }
+
+    public function test_future_modified_metadata_cannot_make_an_old_story_look_current(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        config()->set('alertapy.sources.ultimahora', [
+            'listing_urls' => ['https://www.ultimahora.com/'],
+            'prefilter_requires_location' => false,
+            'max_age_hours' => 168,
+        ]);
+        $source = new Source([
+            'name' => 'Última Hora',
+            'slug' => 'ultimahora',
+            'type' => SourceType::Press,
+            'base_url' => 'https://www.ultimahora.com/',
+            'domain' => 'ultimahora.com',
+        ]);
+        $url = 'https://www.ultimahora.com/dengue-antiguo';
+        Http::preventStrayRequests();
+        Http::fake([
+            'www.ultimahora.com/' => Http::response('<h2><a href="'.$url.'">Dengue suma casos en Luque</a></h2>'),
+            $url => Http::response('<meta property="article:published_time" content="2026-10-06T12:00:00-03:00">'
+                .'<meta property="article:modified_time" content="2026-10-25T12:00:00-03:00">'),
+        ]);
+
+        $this->assertCount(0, app(PressHomepageCollector::class)->collect($source));
+    }
+
+    public function test_generic_press_uses_article_body_to_find_health_topics_missing_from_the_summary(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        $source = new Source([
+            'name' => 'Medio de noticias',
+            'slug' => 'medio-salud-test',
+            'type' => SourceType::Press,
+            'base_url' => 'https://noticias.test/',
+            'domain' => 'noticias.test',
+            'configuration_json' => [
+                'listing_urls' => ['https://noticias.test/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_age_hours' => 168,
+            ],
+        ]);
+        $url = 'https://noticias.test/jornada-caaguazu';
+        $title = 'Jornada comunitaria se realizó en Caaguazú';
+        Http::preventStrayRequests();
+        Http::fake([
+            'noticias.test/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'">'
+                .'<meta property="og:description" content="La actividad llegó a familias de la zona.">'
+                .'<meta property="article:published_time" content="2026-10-24T12:00:00-03:00">'
+                .'<main><article><p>Equipos del Ministerio realizaron vacunación y atención médica en Caaguazú.</p></article></main>'),
+        ]);
+
+        $candidate = app(PressHomepageCollector::class)->collect($source)->sole();
+
+        $this->assertSame('health_public', $candidate->metadata['category_slug']);
+        $this->assertSame('Caaguazú', $candidate->metadata['department']);
     }
 
     public function test_thematic_listings_share_the_global_link_budget_and_duplicate_urls_are_fetched_once(): void
@@ -338,6 +516,55 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertSame('2026-10-24T08:00:00-03:00', $candidates[0]->metadata['occurred_at']);
     }
 
+    public function test_it_reads_relative_spanish_listing_dates_for_recent_regional_health_news(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        $listingUrl = 'https://www.visioncomunicaciones.com.py/blog/categories/villarrica';
+        $articleUrl = 'https://www.visioncomunicaciones.com.py/post/tamizaje-tuberculosis-villarrica';
+        $title = 'Tamizaje para detectar tuberculosis en la cárcel: realizan pruebas a cerca de 600 internos hasta el viernes';
+        $description = 'Salud Pública y el Ministerio de Justicia realizan una jornada de tamizaje para detectar tuberculosis en la Penitenciaría de Villarrica.';
+        $source = new Source([
+            'name' => 'Visión Comunicaciones',
+            'slug' => 'vision-comunicaciones',
+            'type' => SourceType::Press,
+            'base_url' => 'https://www.visioncomunicaciones.com.py/',
+            'domain' => 'visioncomunicaciones.com.py',
+            'enabled' => true,
+            'polling_minutes' => 30,
+            'configuration_json' => [
+                'listing_urls' => [$listingUrl],
+                'prefilter_requires_location' => false,
+                'max_age_hours' => 168,
+                'max_links' => 18,
+                'max_candidates' => 12,
+                'location_search_article_body' => true,
+                'summary_title_only' => true,
+                'regional_department' => 'Guairá',
+            ],
+        ]);
+        $listingHtml = '<div><h2><a href="'.$articleUrl.'">'.$title.'</a><span>hace 3 horas 1 min de lectura</span></h2></div>';
+        Http::preventStrayRequests();
+        Http::fake(function ($request) use ($listingUrl, $articleUrl, $listingHtml, $title, $description) {
+            return match ($request->url()) {
+                $listingUrl => Http::response($listingHtml),
+                $articleUrl => Http::response('<meta property="og:title" content="'.$title.'"><meta property="og:description" content="'.$description.'"><article><p>'.$description.'</p></article>'),
+                default => Http::response('Unexpected request: '.$request->url(), 404),
+            };
+        });
+
+        $candidates = app(PressHomepageCollector::class)->collect($source);
+
+        $this->assertCount(2, Http::recorded());
+        $this->assertCount(1, $candidates);
+        $candidate = $candidates->sole();
+
+        $this->assertSame($articleUrl, $candidate->originalUrl);
+        $this->assertSame('health_public', $candidate->metadata['category_slug']);
+        $this->assertSame('Villarrica', $candidate->metadata['city']);
+        $this->assertSame('2026-10-23T09:00:00-03:00', $candidate->publishedAt->toIso8601String());
+        Http::assertSentCount(2);
+    }
+
     public function test_a_newsroom_address_in_the_footer_is_not_an_event_location(): void
     {
         CarbonImmutable::setTestNow('2026-08-18 21:00:00 America/Asuncion');
@@ -351,7 +578,10 @@ class PressHomepageCollectorTest extends TestCase
             'www.ultimahora.com/' => Http::response('<h2><a href="https://www.ultimahora.com/accidente">Accidente de tránsito deja dos heridos</a></h2>'),
             'www.ultimahora.com/accidente' => Http::response('<meta property="og:title" content="Accidente de tránsito deja dos heridos"><meta property="og:description" content="Los heridos fueron auxiliados."><meta property="article:published_time" content="2026-08-18T22:00:00Z"><footer><p>Redacción: Asunción, Paraguay.</p></footer>'),
         ]);
-        $this->assertCount(0, app(PressHomepageCollector::class)->collect($source));
+        $candidate = app(PressHomepageCollector::class)->collect($source)->sole();
+        $this->assertTrue($candidate->metadata['location_is_fallback']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['department']);
     }
 
     public function test_it_never_interprets_a_missing_publication_date_as_now(): void
@@ -432,4 +662,42 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertSame($archiveUrl, $candidates[1]->originalUrl);
         $this->assertSame('health_vector', $candidates[1]->metadata['category_slug']);
     }
+    public function test_independent_press_correlates_health_and_flood_layers(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-23 12:00:00 America/Asuncion');
+        $source = new Source([
+            'name' => 'Prensa local',
+            'slug' => 'diario-paraguayo',
+            'type' => SourceType::Press,
+            'base_url' => 'https://www.diarioparaguayo.com.py/',
+            'domain' => 'diarioparaguayo.com',
+            'configuration_json' => [
+                'listing_urls' => ['https://www.diarioparaguayo.com.py/'],
+                'prefilter_requires_location' => false,
+                'max_age_hours' => 168,
+                'max_links' => 20,
+                'max_candidates' => 10,
+                'location_search_article_body' => true,
+            ],
+        ]);
+        $title = 'Equipos de salud asisten a comunidades afectadas por inundaciones en Misiones';
+        $url = 'https://diarioparaguayo.com/noticia/equipos-de-salud-misiones/';
+        Http::preventStrayRequests();
+        Http::fake([
+            'www.diarioparaguayo.com.py/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'">
+                <meta property="article:published_time" content="2026-10-22T09:00:00-03:00">
+                <article><p>Los equipos brindan asistencia a familias afectadas en Misiones.</p></article>'),
+        ]);
+
+        $candidates = app(PressHomepageCollector::class)->collect($source);
+
+        $this->assertSame(
+            ['weather_flood', 'health_public'],
+            $candidates->pluck('metadata.category_slug')->all(),
+        );
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->originalUrl === $url));
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->metadata['department'] === 'Misiones'));
+    }
+
 }

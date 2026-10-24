@@ -73,7 +73,16 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('roads', $classifier->classify('Cierres de calles causan caos vehicular en Asunción', ''));
         $this->assertSame('roads', $classifier->classify('Pobladores se manifiestan en Ypacaraí', ''));
         $this->assertSame('security', $classifier->classify('Detienen a presuntos robamotos en Villa Elisa', ''));
-        $this->assertSame('health_vector', $classifier->classify('Confirman casos de hantavirus en Boquerón', ''));
+        $this->assertSame('health_public', $classifier->classify('Confirman casos de hantavirus en Boquerón', ''));
+        $this->assertSame('health_public', $classifier->classify('Confirman brote epidemiológico de influenza en Asunción', ''));
+        $this->assertSame('health_public', $classifier->classify(
+            'Salud Pública provee servicio médico a familias rurales de Presidente Hayes',
+            '',
+        ));
+        $this->assertSame('health_public', $classifier->classify(
+            'Paciente recibe alta tras trasplante renal en Clínicas',
+            '',
+        ));
         $this->assertSame('health_vector', $classifier->classify('SENEPA realiza minga ambiental en Luque', ''));
         $this->assertSame('roads', $classifier->classify('Obra de rehabilitación de la Ruta PY08 avanza por tramos', ''));
         $this->assertSame('territorial_news', $classifier->classify('Fiscalización ambiental detecta tala ilegal en Caaguazú', ''));
@@ -122,21 +131,44 @@ class PressIncidentClassifierTest extends TestCase
             $classifier->classifyAll('Temporal derriba postes y deja barrios sin electricidad en Alto Paraná', ''),
         );
         $this->assertSame(
+            ['electricity', 'weather_flood'],
+            $classifier->classifyAll('TEMPORAL DAÑÓ UNA COMISARÍA Y DEJÓ ZONAS SIN LUZ', ''),
+        );
+        $this->assertSame(
             ['hydrology', 'weather_flood'],
             $classifier->classifyAll('Evacuan familias por crecida del río Paraguay en Humaitá', ''),
         );
     }
 
-    public function test_river_events_require_concrete_impact_and_ignore_normal_or_negated_reports(): void
+    public function test_river_level_changes_are_hydrology_and_flood_layer_requires_confirmed_impact(): void
     {
         $classifier = new PressIncidentClassifier;
 
-        $this->assertSame('hydrology', $classifier->classify('Crecida del río Paraguay arrasa cultivos y amenaza al ganado en Humaitá', ''));
-        $this->assertSame('hydrology', $classifier->classify('Pilar: cierran compuertas de estación de bombeos ante crecida del río Paraguay', ''));
-        $this->assertNull($classifier->classify('Concepción: Río Paraguay sube 9 centímetros, pero no se reportan inundaciones', ''));
-        $this->assertNull($classifier->classify('La crecida del río Paraguay no afecta a pobladores de Pilar', ''));
+        $this->assertSame(
+            ['hydrology', 'weather_flood'],
+            $classifier->classifyAll('Crecida del río Paraguay arrasa cultivos y amenaza al ganado en Humaitá', ''),
+        );
+        $this->assertSame(
+            ['hydrology', 'weather_flood'],
+            $classifier->classifyAll('Itaipú continúa con la asistencia a damnificados ante descenso del río Paraná', ''),
+        );
+        $this->assertSame(
+            ['hydrology'],
+            $classifier->classifyAll('Nivel del río Paraná registra leve descenso e Itaipú ofrece herramienta para estar informado', ''),
+        );
+        $this->assertSame(
+            ['hydrology'],
+            $classifier->classifyAll('Itaipú prevé aumento del nivel del río Paraná y alerta sobre posible impacto a más viviendas', ''),
+        );
+        $this->assertSame(
+            ['hydrology'],
+            $classifier->classifyAll('Concepción: Río Paraguay sube 9 centímetros, pero no se reportan inundaciones', ''),
+        );
+        $this->assertSame(
+            ['hydrology'],
+            $classifier->classifyAll('La crecida del río Paraguay no afecta a pobladores de Pilar', ''),
+        );
         $this->assertNull($classifier->classify('Río Paraguay registra nivel normal en Asunción', ''));
-        $this->assertNull($classifier->classify('Río Paraguay sube 9 centímetros en Concepción', ''));
     }
 
     public function test_explicitly_denied_service_cuts_and_forensic_thirst_are_not_incidents(): void
@@ -179,6 +211,20 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('water', $classifier->classify('Vecinos siguen sin agua y esperan el restablecimiento del suministro en Luque', ''));
     }
 
+    public function test_air_quality_reports_are_not_duplicated_as_generic_territorial_news(): void
+    {
+        $classifier = new PressIncidentClassifier;
+
+        $this->assertSame(
+            ['air_quality'],
+            $classifier->classifyAll('Contaminación atmosférica supera límites sanitarios en Asunción', ''),
+        );
+        $this->assertSame(
+            ['territorial_news'],
+            $classifier->classifyAll('Contaminación de un arroyo preocupa a vecinos de Caaguazú', ''),
+        );
+    }
+
     public function test_it_distinguishes_figurative_accidents_from_physical_crashes(): void
     {
         $classifier = new PressIncidentClassifier;
@@ -189,5 +235,20 @@ class PressIncidentClassifierTest extends TestCase
         $this->assertSame('traffic_accident', $classifier->classify('Dirigente político sufre accidente de tránsito en Central', ''));
         $this->assertSame('traffic_accident', $classifier->classify('Después del choque de opiniones, un vehículo volcó en un accidente vial', ''));
     }
+
+    public function test_it_classifies_independent_animal_health_alerts_and_campaigns(): void
+    {
+        $classifier = new PressIncidentClassifier;
+
+        $this->assertSame('animal_health', $classifier->classify('Confirman un foco de fiebre aftosa en bovinos de San Pedro', ''));
+        $this->assertSame('animal_health', $classifier->classify('Detectan influenza aviar en aves de corral en Alto Paraná', ''));
+        $this->assertSame('animal_health', $classifier->classify('SENACSA inicia vacunación contra la fiebre aftosa en Misiones', ''));
+        $this->assertSame(
+            ['animal_health', 'health_public'],
+            $classifier->classifyAll('Confirman brote de rabia canina en Villarrica', ''),
+        );
+        $this->assertNull($classifier->classify('Ganadería paraguaya aumenta sus exportaciones durante el año', ''));
+    }
+
 }
 

@@ -536,3 +536,7 @@ button { color: inherit; }
 }
 .road-route-tooltip{border:0!important;border-radius:999px!important;background:#fff7e8!important;color:#7a3600!important;font-weight:900!important;box-shadow:0 4px 16px rgba(63,38,7,.18)!important}
 .road-route-popup{display:grid;gap:.3rem;min-width:180px}.road-route-popup strong{color:#8f3e00}.road-route-popup small{color:#60706d}
+
+.map-pin--fallback .map-pin-body { border-style: dashed; opacity: .78; }
+.detail-location-fallback { display: flex; align-items: flex-start; gap: .5rem; margin: .2rem 0 .65rem; padding: .65rem .75rem; border: 1px solid #edc977; border-radius: .8rem; background: #fff8e8; color: #715018; font-size: .75rem; line-height: 1.4; }
+.detail-location-fallback .app-icon { width: 18px; height: 18px; flex: 0 0 auto; }

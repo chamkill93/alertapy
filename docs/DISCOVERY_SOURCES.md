@@ -6,7 +6,7 @@ Los proveedores guardan la URL original, título, contenido disponible, autor/ca
 
 | Proveedor | URL investigada | Tipo | Método | Frecuencia | Estado inicial | Limitaciones |
 | --- | --- | --- | --- | ---: | --- | --- |
-| GDELT | `https://api.gdeltproject.org/api/v2/doc/doc` | Discovery | DOC 2.0 JSON | 30 min | Desactivado por feature flag | Solo descubre. Debe existir URL HTTP(S) del medio original; GDELT nunca reemplaza esa fuente. El servicio exige como mínimo cinco segundos entre solicitudes y puede responder 429. |
+| GDELT | `https://api.gdeltproject.org/api/v2/doc/doc` | Discovery | DOC 2.0 JSON | 30 min | Activado por defecto; admite `GDELT_ENABLED=false` | Cinco búsquedas separadas cubren servicios, salud humana y animal, clima/ambiente, seguridad/vías/fronteras y afectaciones a escuelas, centros de salud y comunidades aisladas. Solo descubre URLs HTTP(S) originales; los resultados quedan en revisión y nunca publican incidencias por sí solos. Respeta 5 s entre solicitudes y puede responder 429. |
 | X | `https://api.x.com/2/tweets/search/recent` | Social | API v2 | 15 min | `DISABLED_CONFIGURATION` | Requiere proyecto de desarrollador y `X_BEARER_TOKEN`. Un post aislado queda sin verificar. |
 | Bluesky | `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts` | Social | AppView pública | 15 min | `STATUS = NOT_IMPLEMENTED` en el entorno actual | La comprobación del 19/08/2026 respondió HTTP 403. Alternativa: reactivar cuando el AppView permita acceso estable o se configure autenticación de servicio. |
 | Mastodon | `/api/v1/timelines/tag/{hashtag}` en instancias configuradas | Social | API por instancia | 30 min | `DISABLED_CONFIGURATION` | No existe búsqueda global completa. Solo consulta instancias y hashtags explícitos. Algunas instancias pueden exigir token. |
@@ -19,9 +19,10 @@ El 23/10/2026 se probó Google News RSS con una búsqueda de cortes programados 
 
 ## Configuración
 
-Todas las integraciones están apagadas por defecto. Las variables están documentadas en `.env.example`:
+GDELT queda activado por defecto en instalaciones nuevas; X, Bluesky, Mastodon, Telegram y YouTube siguen apagados o requieren credenciales/canales autorizados. Las variables están documentadas en `.env.example`:
 
 - `GDELT_ENABLED`.
+- `GDELT_QUERY_UTILITIES`, `GDELT_QUERY_HEALTH`, `GDELT_QUERY_WEATHER`, `GDELT_QUERY_SAFETY` y `GDELT_QUERY_COMMUNITY`.
 - `X_DISCOVERY_ENABLED` y `X_BEARER_TOKEN`.
 - `BLUESKY_DISCOVERY_ENABLED`.
 - `MASTODON_DISCOVERY_ENABLED`, `MASTODON_INSTANCES` y `MASTODON_HASHTAGS`.

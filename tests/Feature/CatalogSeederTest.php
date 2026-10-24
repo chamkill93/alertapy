@@ -21,38 +21,145 @@ class CatalogSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(15, Category::query()->count());
-        $this->assertSame(86, Source::query()->count());
+        $this->assertDatabaseHas('categories', ['slug' => 'health_public', 'enabled' => true]);
+        $this->assertSame(113, Source::query()->count());
+        $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
+        $this->assertCount(5, config('alertapy.discovery.gdelt.queries'));
+        $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);
+        $gdelt = Source::query()->where('slug', 'gdelt')->sole();
+        $this->assertSame('GDELT descubre URLs originales para revisión; nunca se muestra como fuente final ni publica incidencias automáticamente.', $gdelt->configuration_json['review_policy']);
         $this->assertDatabaseHas('sources', ['slug' => '1000noticias', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
         $this->assertSame(168, config('alertapy.sources.latribuna.max_age_hours'));
+        $laTribuna = Source::query()->where('slug', 'latribuna')->sole();
+        $this->assertSame('territorial_press', $laTribuna->configuration_json['collector']);
+        $this->assertSame(\App\Collectors\TerritorialPressCollector::class, app(SourceCommandRegistry::class)->scrapers()['latribuna']);
+        $this->assertContains('https://www.latribuna.com.py/etiqueta/neembucu-2/', config('alertapy.sources.latribuna.listing_urls'));
+        $this->assertContains('https://www.latribuna.com.py/etiqueta/paraguari-departamento/', config('alertapy.sources.latribuna.listing_urls'));
         foreach (['abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna'] as $utilityPressSource) {
             $this->assertContains($utilityPressSource, config('alertapy.cycle.priority_sources'));
         }
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-automatic-stations', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'dmh-cap', 'enabled' => true]);
+        $featuredHealth = Source::query()->where('slug', 'mspbs-health-featured')->sole();
+        $this->assertTrue($featuredHealth->enabled);
+        $this->assertSame('official', $featuredHealth->type->value);
+        $this->assertSame('health_news', $featuredHealth->configuration_json['collector']);
+        $this->assertSame(
+            ['https://www.mspbs.gov.py/buscar.php?modo=0&page=669&q=&url=portal'],
+            config('alertapy.sources.mspbs-health-featured.listing_urls'),
+        );
+        $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['mspbs-health-featured']);
         $this->assertDatabaseHas('sources', ['slug' => 'pai', 'enabled' => true, 'ingestion_type' => 'html']);
+        $this->assertDatabaseHas('sources', ['slug' => 'agencia-ip', 'enabled' => true, 'ingestion_type' => 'html']);
+        $this->assertDatabaseHas('sources', ['slug' => 'cde-hot', 'enabled' => true, 'ingestion_type' => 'html']);
+        $cdeHot = Source::query()->where('slug', 'cde-hot')->sole();
+        $this->assertSame('regional_press', $cdeHot->configuration_json['collector']);
+        $this->assertSame(15, $cdeHot->polling_minutes);
+        $this->assertDatabaseHas('sources', ['slug' => 'gobernacion-neembucu', 'enabled' => true, 'type' => 'official']);
+        $neembucuGovernment = Source::query()->where('slug', 'gobernacion-neembucu')->sole();
+        $this->assertSame('press_homepage', $neembucuGovernment->configuration_json['collector']);
+        $this->assertSame('Ñeembucú', $neembucuGovernment->configuration_json['regional_department']);
+        $this->assertSame([
+            'https://xn--eembucu-3za.gov.py/noticias/',
+            'https://xn--eembucu-3za.gov.py/category/gacetilla-de-prensa/',
+        ], $neembucuGovernment->configuration_json['listing_urls']);
+        $this->assertDatabaseHas('sources', ['slug' => 'gobernacion-alto-paraguay', 'enabled' => true, 'type' => 'official']);
+        $altoParaguayGovernment = Source::query()->where('slug', 'gobernacion-alto-paraguay')->sole();
+        $this->assertSame('regional_press', $altoParaguayGovernment->configuration_json['collector']);
+        $this->assertSame('Alto Paraguay', $altoParaguayGovernment->configuration_json['regional_department']);
+        $this->assertSame(['https://arturomendez.org/'], $altoParaguayGovernment->configuration_json['listing_urls']);
+        $this->assertSame(30, $altoParaguayGovernment->polling_minutes);
+        $this->assertSame(\App\Collectors\RegionalPressCollector::class, app(SourceCommandRegistry::class)->scrapers()['gobernacion-alto-paraguay']);
+        $agenciaIp = Source::query()->where('slug', 'agencia-ip')->sole();
+        $this->assertSame('press_homepage', $agenciaIp->configuration_json['collector']);
+        $this->assertFalse($agenciaIp->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($agenciaIp->configuration_json['location_search_article_body']);
+        $this->assertContains('agencia-ip', config('alertapy.cycle.priority_sources'));
         $this->assertDatabaseHas('sources', ['slug' => 'digies', 'enabled' => true, 'ingestion_type' => 'html']);
+        $healthSources = Source::query()->whereIn('slug', ['dinavisa', 'digesa', 'ins', 'inan', 'dnerhs', 'ips'])->get();
+        $this->assertCount(6, $healthSources);
+        $this->assertTrue($healthSources->every(fn (Source $source): bool => $source->enabled
+            && ($source->configuration_json['collector'] ?? null) === 'health_news'
+            && ($source->configuration_json['category_classifier'] ?? null) === 'health'));
+        $this->assertContains('ips', config('alertapy.cycle.priority_sources'));
+        $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['ips']);
+        $dnerhs = Source::query()->where('slug', 'dnerhs')->sole();
+        $this->assertSame('health_news', $dnerhs->configuration_json['collector']);
+        $this->assertSame([
+            'https://dnerhs.mspbs.gov.py/index.php/category/dnerhs/noticias/',
+            'https://dnerhs.mspbs.gov.py/index.php/category/dnerhs/dn/dgprhs/eqips/',
+        ], $dnerhs->configuration_json['listing_urls']);
+        $this->assertDatabaseHas('sources', ['slug' => 'rdn', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
+        $paraguayEnVivo = Source::query()->where('slug', 'paraguay-en-vivo')->sole();
+        $this->assertTrue($paraguayEnVivo->enabled);
+        $this->assertSame('territorial_press', $paraguayEnVivo->configuration_json['collector']);
+        $this->assertSame([
+            'https://paraguayenvivo.com/',
+            'https://paraguayenvivo.com/departamento/alto-paraguay/',
+            'https://paraguayenvivo.com/departamento/neembucu/',
+            'https://paraguayenvivo.com/departamento/paraguari/',
+        ], $paraguayEnVivo->configuration_json['listing_urls']);
+        $this->assertSame(60, $paraguayEnVivo->polling_minutes);
+        $this->assertSame(8, $paraguayEnVivo->configuration_json['max_links']);
+        $this->assertSame(8, $paraguayEnVivo->configuration_json['max_candidates']);
+        $this->assertSame(\App\Collectors\TerritorialPressCollector::class, app(SourceCommandRegistry::class)->scrapers()['paraguay-en-vivo']);
+        $this->assertFalse($paraguayEnVivo->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($paraguayEnVivo->configuration_json['location_search_article_body']);
+        $this->assertSame(168, $paraguayEnVivo->configuration_json['max_age_hours']);
+        $this->assertDatabaseHas('sources', ['slug' => 'paraguay24horas', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'el-surti', 'enabled' => true]);
+        $elSurti = Source::query()->where('slug', 'el-surti')->sole();
+        $this->assertSame('territorial_press', $elSurti->configuration_json['collector']);
+        $this->assertSame(30, $elSurti->polling_minutes);
+        $this->assertSame(['https://elsurti.com/'], $elSurti->configuration_json['listing_urls']);
+        $this->assertFalse($elSurti->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($elSurti->configuration_json['location_search_article_body']);
+        $paraguay24Horas = Source::query()->where('slug', 'paraguay24horas')->sole();
+        $this->assertSame(30, $paraguay24Horas->polling_minutes);
+        $this->assertSame('https://paraguay24horas.com/', $paraguay24Horas->base_url);
+        $this->assertFalse($paraguay24Horas->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($paraguay24Horas->configuration_json['location_search_article_body']);
+        $diarioParaguayo = Source::query()->where('slug', 'diario-paraguayo')->sole();
+        $this->assertSame('diarioparaguayo.com', $diarioParaguayo->domain);
+        $this->assertSame('https://www.diarioparaguayo.com.py/', $diarioParaguayo->base_url);
+        $primeraPlana = Source::query()->where('slug', 'primera-plana')->sole();
+        $this->assertSame('https://diarioprimeraplana.com/', $primeraPlana->base_url);
+        $this->assertSame(['https://diarioprimeraplana.com/'], $primeraPlana->configuration_json['listing_urls']);
+        $this->assertFalse($primeraPlana->configuration_json['prefilter_requires_location']);
+        $this->assertTrue($primeraPlana->configuration_json['location_search_article_body']);
+        $this->assertSame(168, $primeraPlana->configuration_json['max_age_hours']);
+        $this->assertSame(30, $primeraPlana->polling_minutes);
+        $this->assertSame(\App\Collectors\PressHomepageCollector::class, app(SourceCommandRegistry::class)->scrapers()['primera-plana']);
         $this->assertSame('health', Source::query()->where('slug', 'pai')->sole()->configuration_json['category_classifier']);
         $this->assertSame(HealthNewsCollector::class, app(SourceCommandRegistry::class)->scrapers()['pai']);
         $this->assertContains('pai', config('alertapy.cycle.priority_sources'));
         $this->assertContains('digies', config('alertapy.cycle.priority_sources'));
         $additionalPress = Source::query()->whereIn('slug', [
             'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya',
+            'el-independiente', 'parametro', 'pulso-paraguayo',
         ])->get();
-        $this->assertCount(7, $additionalPress);
+        $this->assertCount(10, $additionalPress);
         $originalPress = $additionalPress->whereIn('slug', ['asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay']);
         $this->assertTrue($originalPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 15
             && ($source->configuration_json['location_search_article_body'] ?? null) === false));
-        $territorialPress = $additionalPress->whereIn('slug', ['ahendu', 'la-verdad-paraguaya']);
+        $territorialPress = $additionalPress->whereIn('slug', [
+            'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo',
+        ]);
         $this->assertTrue($territorialPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 30
+            && ($source->configuration_json['collector'] ?? null) === 'territorial_press'
             && ($source->configuration_json['location_search_article_body'] ?? null) === true
             && ($source->configuration_json['prefilter_requires_location'] ?? null) === false));
         $this->assertSame([], array_diff($additionalPress->pluck('slug')->all(), config('alertapy.cycle.priority_sources')));
         $this->assertDatabaseHas('sources', ['slug' => 'ultimas-noticias-cde', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'hechos-digital', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'tu-radio-925', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'agr-fm-tv', 'enabled' => true]);
+        $this->assertDatabaseHas('sources', ['slug' => 'canindeyu-digital', 'enabled' => true]);
         $this->assertSame(0, Incident::query()->count());
     }
 
@@ -92,7 +199,27 @@ class CatalogSeederTest extends TestCase
         $this->assertSame(45, $source->polling_minutes);
         $this->assertSame('Keep this setting', $source->configuration_json['operator_note']);
         $this->assertFalse($source->configuration_json['location_search_article_body']);
-        $this->assertSame(7, Source::query()->count());
+        $this->assertSame(16, Source::query()->count());
     }
+
+    public function test_additional_press_seeder_enables_territorial_collection_without_overwriting_custom_collectors(): void
+    {
+        $definitions = collect(AdditionalPressSourceSeeder::definitions())->keyBy('slug');
+        $ahendu = $definitions['ahendu'];
+        $ahendu['configuration_json'] = ['collector' => 'press_homepage', 'operator_note' => 'Keep this setting'];
+        Source::query()->create($ahendu);
+        $elSurti = $definitions['el-surti'];
+        $elSurti['configuration_json'] = ['collector' => 'custom_collector', 'operator_note' => 'Preserve custom setup'];
+        Source::query()->create($elSurti);
+
+        $this->seed(AdditionalPressSourceSeeder::class);
+
+        $updatedAhendu = Source::query()->where('slug', 'ahendu')->sole();
+        $this->assertSame('territorial_press', $updatedAhendu->configuration_json['collector']);
+        $this->assertTrue($updatedAhendu->configuration_json['location_search_article_body']);
+        $this->assertSame('Keep this setting', $updatedAhendu->configuration_json['operator_note']);
+        $this->assertSame('custom_collector', Source::query()->where('slug', 'el-surti')->sole()->configuration_json['collector']);
+    }
+
 }
 

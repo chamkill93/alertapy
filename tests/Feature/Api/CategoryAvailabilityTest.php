@@ -32,8 +32,8 @@ class CategoryAvailabilityTest extends TestCase
             ->assertJsonCount(1, 'summary')
             ->assertJsonPath('summary.0.slug', 'electricity')
             ->assertJsonPath('summary.0.count', 1)
-            ->assertJsonCount(3, 'category_availability');
-        $expected = ['air_quality' => 0, 'electricity' => 1, 'fire' => 2];
+            ->assertJsonCount(4, 'category_availability');
+        $expected = ['air_quality' => 0, 'electricity' => 1, 'fire' => 2, 'health_public' => 0];
         $this->assertSame($expected, collect($response->json('category_availability'))->pluck('count', 'slug')->all());
 
         $all = $this->getJson('/api/incidents?per_page=1&pagination=cursor')->assertOk()->assertJsonCount(1, 'data');
@@ -53,6 +53,7 @@ class CategoryAvailabilityTest extends TestCase
             ->assertJsonPath('category_availability', [
                 ['slug' => 'fire', 'count' => 1],
                 ['slug' => 'water', 'count' => 0],
+                ['slug' => 'health_public', 'count' => 0],
             ]);
     }
 
@@ -79,7 +80,7 @@ class CategoryAvailabilityTest extends TestCase
         $response = $this->getJson('/api/incidents?categories=electricity&period=24h&bbox=-25.4,-57.7,-25.2,-57.5&source=official&city=Asunci%C3%B3n&status=active&road=PY02')
             ->assertOk()->assertJsonCount(1, 'data');
 
-        $this->assertSame(['electricity' => 1, 'fire' => 1], collect($response->json('category_availability'))->pluck('count', 'slug')->all());
+        $this->assertSame(['electricity' => 1, 'fire' => 1, 'health_public' => 0], collect($response->json('category_availability'))->pluck('count', 'slug')->all());
     }
 
     public function test_availability_respects_specific_source_and_radius_even_with_no_category_selected(): void
@@ -102,7 +103,10 @@ class CategoryAvailabilityTest extends TestCase
 
         $this->getJson('/api/incidents?categories=__none__&source=specific-source&bbox=-25.4,-57.7,-25.2,-57.5&near_lat=-25.30&near_lng=-57.60&radius_km=1')
             ->assertOk()->assertJsonCount(0, 'data')
-            ->assertJsonPath('category_availability', [['slug' => 'fire', 'count' => 1]]);
+            ->assertJsonPath('category_availability', [
+                ['slug' => 'fire', 'count' => 1],
+                ['slug' => 'health_public', 'count' => 0],
+            ]);
     }
 
     public function test_empty_result_still_contains_all_catalog_categories_with_zero_counts(): void
@@ -115,6 +119,7 @@ class CategoryAvailabilityTest extends TestCase
             ->assertJsonPath('category_availability', [
                 ['slug' => 'air_quality', 'count' => 0],
                 ['slug' => 'water', 'count' => 0],
+                ['slug' => 'health_public', 'count' => 0],
             ]);
     }
 

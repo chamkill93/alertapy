@@ -53,6 +53,11 @@ class IncidentQueryService
         }
 
         if (isset($filters['near_lat'], $filters['near_lng'], $filters['radius_km'])) {
+            // Reference pins are for the map and must not trigger proximity alerts.
+            $query->where(function (Builder $query): void {
+                $query->whereNull('location_evidence_json')
+                    ->orWhereJsonDoesntContain('location_evidence_json->method', MapLocationFallback::METHOD);
+            });
             $this->applyRadius(
                 $query,
                 (float) $filters['near_lat'],

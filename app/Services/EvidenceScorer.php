@@ -17,7 +17,9 @@ class EvidenceScorer
             'press_allowlist' => $source->type === SourceType::Press ? .18 : 0,
             'source_url' => filter_var($candidate->originalUrl, FILTER_VALIDATE_URL) ? .12 : -.35,
             'valid_date' => ($candidate->publishedAt !== null || ! empty($candidate->metadata['starts_at'])) ? .12 : -.2,
-            'precise_location' => $location !== null ? ($location->precision->isApproximate() ? .1 : .18) : -.35,
+            'precise_location' => ($candidate->metadata['location_is_fallback'] ?? false)
+                ? -.35
+                : ($location !== null ? ($location->precision->isApproximate() ? .1 : .18) : -.35),
             'recent_timestamp' => $candidate->publishedAt?->greaterThan(now()->subDays(7)) || ! empty($candidate->metadata['starts_at']) ? .08 : 0,
             'personal_accusation' => preg_match('/\b(?:acus[oa]|culpable|delincuente)\s+[A-ZÁÉÍÓÚÑ][\pL]+\s+[A-ZÁÉÍÓÚÑ][\pL]+/u', $candidate->title.' '.$candidate->content) === 1 ? -.8 : 0,
             'outside_paraguay' => $location !== null && ($location->latitude < -27.8 || $location->latitude > -19 || $location->longitude < -63 || $location->longitude > -54) ? -1 : 0,

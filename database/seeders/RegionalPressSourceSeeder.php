@@ -59,6 +59,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://caaguazunoticiasdigital.com.py/', 'https://caaguazunoticiasdigital.com.py/category/locales/'],
             ],
             [
+                'name' => 'OviedoPress',
+                'slug' => 'oviedopress',
+                'domain' => 'oviedopress.com',
+                'regional_department' => 'Caaguazú',
+                'listing_urls' => ['https://oviedopress.com/'],
+            ],
+            [
                 'name' => 'Diario Vanguardia',
                 'slug' => 'diario-vanguardia',
                 'domain' => 'diariovanguardia.com.py',
@@ -91,6 +98,20 @@ class RegionalPressSourceSeeder extends Seeder
                 ],
             ],
             [
+                'name' => 'AGR 101.3 FM / Revista Unión',
+                'slug' => 'agr-fm-tv',
+                'domain' => 'agrfmtv.com.py',
+                'regional_department' => 'Canindeyú',
+                'listing_urls' => ['https://www.agrfmtv.com.py/'],
+            ],
+            [
+                'name' => 'Canindeyú Digital',
+                'slug' => 'canindeyu-digital',
+                'domain' => 'canindeyudigital.com',
+                'regional_department' => 'Canindeyú',
+                'listing_urls' => ['https://www.canindeyudigital.com/canindeyu'],
+            ],
+            [
                 'name' => 'Portal Capitán Meza',
                 'slug' => 'portal-capitan-meza',
                 'domain' => 'capitanmeza.com.py',
@@ -98,11 +119,25 @@ class RegionalPressSourceSeeder extends Seeder
                 'listing_urls' => ['https://capitanmeza.com.py/'],
             ],
             [
+                'name' => 'Más Encarnación',
+                'slug' => 'mas-encarnacion',
+                'domain' => 'masencarnacion.com',
+                'regional_department' => 'Itapúa',
+                'listing_urls' => ['https://masencarnacion.com/'],
+            ],
+            [
                 'name' => 'Radio Guairá',
                 'slug' => 'radio-guaira',
                 'domain' => 'radioguaira.com',
                 'regional_department' => 'Guairá',
                 'listing_urls' => ['https://www.radioguaira.com/'],
+            ],
+            [
+                'name' => 'Visión Comunicaciones',
+                'slug' => 'vision-comunicaciones',
+                'domain' => 'visioncomunicaciones.com.py',
+                'regional_department' => 'Guairá',
+                'listing_urls' => ['https://www.visioncomunicaciones.com.py/blog/categories/villarrica'],
             ],
             [
                 'name' => 'Pedro Juan Digital',
@@ -117,6 +152,13 @@ class RegionalPressSourceSeeder extends Seeder
                 'domain' => 'amambaydigital.com',
                 'regional_department' => 'Amambay',
                 'listing_urls' => ['https://amambaydigital.com/'],
+            ],
+            [
+                'name' => 'Portal Amambay',
+                'slug' => 'portal-amambay',
+                'domain' => 'portalamambay.com.py',
+                'regional_department' => 'Amambay',
+                'listing_urls' => ['https://portalamambay.com.py/'],
             ],
             [
                 'name' => 'Luque Noticias',
@@ -138,6 +180,20 @@ class RegionalPressSourceSeeder extends Seeder
                 'domain' => 'hechosdigital.com.py',
                 'regional_department' => 'Amambay',
                 'listing_urls' => ['https://hechosdigital.com.py/'],
+            ],
+            [
+                'name' => 'Tu Radio 92.5 FM',
+                'slug' => 'tu-radio-925',
+                'domain' => 'turadio92.com',
+                'regional_department' => 'Amambay',
+                'listing_urls' => ['https://turadio92.com/'],
+            ],
+            [
+                'name' => 'TVS Digital',
+                'slug' => 'tvs-digital',
+                'domain' => 'tvs.com.py',
+                'regional_department' => 'Itapúa',
+                'listing_urls' => ['https://tvs.com.py/', 'https://tvs.com.py/category/locales/'],
             ],
             [
                 'name' => 'Radio ZP30',

@@ -90,6 +90,10 @@ class LocationSeeder extends Seeder
             ['type' => 'city', 'name' => 'Cambyretá', 'query' => 'Cambyretá, Itapúa', 'city' => 'Cambyretá', 'department' => 'Itapúa', 'accuracy' => 'city', 'aliases' => ['Cambyreta']],
             ['type' => 'city', 'name' => 'Asunción', 'query' => 'Asunción', 'city' => 'Asunción', 'department' => 'Capital', 'accuracy' => 'city', 'aliases' => ['Capital del país'], 'latitude' => -25.2800459, 'longitude' => -57.6343814],
             ['type' => 'city', 'name' => 'Caacupé', 'query' => 'Caacupé, Cordillera', 'city' => 'Caacupé', 'department' => 'Cordillera', 'accuracy' => 'city', 'aliases' => [], 'latitude' => -25.3856888, 'longitude' => -57.1404770],
+            // GeoNames populated-place coordinates for localities cited by current Itapúa reporting.
+            ['type' => 'city', 'name' => 'Coronel Bogado', 'query' => 'Coronel Bogado, Itapúa', 'city' => 'Coronel Bogado', 'department' => 'Itapúa', 'accuracy' => 'city', 'aliases' => ['Coronel José Félix Bogado', 'Cnel. Bogado', 'Cnel Bogado'], 'latitude' => -27.16293, 'longitude' => -56.24023],
+            ['type' => 'city', 'name' => 'General Delgado', 'query' => 'General Delgado, Itapúa', 'city' => 'General Delgado', 'department' => 'Itapúa', 'accuracy' => 'city', 'aliases' => ['General José María Delgado', 'Gral. Delgado', 'Gral Delgado'], 'latitude' => -27.09046, 'longitude' => -56.52474],
+            ['type' => 'city', 'name' => 'San Juan del Paraná', 'query' => 'San Juan del Paraná, Itapúa', 'city' => 'San Juan del Paraná', 'department' => 'Itapúa', 'accuracy' => 'city', 'aliases' => ['San Juan del Parana'], 'latitude' => -27.302639, 'longitude' => -55.963869],
             ['type' => 'city', 'name' => 'Capitán Meza', 'query' => 'Capitán Meza, Itapúa', 'city' => 'Capitán Meza', 'department' => 'Itapúa', 'accuracy' => 'city', 'aliases' => []],
             ['type' => 'city', 'name' => 'Carapeguá', 'query' => 'Carapeguá, Paraguarí', 'city' => 'Carapeguá', 'department' => 'Paraguarí', 'accuracy' => 'city', 'aliases' => []],
             ['type' => 'city', 'name' => 'Capiatá', 'query' => 'Capiatá, Central', 'city' => 'Capiatá', 'department' => 'Central', 'accuracy' => 'city', 'aliases' => [], 'latitude' => -25.3548171, 'longitude' => -57.4427315],
@@ -131,6 +135,9 @@ class LocationSeeder extends Seeder
             ['type' => 'department', 'name' => 'Misiones', 'query' => 'Departamento de Misiones', 'city' => null, 'department' => 'Misiones', 'accuracy' => 'department', 'aliases' => ['Departamento de Misiones']],
             ['type' => 'department', 'name' => 'San Pedro', 'query' => 'Departamento de San Pedro', 'city' => null, 'department' => 'San Pedro', 'accuracy' => 'department', 'aliases' => ['Departamento de San Pedro']],
             ['type' => 'department', 'name' => 'Central', 'query' => 'Departamento Central, Paraguay', 'city' => null, 'department' => 'Central', 'accuracy' => 'department', 'aliases' => ['Departamento Central']],
+            ['type' => 'department', 'name' => 'Departamento de Concepción', 'query' => 'Departamento de Concepción, Paraguay', 'city' => null, 'department' => 'Concepción', 'accuracy' => 'department', 'aliases' => []],
+            ['type' => 'department', 'name' => 'Departamento de Guairá', 'query' => 'Departamento de Guairá, Paraguay', 'city' => null, 'department' => 'Guairá', 'accuracy' => 'department', 'aliases' => []],
+            ['type' => 'department', 'name' => 'Departamento de Paraguarí', 'query' => 'Departamento de Paraguarí, Paraguay', 'city' => null, 'department' => 'Paraguarí', 'accuracy' => 'department', 'aliases' => []],
         ];
     }
 
@@ -141,3 +148,4 @@ class LocationSeeder extends Seeder
         return preg_replace('/\s+/u', ' ', $normalized) ?: $normalized;
     }
 }
+

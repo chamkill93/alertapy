@@ -12,6 +12,10 @@ class IncidentImpactService
 
     public function forIncident(Incident $incident): ?array
     {
+        if ($incident->usesReferenceLocation()) {
+            return null;
+        }
+
         $context = $this->territorial->forIncident($incident);
         if ($incident->latitude === null || $incident->longitude === null) return $context;
         $radius = 2.0; $box = $this->geometry->boundingBoxAround($incident->latitude, $incident->longitude, $radius);

@@ -17,11 +17,15 @@ class IncidentDetailResource extends IncidentSummaryResource
     {
         return [
             ...parent::toArray($request),
-            'territorial_impact' => app(IncidentImpactService::class)->forIncident($this->resource),
-            'nearby_infrastructure' => $this->latitude !== null && $this->longitude !== null
+            'territorial_impact' => $this->resource->usesReferenceLocation()
+                ? null
+                : app(IncidentImpactService::class)->forIncident($this->resource),
+            'nearby_infrastructure' => ! $this->resource->usesReferenceLocation() && $this->latitude !== null && $this->longitude !== null
                 ? app(NearbyInfrastructureService::class)->summary((float) $this->latitude, (float) $this->longitude, 2)
                 : null,
-            'climate_context' => app(ClimateContextService::class)->forIncident($this->resource),
+            'climate_context' => $this->resource->usesReferenceLocation()
+                ? null
+                : app(ClimateContextService::class)->forIncident($this->resource),
             'publication_explanation' => $this->publication_explanation_json
                 ?? app(PublicationExplanationService::class)->forIncident($this->resource),
             'data_quality' => $this->data_quality_json

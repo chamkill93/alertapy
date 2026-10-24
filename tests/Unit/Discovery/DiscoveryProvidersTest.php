@@ -38,6 +38,46 @@ class DiscoveryProvidersTest extends TestCase
         $this->assertStringNotContainsString('gdeltproject.org', $items[0]->originalUrl);
     }
 
+    public function test_gdelt_keeps_local_school_closure_alerts_for_editorial_review(): void
+    {
+        config()->set('alertapy.discovery.gdelt.query', null);
+        config()->set('alertapy.discovery.gdelt.queries', ['sourcecountry:paraguay "clases suspendidas"']);
+        config()->set('alertapy.discovery.gdelt.request_interval_seconds', 0);
+        Http::fake(['api.gdeltproject.org/*' => Http::response(['articles' => [[
+            'url' => 'https://medio.example/clases-suspendidas-concepcion',
+            'title' => 'Clases suspendidas tras crecida en Concepción',
+            'seendate' => '20261023T100000Z',
+        ]]])]);
+
+        $items = app(GdeltDiscoveryProvider::class)->discover($this->source('gdelt', SourceType::Discovery));
+
+        $this->assertCount(1, $items);
+        $this->assertSame('https://medio.example/clases-suspendidas-concepcion', $items[0]->originalUrl);
+        $this->assertSame('medio.example', $items[0]->originalDomain);
+    }
+
+    public function test_gdelt_keeps_respiratory_virus_reports_for_editorial_review(): void
+    {
+        config()->set('alertapy.discovery.gdelt.query', null);
+        config()->set('alertapy.discovery.gdelt.queries', ['sourcecountry:paraguay rhinovirus']);
+        config()->set('alertapy.discovery.gdelt.request_interval_seconds', 0);
+        Http::fake(['api.gdeltproject.org/*' => Http::response(['articles' => [[
+            'url' => 'https://dgvs.mspbs.gov.py/rhinovirus-circulacion',
+            'title' => 'Rhinovirus causa más de la mitad de las internaciones por cuadros respiratorios',
+            'seendate' => '20261023T100000Z',
+        ], [
+            'url' => 'https://dgvs.mspbs.gov.py/parainfluenza-reporte',
+            'title' => 'Parainfluenza detectada en muestras clínicas',
+            'seendate' => '20261023T090000Z',
+        ]]])]);
+
+        $items = app(GdeltDiscoveryProvider::class)->discover($this->source('gdelt', SourceType::Discovery));
+
+        $this->assertCount(2, $items);
+        $this->assertContains('https://dgvs.mspbs.gov.py/rhinovirus-circulacion', $items->pluck('originalUrl')->all());
+        $this->assertContains('https://dgvs.mspbs.gov.py/parainfluenza-reporte', $items->pluck('originalUrl')->all());
+    }
+
     public function test_bluesky_parses_public_posts_as_unverified_social_discovery(): void
     {
         Http::fake(['public.api.bsky.app/*' => Http::response(['posts' => [[
@@ -104,6 +144,48 @@ class DiscoveryProvidersTest extends TestCase
         $this->expectExceptionMessage('MASTODON_INSTANCES');
         app(MastodonDiscoveryProvider::class)->discover($this->source('mastodon', SourceType::Social));
     }
+
+
+    public function test_gdelt_queries_all_configured_groups_and_keeps_original_urls(): void
+    {
+        config()->set('alertapy.discovery.gdelt.query', null);
+        config()->set('alertapy.discovery.gdelt.queries', [
+            'sourcecountry:paraguay storm',
+            'sourcecountry:paraguay animal-health',
+        ]);
+
+        Http::fake(function ($request) {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $parameters);
+
+            $articles = str_contains((string) ($parameters['query'] ?? ''), 'animal-health')
+                ? [[
+                    'url' => 'https://medio.example/alerta-aftosa-san-pedro',
+                    'title' => 'Confirman fiebre aftosa en bovinos de San Pedro',
+                    'seendate' => '20261023T120000Z',
+                ], [
+                    'url' => 'https://medio.example/temporal-pilar',
+                    'title' => 'Temporal afecta viviendas de Pilar',
+                    'seendate' => '20261023T110000Z',
+                ]]
+                : [[
+                    'url' => 'https://medio.example/temporal-pilar',
+                    'title' => 'Temporal afecta viviendas de Pilar',
+                    'seendate' => '20261023T110000Z',
+                ]];
+
+            return Http::response(['articles' => $articles]);
+        });
+
+        $items = app(GdeltDiscoveryProvider::class)->discover($this->source('gdelt', SourceType::Discovery));
+
+        $this->assertCount(2, $items);
+        $this->assertSame([
+            'https://medio.example/temporal-pilar',
+            'https://medio.example/alerta-aftosa-san-pedro',
+        ], $items->pluck('originalUrl')->all());
+        Http::assertSentCount(2);
+    }
+
 
     private function source(string $slug, SourceType $type): Source
     {

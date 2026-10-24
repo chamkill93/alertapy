@@ -37,9 +37,9 @@ return [
     'cycle' => [
         // Refresh services, scheduled-outage press backups and live monitoring before slower general news sites.
         // Each source still obeys its own polling interval and error handling.
-        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', 'abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna', '1000noticias', 'nanduti', 'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya', 'ultimas-noticias-cde', 'hechos-digital', 'senepa', 'mspbs-health', 'dgvs', 'pai', 'digies'],
+        'priority_sources' => ['ande', 'essap', 'erssan', 'siaguapy', 'meteorologia', 'dmh-automatic-stations', 'dmh-cap', 'abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna', '1000noticias', 'nanduti', 'asuncion-actual', 'ahora-paraguay', 'elnacional', 'la-clave', 'ratio-paraguay', 'ahendu', 'la-verdad-paraguaya', 'el-independiente', 'parametro', 'pulso-paraguayo', 'ultimas-noticias-cde', 'hechos-digital', 'senepa', 'mspbs-health', 'dgvs', 'agencia-ip', 'pai', 'digies', 'dinavisa', 'digesa', 'ins', 'inan', 'dnerhs', 'ips'],
         'max_seconds' => (int) env('ALERTAPY_CYCLE_MAX_SECONDS', 180),
-        'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 30),
+        'max_sources' => (int) env('ALERTAPY_MAX_SOURCES_PER_CYCLE', 38),
         'max_candidates' => (int) env('ALERTAPY_MAX_CANDIDATES_PER_CYCLE', 100),
         'max_ai_decisions' => (int) env('ALERTAPY_MAX_AI_DECISIONS_PER_CYCLE', 50),
     ],
@@ -164,7 +164,7 @@ return [
             'prefilter_requires_location' => false,
             'forced_category_slug' => 'health_vector',
             'required_event_pattern' => '/\b(arbovirosis|dengue|chikungunya|zika|chagas|paludismo|malaria|leishmaniasis|mosquitos?|aedes|minga ambiental|rastrillaje|control (?:fisico|quimico|vectorial)|bloqueo quimico|eliminacion de criaderos|destruccion de criaderos|vigilancia entomologica|fumigacion|rociado|insecticida)\w*/u',
-            'excluded_event_pattern' => '/\b(mecip|acuerdos? y compromisos? eticos|rendicion de cuentas|conferencia internacional|acto protocolar)\b/u',
+            'excluded_event_pattern' => '/\b(mecip|acuerdos? y compromisos? eticos|rendicion de cuentas|conferencia internacional|acto protocolar|dia mundial del mosquito)\b/u',
             'max_age_hours' => (int) env('SOURCE_SENEPA_MAX_AGE_HOURS', 168),
             'max_links' => 100,
             'max_candidates' => 50,
@@ -234,6 +234,8 @@ return [
                 'https://www.latribuna.com.py/',
                 'https://www.latribuna.com.py/nacionales/locales/',
                 'https://www.latribuna.com.py/sucesos/policiales/',
+                'https://www.latribuna.com.py/etiqueta/neembucu-2/',
+                'https://www.latribuna.com.py/etiqueta/paraguari-departamento/',
             ],
             'prefilter_requires_location' => true,
             'summary_title_only' => true,
@@ -310,6 +312,17 @@ return [
             'category_classifier' => 'health',
             'max_links' => 90,
             'max_candidates' => 30,
+        ],
+        'mspbs-health-featured' => [
+            'enabled' => env('SOURCE_MSPBS_HEALTH_FEATURED_ENABLED', true),
+            'listing_urls' => ['https://www.mspbs.gov.py/buscar.php?modo=0&page=669&q=&url=portal'],
+            'prefilter_requires_location' => false,
+            'summary_title_only' => true,
+            'max_age_hours' => 168,
+            'location_search_article_body' => true,
+            'category_classifier' => 'health',
+            'max_links' => 60,
+            'max_candidates' => 20,
         ],
         'dgvs' => [
             'enabled' => env('SOURCE_DGVS_ENABLED', true),
@@ -466,12 +479,21 @@ return [
 
     'discovery' => [
         'gdelt' => [
-            'enabled' => env('GDELT_ENABLED', false),
+            // Public multilingual news discovery is on by default. A custom GDELT_QUERY
+            // can replace these balanced groups without changing the collector.
+            'enabled' => env('GDELT_ENABLED', true),
             'endpoint' => env('GDELT_API_URL', 'https://api.gdeltproject.org/api/v2/doc/doc'),
-            'query' => env('GDELT_QUERY', 'Paraguay ("sin luz" OR "sin agua" OR accidente OR choque OR incendio OR inundacion OR temporal OR "ruta bloqueada")'),
+            'query' => env('GDELT_QUERY'),
+            'queries' => [
+                env('GDELT_QUERY_UTILITIES', 'sourcecountry:paraguay ("power outage" OR blackout OR "water outage" OR "water shortage" OR "electricity cut" OR "water cut" OR "no water" OR "no electricity" OR "water supply" OR "electric service" OR "sin luz" OR "sin electricidad" OR "corte de energia" OR "corte de agua" OR "falta de agua" OR "baja presion de agua")'),
+                env('GDELT_QUERY_HEALTH', 'sourcecountry:paraguay (dengue OR chikungunya OR zika OR malaria OR measles OR hantavirus OR leptospirosis OR tuberculosis OR meningitis OR influenza OR rhinovirus OR rinovirus OR metapneumovirus OR adenovirus OR parainfluenza OR VRS OR RSV OR "respiratory syncytial virus" OR "virus sincitial" OR "virus respiratorio" OR "infeccion respiratoria" OR mpox OR "yellow fever" OR outbreak OR epidemic OR "health alert" OR hospital OR "foot-and-mouth disease" OR "avian influenza" OR "bird flu" OR brucellosis OR "swine fever" OR rabies OR poisoning OR aftosa OR "gripe aviar" OR brucelosis OR rabia OR "peste porcina" OR "fiebre amarilla" OR sarampion OR "alerta sanitaria")'),
+                env('GDELT_QUERY_WEATHER', 'sourcecountry:paraguay (flood OR flooding OR overflow OR "river level" OR storm OR hail OR drought OR smoke OR "forest fire" OR wildfire OR pollution OR "air quality" OR spill OR contamination OR inundacion OR crecida OR desborde OR tormenta OR granizo OR sequia OR "incendio forestal" OR contaminacion OR "calidad del aire" OR derrame)'),
+                env('GDELT_QUERY_SAFETY', 'sourcecountry:paraguay (accident OR crash OR collision OR fire OR homicide OR assault OR robbery OR theft OR "cattle rustling" OR landslide OR "road closure" OR "bridge closure" OR evacuation OR rescue OR "border crossing" OR emergency OR accidente OR choque OR colision OR atropellamiento OR incendio OR homicidio OR asalto OR robo OR abigeato OR derrumbe OR "ruta cerrada" OR "calle cerrada" OR evacuacion OR rescate OR "paso fronterizo" OR emergencia)'),
+                env('GDELT_QUERY_COMMUNITY', 'sourcecountry:paraguay ("suspension de clases" OR "clases suspendidas" OR "escuela cerrada" OR "cierre de escuelas" OR "school closure" OR "school evacuation" OR "protesta docente" OR "teacher strike" OR "hospital cerrado" OR "hospital clausurado" OR "sin ambulancia" OR "sin medicamentos" OR "comunidad aislada" OR "comunidades aisladas" OR "pobladores aislados" OR "familias evacuadas" OR "viviendas evacuadas" OR "community isolated" OR "evacuated families")'),
+            ],
             'timespan' => env('GDELT_TIMESPAN', '24h'),
-            'max_results' => (int) env('GDELT_MAX_RESULTS', 50),
-            'timeout' => (int) env('GDELT_TIMEOUT', 30),
+            'max_results' => (int) env('GDELT_MAX_RESULTS', 25),
+            'timeout' => (int) env('GDELT_TIMEOUT', 12),
         ],
         'x' => [
             'enabled' => env('X_DISCOVERY_ENABLED', false) && trim((string) env('X_BEARER_TOKEN', '')) !== '',

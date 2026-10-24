@@ -41,16 +41,32 @@ class ParaguayLocationExtractor
 
                     $matches->put($location->id, [
                         'position' => $found[0][1],
+                        'length' => strlen($alias->normalized_alias),
                         'text' => $location->name,
                         'query' => $location->geocoding_query ?: $location->name,
                         'city' => $location->city,
                         'department' => $location->department,
                         'accuracy' => $location->accuracy,
+                        'type' => $location->type,
                     ]);
                     break;
                 }
             }
         }
+
+        // A department phrase such as "Departamento de Concepción" also
+        // contains the city alias "Concepción". Keep the longer explicit
+        // territorial label so department-wide notices are not pinned to a city.
+        $matches = $matches->reject(function (array $match) use ($matches): bool {
+            if ($match['type'] === 'department') {
+                return false;
+            }
+
+            return $matches->contains(fn (array $other): bool => $other['type'] === 'department'
+                && $other['position'] <= $match['position']
+                && $other['position'] + $other['length'] >= $match['position'] + $match['length']
+                && $other['length'] > $match['length']);
+        });
 
         $specificDepartments = $matches
             ->filter(fn (array $match): bool => $match['city'] !== null)
@@ -62,7 +78,7 @@ class ParaguayLocationExtractor
             ->reject(fn (array $match): bool => $match['city'] === null && $specificDepartments->contains($match['department']))
             ->sortBy('position')
             ->map(function (array $match): array {
-                unset($match['position']);
+                unset($match['position'], $match['length'], $match['type']);
 
                 return $match;
             })
@@ -145,3 +161,4 @@ class ParaguayLocationExtractor
         return trim(preg_replace('/\s+/u', ' ', $value) ?: $value);
     }
 }
+

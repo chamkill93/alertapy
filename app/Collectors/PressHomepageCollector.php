@@ -6,6 +6,7 @@ use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
 use App\Services\HealthCategoryClassifier;
+use App\Services\MapLocationFallback;
 use App\Services\ParaguayLocationExtractor;
 use App\Services\PressIncidentClassifier;
 use App\Services\UtilityScheduleExtractor;
@@ -26,6 +27,7 @@ class PressHomepageCollector implements CollectorInterface
         private readonly PressIncidentClassifier $classifier,
         private readonly UtilityScheduleExtractor $schedules,
         private readonly HealthCategoryClassifier $healthClassifier,
+        private readonly MapLocationFallback $locationFallback,
     ) {}
 
     /** @return Collection<int, CandidateDTO> */
@@ -147,7 +149,7 @@ class PressHomepageCollector implements CollectorInterface
                 // the article. Keep the event filter, then resolve its place
                 // from the published article instead of losing it here.
                 $category = $location === null
-                    ? $this->classifier->classify($title, '')
+                    ? ($this->classifier->classify($title, '') ?? $this->healthClassifier->classify($title))
                     : $this->category($title, '', $location);
 
                 if ($category === null) {
@@ -201,6 +203,7 @@ class PressHomepageCollector implements CollectorInterface
         $articleText = $this->articleText($xpath);
         $description = $this->plainText((string) ($metadata['og:description'] ?? $metadata['description'] ?? ''));
         $contextDescription = $description !== '' ? $description : $articleText;
+        $classificationContext = trim($contextDescription.' '.mb_substr($articleText, 0, 2000));
         $content = (bool) ($settings['summary_title_only'] ?? false)
             ? $title
             : ($contextDescription !== '' ? $contextDescription : $title);
@@ -211,15 +214,46 @@ class PressHomepageCollector implements CollectorInterface
         ) ?? $this->date((string) ($link['published_at'] ?? ''), (string) config('app.timezone'))
             ?? $this->dateFromText($articleText);
 
-        if ($publishedAt === null || $publishedAt->lt($cutoff) || $publishedAt->isFuture()) {
+        $updatedValue = (string) ($metadata['article:modified_time']
+            ?? $metadata['og:updated_time']
+            ?? $this->jsonLdValue($xpath, 'dateModified')
+            ?? '');
+        $updatedAt = $this->date(
+            $updatedValue,
+            (string) config("alertapy.sources.{$source->slug}.published_timezone", config('app.timezone')),
+        );
+        $originalPublishedAt = $publishedAt;
+        $freshnessAt = $publishedAt;
+        $freshnessBasis = 'published';
+
+        // An explicit, recent publisher update can keep a report current within
+        // the retention window; future update timestamps are never trusted.
+        if ($updatedAt !== null && ! $updatedAt->isFuture()
+            && ($freshnessAt === null || $updatedAt->gt($freshnessAt))) {
+            $freshnessAt = $updatedAt;
+            $freshnessBasis = 'updated';
+        }
+
+        if ($freshnessAt === null || $freshnessAt->lt($cutoff) || $freshnessAt->isFuture()) {
             return collect();
         }
 
+        // Preserve the original publication time for audit while freshness
+        // and seven-day retention follow the latest verified update.
+        $publishedAt = $freshnessAt;
+
         $locationEvidence = $description;
         $location = $this->locationExtractor->extract($title, $description);
-        if ($location === null && (bool) ($settings['location_search_article_body'] ?? true) && $articleText !== '') {
-            $locationEvidence = mb_substr($articleText, 0, 5000);
-            $location = $this->locationExtractor->extract($title, $locationEvidence);
+        if ((bool) ($settings['location_search_article_body'] ?? true) && $articleText !== '') {
+            $locationEvidence = trim($description.' '.mb_substr($articleText, 0, 5000));
+            if ($location === null) {
+                $location = $this->locationExtractor->extract($title, $locationEvidence);
+            }
+        }
+        $hasReportedLocation = $location !== null;
+        $location = $this->locationFallback->forNews($source->type, $location);
+        if (($location['is_fallback'] ?? false) && $this->locationFallback->isClearlyEditorial($title, $contextDescription, $content)) {
+            return collect();
         }
         $hasConfiguredCategory = is_string($settings['forced_category_slug'] ?? null);
         $categories = [];
@@ -227,18 +261,25 @@ class PressHomepageCollector implements CollectorInterface
         if ($location !== null && ($settings['category_classifier'] ?? null) === 'health') {
             // Health notices can also describe a flood, road closure, outage,
             // or another territorial event. Keep each supported layer visible.
+            // Preserve the existing territorial category as the primary raw-item ID.
+            // This lets a new health layer be attached to articles already seen as floods or outages.
             $categories = array_values(array_unique([
-                ...$this->healthClassifier->classifyAll($title),
                 ...$this->classifier->classifyAll($title, $contextDescription),
+                ...$this->healthClassifier->classifyAll($title, $classificationContext),
             ]));
         } elseif ($location !== null && $hasConfiguredCategory) {
             $configured = $this->configuredCategory($settings, $title, $contextDescription);
             $categories = $configured === null ? [] : [$configured];
         } elseif ($location !== null) {
-            $categories = $this->classifier->classifyAll($title, $contextDescription);
+            // Independent publishers can also surface public-health events;
+            // retain any separate territorial category from the same headline.
+            $categories = array_values(array_unique([
+                ...$this->classifier->classifyAll($title, $contextDescription),
+                ...$this->healthClassifier->classifyAll($title, $classificationContext),
+            ]));
 
-            if ($categories === []) {
-                $category = $this->category($title, $contextDescription, $location);
+            if ($categories === [] && $hasReportedLocation) {
+                $category = $this->category($title, $classificationContext, $location);
                 $categories = $category === null ? [] : [$category];
             }
         }
@@ -258,6 +299,8 @@ class PressHomepageCollector implements CollectorInterface
             content: $content,
             publishedAt: $publishedAt,
             detectedLocation: $location['query'],
+            latitude: $location['latitude'] ?? null,
+            longitude: $location['longitude'] ?? null,
             metadata: [
                 'category_slug' => $category,
                 'category_variant' => $index > 0,
@@ -265,11 +308,15 @@ class PressHomepageCollector implements CollectorInterface
                 'city' => $location['city'],
                 'department' => $location['department'],
                 'location_accuracy' => $location['accuracy'],
+                'location_is_fallback' => $location['is_fallback'],
                 'original_title' => $title,
                 'homepage_collector' => true,
                 'regional_department' => $settings['regional_department'] ?? null,
                 'privacy_limited' => (bool) ($settings['summary_title_only'] ?? false),
                 'location_evidence' => Str::limit($title.' '.$locationEvidence, 2000, '…'),
+                'article_published_at' => $originalPublishedAt?->toIso8601String(),
+                'article_updated_at' => $updatedAt?->toIso8601String(),
+                'freshness_basis' => $freshnessBasis,
                 'force_multi_location_department' => (bool) ($settings['force_multi_location_department'] ?? false),
                 'dedup_window_hours' => (int) ($settings['dedup_window_hours'] ?? 12),
                 'dedup_source_only' => (bool) ($settings['dedup_source_only'] ?? false),
@@ -281,7 +328,8 @@ class PressHomepageCollector implements CollectorInterface
     /** @param array{text: string, query: string, city: ?string, department: ?string, accuracy: string} $location */
     private function category(string $title, string $description, array $location): ?string
     {
-        $category = $this->classifier->classify($title, $description);
+        $category = $this->classifier->classify($title, $description)
+            ?? $this->healthClassifier->classify($title, $description);
 
         if ($category !== null) {
             return $category;
@@ -406,6 +454,25 @@ class PressHomepageCollector implements CollectorInterface
 
     private function dateFromText(string $text): ?CarbonImmutable
     {
+        $normalized = Str::lower(Str::ascii($text));
+
+        if (preg_match('/\bhace\s+(\d+)\s*(segundos?|seg|minutos?|min|horas?|hrs?|hr|h|dias?|semanas?|meses?|anos?)\b/u', $normalized, $relative) === 1) {
+            $elapsed = (int) $relative[1];
+            $unit = $relative[2];
+            $now = CarbonImmutable::now((string) config('app.timezone'));
+
+            return match (true) {
+                str_starts_with($unit, 'seg') => $now->subSeconds($elapsed),
+                str_starts_with($unit, 'min') => $now->subMinutes($elapsed),
+                str_starts_with($unit, 'hor'), in_array($unit, ['h', 'hr', 'hrs'], true) => $now->subHours($elapsed),
+                str_starts_with($unit, 'dia') => $now->subDays($elapsed),
+                str_starts_with($unit, 'sem') => $now->subWeeks($elapsed),
+                str_starts_with($unit, 'mes') => $now->subMonthsNoOverflow($elapsed),
+                str_starts_with($unit, 'ano') => $now->subYearsNoOverflow($elapsed),
+                default => null,
+            };
+        }
+
         if (preg_match('/(?:fecha|publicado el)?\s*:?\s*(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+(\d{4})/iu', $text, $match) === 1) {
             $months = [
                 'enero' => 1,
@@ -449,7 +516,7 @@ class PressHomepageCollector implements CollectorInterface
         $node = $anchor;
 
         for ($depth = 0; $depth < 4 && $node instanceof DOMElement; $depth++) {
-            $date = $this->dateFromText($this->plainText((string) $node->textContent));
+            $date = $this->dateFromText($this->textContentWithSeparators($node));
 
             if ($date !== null) {
                 return $date;
@@ -465,6 +532,27 @@ class PressHomepageCollector implements CollectorInterface
         }
 
         return null;
+    }
+
+    private function textContentWithSeparators(DOMElement $element): string
+    {
+        $textNodes = (new DOMXPath($element->ownerDocument))->query('.//text()', $element);
+
+        if ($textNodes === false) {
+            return $this->plainText((string) $element->textContent);
+        }
+
+        $parts = [];
+
+        foreach ($textNodes as $textNode) {
+            $text = $this->plainText((string) $textNode->nodeValue);
+
+            if ($text !== '') {
+                $parts[] = $text;
+            }
+        }
+
+        return implode(' ', $parts);
     }
 
     private function nestedValue(mixed $payload, string $key): ?string

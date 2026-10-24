@@ -5,6 +5,7 @@ namespace App\Collectors;
 use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Models\Source;
+use App\Services\MapLocationFallback;
 use App\Services\ParaguayLocationExtractor;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -14,7 +15,10 @@ use RuntimeException;
 
 class EssapCollector implements CollectorInterface
 {
-    public function __construct(private readonly ParaguayLocationExtractor $locationExtractor) {}
+    public function __construct(
+        private readonly ParaguayLocationExtractor $locationExtractor,
+        private readonly MapLocationFallback $locationFallback,
+    ) {}
 
     /** @return Collection<int, CandidateDTO> */
     public function collect(Source $source): Collection
@@ -115,7 +119,10 @@ class EssapCollector implements CollectorInterface
             return null;
         }
 
-        $location = $this->locationExtractor->extract($title, $excerpt, mb_substr($content, 0, 5000));
+        $location = $this->locationFallback->forNews(
+            $source->type,
+            $this->locationExtractor->extract($title, $excerpt, mb_substr($content, 0, 5000)),
+        );
 
         if ($location === null) {
             return null;
@@ -132,12 +139,15 @@ class EssapCollector implements CollectorInterface
             content: $evidence !== '' ? $evidence : $title,
             publishedAt: $publishedAt,
             detectedLocation: $location['query'],
+            latitude: $location['latitude'] ?? null,
+            longitude: $location['longitude'] ?? null,
             metadata: [
                 'category_slug' => 'water',
                 'location_text' => $location['text'],
                 'city' => $location['city'],
                 'department' => $location['department'],
                 'location_accuracy' => $location['accuracy'],
+                'location_is_fallback' => $location['is_fallback'],
                 'original_title' => $title,
                 'official_api' => true,
             ],
@@ -173,3 +183,4 @@ class EssapCollector implements CollectorInterface
         return CarbonImmutable::parse($value, $timezone)->setTimezone((string) config('app.timezone'));
     }
 }
+

@@ -43,6 +43,7 @@ class ScrapedIncidentIngestor
         private readonly LocationQualityAnalyzer $locationQuality,
         private readonly PublicationExplanationService $publicationExplanation,
         private readonly IncidentDataQualityService $dataQuality,
+        private readonly MapLocationFallback $mapLocationFallback,
     ) {}
 
     /** @return array{discovered: int, published: int, merged: int, waiting_location: int, pending_decision: int, unchanged: int, ignored_date: int} */
@@ -146,7 +147,8 @@ class ScrapedIncidentIngestor
             return 'unchanged';
         }
 
-        $roadResolution = $this->locationPipeline->resolve(
+        $isLocationFallback = (bool) ($candidate->metadata['location_is_fallback'] ?? false);
+        $roadResolution = $isLocationFallback ? null : $this->locationPipeline->resolve(
             $candidate->title.' '.$candidate->content,
             $candidate->latitude,
             $candidate->longitude,
@@ -159,6 +161,42 @@ class ScrapedIncidentIngestor
             ?? ($candidate->detectedLocation !== null
                 ? $this->geocoding->resolve($candidate->detectedLocation)
                 : null);
+        if ($location === null && ! $this->mapLocationFallback->isClearlyEditorial($candidate->title, $candidate->content)) {
+            $fallback = $this->mapLocationFallback->forNews($candidate->sourceType, null);
+            if ($fallback !== null) {
+                $location = new GeocodingResult(
+                    $fallback['latitude'],
+                    $fallback['longitude'],
+                    LocationAccuracy::Approximate,
+                    'map-reference',
+                    $fallback['query'],
+                );
+                $isLocationFallback = true;
+                $candidate = new CandidateDTO(
+                    sourceSlug: $candidate->sourceSlug,
+                    sourceType: $candidate->sourceType,
+                    externalIdentifier: $candidate->externalIdentifier,
+                    title: $candidate->title,
+                    originalUrl: $candidate->originalUrl,
+                    content: $candidate->content,
+                    publishedAt: $candidate->publishedAt,
+                    detectedLocation: $candidate->detectedLocation,
+                    latitude: $candidate->latitude,
+                    longitude: $candidate->longitude,
+                    metadata: [
+                        ...$candidate->metadata,
+                        'location_is_fallback' => true,
+                        'location_text' => MapLocationFallback::LABEL,
+                        'location_accuracy' => 'approximate',
+                        'city' => null,
+                        'department' => null,
+                    ],
+                );
+            }
+        }
+        $locationEvidence = $isLocationFallback
+            ? ['method' => MapLocationFallback::METHOD, 'reported_location' => null, 'map_reference' => 'Asunción']
+            : $roadResolution?->evidence;
         $contentCandidate = ContentCandidate::query()->updateOrCreate(
             ['source_id' => $source->id, 'raw_item_id' => $rawItem->id],
             [
@@ -168,7 +206,7 @@ class ScrapedIncidentIngestor
                 'detected_location' => $candidate->detectedLocation,
                 'road_code' => $roadResolution?->roadCode,
                 'road_kilometer' => $roadResolution?->kilometer,
-                'location_evidence_json' => $roadResolution?->evidence,
+                'location_evidence_json' => $locationEvidence,
                 'latitude' => $location?->latitude,
                 'longitude' => $location?->longitude,
                 'attempts' => 0,
@@ -207,34 +245,38 @@ class ScrapedIncidentIngestor
             return 'pending_decision';
         }
 
-        return DB::transaction(function () use ($source, $candidate, $rawItem, $rawChanged, $contentCandidate, $category, $location, $roadResolution, $decision, $explicitStartsAt, $temporal): string {
+        return DB::transaction(function () use ($source, $candidate, $rawItem, $rawChanged, $contentCandidate, $category, $location, $roadResolution, $decision, $explicitStartsAt, $temporal, $isLocationFallback, $locationEvidence): string {
             $startsAt = $explicitStartsAt
                 ?? $temporal['occurred_at']
                 ?? $candidate->publishedAt
                 ?? CarbonImmutable::now();
             $endsAt = $this->date($candidate->metadata['ends_at'] ?? null);
-            $locationText = trim((string) ($candidate->metadata['location_text'] ?? $candidate->detectedLocation));
-            $city = $this->nullableString($candidate->metadata['city'] ?? null);
-            $department = $this->nullableString($candidate->metadata['department'] ?? null);
-            $sourceAccuracy = LocationAccuracy::tryFrom((string) ($candidate->metadata['location_accuracy'] ?? ''));
-            $incident = $decision->action === 'CLOSE'
+            $locationText = $isLocationFallback
+                ? MapLocationFallback::LABEL
+                : trim((string) ($candidate->metadata['location_text'] ?? $candidate->detectedLocation));
+            $city = $isLocationFallback ? null : $this->nullableString($candidate->metadata['city'] ?? null);
+            $department = $isLocationFallback ? null : $this->nullableString($candidate->metadata['department'] ?? null);
+            $sourceAccuracy = $isLocationFallback
+                ? LocationAccuracy::Approximate
+                : LocationAccuracy::tryFrom((string) ($candidate->metadata['location_accuracy'] ?? ''));
+            $incident = ! $isLocationFallback && $decision->action === 'CLOSE'
                 ? $this->closingRules->findMatching($category->id, $city, $department, $startsAt, $candidate->title.' '.$candidate->content, $candidate, $rawItem->id)
                 : null;
-            if ($decision->action === 'CLOSE' && $incident === null) {
+            if (! $isLocationFallback && $decision->action === 'CLOSE' && $incident === null) {
                 $contentCandidate->forceFill(['status' => 'pending_ai', 'next_retry_at' => now()->addMinutes(30)])->save();
                 return 'pending_decision';
             }
             $incident ??= Incident::query()
                 ->whereHas('sources', fn ($query) => $query->where('raw_item_id', $rawItem->id))
                 ->first();
-            $incident ??= ($roadResolution?->roadId !== null ? $this->findRoadDuplicate($category->id, $roadResolution->roadId, $roadResolution->kilometer, $startsAt, $candidate) : null)
-            ?? $this->findCorroboratedFire(
+            $incident ??= ($isLocationFallback ? null : ($roadResolution?->roadId !== null ? $this->findRoadDuplicate($category->id, $roadResolution->roadId, $roadResolution->kilometer, $startsAt, $candidate) : null))
+            ?? ($isLocationFallback ? null : $this->findCorroboratedFire(
                 $source,
                 $category->slug,
                 $location->latitude,
                 $location->longitude,
                 $startsAt,
-            ) ?? $this->findPotentialDuplicate(
+            )) ?? ($isLocationFallback ? null : $this->findPotentialDuplicate(
                 $category->id,
                 $category->slug,
                 $locationText,
@@ -245,7 +287,7 @@ class ScrapedIncidentIngestor
                 $city,
                 $department,
                 $candidate,
-            ) ?? $this->corroboration->findMatch(
+            )) ?? ($isLocationFallback ? null : $this->corroboration->findMatch(
                 $category->id,
                 $candidate,
                 $location,
@@ -253,7 +295,7 @@ class ScrapedIncidentIngestor
                 $city,
                 $department,
                 $source,
-            );
+            ));
             $wasMerged = $incident !== null;
 
             if ($incident === null) {
@@ -287,7 +329,7 @@ class ScrapedIncidentIngestor
                     'road_kilometer' => $roadResolution?->kilometer,
                     'road_location_method' => $roadResolution?->resolutionMethod,
                     'location_error_meters' => $roadResolution?->estimatedErrorMeters,
-                    'location_evidence_json' => $roadResolution?->evidence,
+                    'location_evidence_json' => $locationEvidence,
                     'severity' => $this->severity($candidate),
                     'latitude' => $location->latitude,
                     'longitude' => $location->longitude,
@@ -693,3 +735,4 @@ class ScrapedIncidentIngestor
         return $geometry;
     }
 }
+

@@ -53,6 +53,29 @@ class AbcColorCollectorTest extends TestCase
         $this->assertSame('department', $candidates[1]->metadata['location_accuracy']);
     }
 
+    public function test_an_unlocated_rss_incident_is_kept_with_an_asuncion_reference(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-18 16:00:00 America/Asuncion');
+        $source = new Source([
+            'name' => 'ABC Color', 'slug' => 'abc', 'type' => SourceType::Press,
+            'base_url' => 'https://www.abc.com.py/', 'domain' => 'abc.com.py',
+        ]);
+        $xml = '<rss><channel><item><title>Incendio deja daños materiales y familias evacuadas</title>'
+            .'<link>https://www.abc.com.py/nacionales/incendio-sin-lugar/</link>'
+            .'<pubDate>Tue, 18 Aug 2026 18:00:00 +0000</pubDate>'
+            .'<description>Bomberos controlaron las llamas y asistieron a los vecinos.</description>'
+            .'</item></channel></rss>';
+
+        $candidate = app(AbcColorCollector::class)->parse($source, $xml)->sole();
+
+        $this->assertSame('Asunción', $candidate->detectedLocation);
+        $this->assertTrue($candidate->metadata['location_is_fallback']);
+        $this->assertNull($candidate->metadata['city']);
+        $this->assertNull($candidate->metadata['department']);
+        $this->assertSame(-25.2800459, $candidate->latitude);
+        $this->assertSame(-57.6343814, $candidate->longitude);
+    }
+
     public function test_it_reads_the_public_archive_and_detects_a_power_outage(): void
     {
         CarbonImmutable::setTestNow('2026-08-18 16:00:00 America/Asuncion');

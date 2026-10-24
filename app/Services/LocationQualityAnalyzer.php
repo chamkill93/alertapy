@@ -23,6 +23,7 @@ class LocationQualityAnalyzer
             default => LocationQuality::Unknown,
         };
         $flags = [];
+        if ($incident->usesReferenceLocation()) $flags[] = 'MAP_REFERENCE_ONLY';
         $lat = $incident->latitude; $lng = $incident->longitude;
         if ($lat === null || $lng === null) $flags[] = 'UNKNOWN_LOCATION';
         elseif ($lat == 0.0 || $lng == 0.0) $flags[] = 'ZERO_COORDINATES';

@@ -276,6 +276,9 @@
                 <button type="button" data-quick-category="hydrology" aria-label="Mostrar incidencias de ríos e hidrología" aria-pressed="false">
                     <span data-app-icon="hydrology" aria-hidden="true"></span><span>Ríos</span>
                 </button>
+                <button type="button" data-quick-category="health" aria-label="Mostrar incidencias de salud" aria-pressed="false">
+                    <span data-app-icon="health_public" aria-hidden="true"></span><span>Salud</span>
+                </button>
             </div>
 
             <button class="report-fab" data-report-open type="button">

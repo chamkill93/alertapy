@@ -227,4 +227,9 @@ class Incident extends Model
     {
         return $this->belongsTo(Road::class);
     }
+
+    public function usesReferenceLocation(): bool
+    {
+        return data_get($this->location_evidence_json, 'method') === \App\Services\MapLocationFallback::METHOD;
+    }
 }

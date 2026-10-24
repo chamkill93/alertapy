@@ -11,6 +11,14 @@ class CategoryApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_health_public_category_is_available_after_migrations_without_seeding(): void
+    {
+        $this->getJson('/api/categories')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.slug', 'health_public');
+    }
+
     public function test_it_returns_only_enabled_categories_in_catalog_order(): void
     {
         $this->seed(CategorySeeder::class);

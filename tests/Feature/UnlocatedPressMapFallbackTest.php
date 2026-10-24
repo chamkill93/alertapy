@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Contracts\Collectors\CollectorInterface;
 use App\DTOs\CandidateDTO;
 use App\Enums\SourceType;
+use App\Models\ContentCandidate;
 use App\Models\Incident;
 use App\Models\Source;
 use App\Services\MapLocationFallback;
@@ -45,14 +46,9 @@ class UnlocatedPressMapFallbackTest extends TestCase
             originalUrl: 'https://press.test/unknown-place-story',
             content: 'La noticia describe el choque, pero no permite identificar su localidad.',
             publishedAt: now()->subMinutes(10)->toImmutable(),
-            detectedLocation: 'Asunción',
+            detectedLocation: null,
             metadata: [
                 'category_slug' => 'traffic_accident',
-                'location_is_fallback' => true,
-                'location_text' => MapLocationFallback::LABEL,
-                'location_accuracy' => 'approximate',
-                'city' => null,
-                'department' => null,
             ],
         );
         $collector = new class($candidate) implements CollectorInterface {
@@ -73,6 +69,7 @@ class UnlocatedPressMapFallbackTest extends TestCase
         $this->assertSame(MapLocationFallback::LABEL, $incident->location_text);
         $this->assertTrue($incident->usesReferenceLocation());
         $this->assertSame(MapLocationFallback::METHOD, data_get($incident->location_evidence_json, 'method'));
+        $this->assertSame(-0.35, ContentCandidate::query()->sole()->evidence_components_json['precise_location']);
         $this->assertEqualsWithDelta(-25.2800459, $incident->latitude, 0.01);
         $this->assertEqualsWithDelta(-57.6343814, $incident->longitude, 0.01);
 
@@ -98,3 +95,4 @@ class UnlocatedPressMapFallbackTest extends TestCase
             ->assertJsonPath('data.publication_explanation.reasons.1', 'Ubicación no informada; marcador de referencia en Asunción');
     }
 }
+

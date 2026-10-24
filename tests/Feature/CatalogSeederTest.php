@@ -22,7 +22,7 @@ class CatalogSeederTest extends TestCase
 
         $this->assertSame(15, Category::query()->count());
         $this->assertDatabaseHas('categories', ['slug' => 'health_public', 'enabled' => true]);
-        $this->assertSame(112, Source::query()->count());
+        $this->assertSame(113, Source::query()->count());
         $this->assertTrue(config('alertapy.discovery.gdelt.enabled'));
         $this->assertCount(5, config('alertapy.discovery.gdelt.queries'));
         $this->assertDatabaseHas('sources', ['slug' => 'gdelt', 'enabled' => true]);
@@ -65,6 +65,13 @@ class CatalogSeederTest extends TestCase
             'https://xn--eembucu-3za.gov.py/noticias/',
             'https://xn--eembucu-3za.gov.py/category/gacetilla-de-prensa/',
         ], $neembucuGovernment->configuration_json['listing_urls']);
+        $this->assertDatabaseHas('sources', ['slug' => 'gobernacion-alto-paraguay', 'enabled' => true, 'type' => 'official']);
+        $altoParaguayGovernment = Source::query()->where('slug', 'gobernacion-alto-paraguay')->sole();
+        $this->assertSame('regional_press', $altoParaguayGovernment->configuration_json['collector']);
+        $this->assertSame('Alto Paraguay', $altoParaguayGovernment->configuration_json['regional_department']);
+        $this->assertSame(['https://arturomendez.org/'], $altoParaguayGovernment->configuration_json['listing_urls']);
+        $this->assertSame(30, $altoParaguayGovernment->polling_minutes);
+        $this->assertSame(\\App\\Collectors\\RegionalPressCollector::class, app(SourceCommandRegistry::class)->scrapers()['gobernacion-alto-paraguay']);
         $agenciaIp = Source::query()->where('slug', 'agencia-ip')->sole();
         $this->assertSame('press_homepage', $agenciaIp->configuration_json['collector']);
         $this->assertFalse($agenciaIp->configuration_json['prefilter_requires_location']);

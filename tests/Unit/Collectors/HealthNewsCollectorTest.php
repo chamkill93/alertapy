@@ -159,6 +159,47 @@ class HealthNewsCollectorTest extends TestCase
     }
 
 
+    public function test_health_category_uses_article_lead_when_open_graph_description_is_generic(): void
+    {
+        $url = 'https://www.mspbs.gov.py/portal/jornada-comunitaria-caaguazu.html';
+        $title = 'Jornada comunitaria se realizó en Caaguazú';
+        $configuration = [
+            'listing_urls' => ['https://www.mspbs.gov.py/noticias.php?page=1&url=portal'],
+            'prefilter_requires_location' => false,
+            'summary_title_only' => true,
+            'max_age_hours' => 168,
+            'max_links' => 20,
+            'max_candidates' => 10,
+            'location_search_article_body' => true,
+            'category_classifier' => 'health',
+        ];
+        config()->set('alertapy.sources.mspbs-health', $configuration);
+        Http::preventStrayRequests();
+        Http::fake([
+            'www.mspbs.gov.py/noticias.php*' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'">'
+                .'<meta property="og:description" content="La actividad se desarrolló con participación de vecinos de la localidad.">'
+                .'<meta property="article:published_time" content="2026-10-22T12:00:00-03:00">'
+                .'<article><p>Equipos del MSPBS realizaron vacunación y atención médica a niños y adultos.</p>'
+                .'<p>La actividad se llevó a cabo en Caaguazú.</p></article>'),
+        ]);
+        $source = new Source([
+            'name' => 'MSPBS',
+            'slug' => 'mspbs-health',
+            'type' => SourceType::Official,
+            'base_url' => 'https://www.mspbs.gov.py/',
+            'domain' => 'mspbs.gov.py',
+            'configuration_json' => $configuration,
+        ]);
+
+        $candidate = app(MspbsCollector::class)->collect($source)->sole();
+
+        $this->assertSame('health_public', $candidate->metadata['category_slug']);
+        $this->assertSame('Caaguazú', $candidate->metadata['city']);
+        $this->assertSame($url, $candidate->originalUrl);
+        $this->assertSame($title, $candidate->content);
+    }
+
     public function test_ips_daily_health_story_is_collected_with_its_original_source_link(): void
     {
         $definition = collect(AdditionalHealthSourceSeeder::definitions())->firstWhere('slug', 'ips');

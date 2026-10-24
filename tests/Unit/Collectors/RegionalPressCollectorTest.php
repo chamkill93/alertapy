@@ -101,4 +101,47 @@ class RegionalPressCollectorTest extends TestCase
             && $candidate->originalUrl === $url));
     }
 
+    public function test_alto_paraguay_official_channel_maps_recent_health_equipment_news(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        $source = Source::query()->create([
+            'name' => 'Gobernación de Alto Paraguay (G.A.P.)',
+            'slug' => 'gobernacion-alto-paraguay',
+            'type' => SourceType::Official,
+            'base_url' => 'https://arturomendez.org/',
+            'domain' => 'arturomendez.org',
+            'enabled' => true,
+            'polling_minutes' => 30,
+            'configuration_json' => [
+                'collector' => 'regional_press',
+                'regional_department' => 'Alto Paraguay',
+                'listing_urls' => ['https://arturomendez.org/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'summary_title_only' => true,
+                'max_age_hours' => 168,
+            ],
+        ]);
+        $url = 'https://arturomendez.org/2026/10/22/maquina-de-rayos-x-para-puerto-casado/';
+        $title = 'Máquina de rayos X para Puerto Casado';
+        Http::preventStrayRequests();
+        Http::fake([
+            'arturomendez.org/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'">'
+                .'<meta property="og:description" content="La Gobernación de Alto Paraguay anuncia una máquina de rayos X para Puerto Casado.">'
+                .'<meta property="article:published_time" content="2026-10-22T12:00:00-03:00">'
+                .'<main><article><p>El equipo permitirá realizar estudios en Puerto Casado.</p></article></main>'),
+        ]);
+
+        $candidates = app(RegionalPressCollector::class)->collect($source);
+        $candidate = $candidates->firstWhere('metadata.category_slug', 'health_public');
+
+        $this->assertNotNull($candidate);
+        $this->assertSame(SourceType::Official, $candidate->sourceType);
+        $this->assertSame($url, $candidate->originalUrl);
+        $this->assertSame('Puerto Casado', $candidate->metadata['city']);
+        $this->assertSame('Alto Paraguay', $candidate->metadata['department']);
+        $this->assertSame($title, $candidate->content);
+    }
+
 }

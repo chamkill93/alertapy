@@ -43,6 +43,7 @@ class ScrapedIncidentIngestor
         private readonly LocationQualityAnalyzer $locationQuality,
         private readonly PublicationExplanationService $publicationExplanation,
         private readonly IncidentDataQualityService $dataQuality,
+        private readonly MapLocationFallback $mapLocationFallback,
     ) {}
 
     /** @return array{discovered: int, published: int, merged: int, waiting_location: int, pending_decision: int, unchanged: int, ignored_date: int} */
@@ -160,6 +161,39 @@ class ScrapedIncidentIngestor
             ?? ($candidate->detectedLocation !== null
                 ? $this->geocoding->resolve($candidate->detectedLocation)
                 : null);
+        if ($location === null && ! $this->mapLocationFallback->isClearlyEditorial($candidate->title, $candidate->content)) {
+            $fallback = $this->mapLocationFallback->forNews($candidate->sourceType, null);
+            if ($fallback !== null) {
+                $location = new GeocodingResult(
+                    $fallback['latitude'],
+                    $fallback['longitude'],
+                    LocationAccuracy::Approximate,
+                    'map-reference',
+                    $fallback['query'],
+                );
+                $isLocationFallback = true;
+                $candidate = new CandidateDTO(
+                    sourceSlug: $candidate->sourceSlug,
+                    sourceType: $candidate->sourceType,
+                    externalIdentifier: $candidate->externalIdentifier,
+                    title: $candidate->title,
+                    originalUrl: $candidate->originalUrl,
+                    content: $candidate->content,
+                    publishedAt: $candidate->publishedAt,
+                    detectedLocation: $candidate->detectedLocation,
+                    latitude: $candidate->latitude,
+                    longitude: $candidate->longitude,
+                    metadata: [
+                        ...$candidate->metadata,
+                        'location_is_fallback' => true,
+                        'location_text' => MapLocationFallback::LABEL,
+                        'location_accuracy' => 'approximate',
+                        'city' => null,
+                        'department' => null,
+                    ],
+                );
+            }
+        }
         $locationEvidence = $isLocationFallback
             ? ['method' => MapLocationFallback::METHOD, 'reported_location' => null, 'map_reference' => 'Asunción']
             : $roadResolution?->evidence;
@@ -220,8 +254,8 @@ class ScrapedIncidentIngestor
             $locationText = $isLocationFallback
                 ? MapLocationFallback::LABEL
                 : trim((string) ($candidate->metadata['location_text'] ?? $candidate->detectedLocation));
-            $city = $this->nullableString($candidate->metadata['city'] ?? null);
-            $department = $this->nullableString($candidate->metadata['department'] ?? null);
+            $city = $isLocationFallback ? null : $this->nullableString($candidate->metadata['city'] ?? null);
+            $department = $isLocationFallback ? null : $this->nullableString($candidate->metadata['department'] ?? null);
             $sourceAccuracy = $isLocationFallback
                 ? LocationAccuracy::Approximate
                 : LocationAccuracy::tryFrom((string) ($candidate->metadata['location_accuracy'] ?? ''));
@@ -701,3 +735,4 @@ class ScrapedIncidentIngestor
         return $geometry;
     }
 }
+

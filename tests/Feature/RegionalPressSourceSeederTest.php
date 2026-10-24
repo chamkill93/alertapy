@@ -27,12 +27,11 @@ class RegionalPressSourceSeederTest extends TestCase
         $definitions = RegionalPressSourceSeeder::definitions();
         $slugs = array_column($definitions, 'slug');
 
-        $this->assertCount(27, $definitions);
+        $this->assertCount(26, $definitions);
         $this->assertContains('oviedopress', $slugs);
         $this->assertContains('mas-encarnacion', $slugs);
         $this->assertContains('tu-radio-925', $slugs);
         $this->assertContains('vision-comunicaciones', $slugs);
-        $this->assertContains('itapua-noticias', $slugs);
         $this->assertCount(count($slugs), array_unique($slugs));
         $this->assertSame(count($definitions), Source::query()->whereIn('slug', $slugs)->count());
 
@@ -51,10 +50,6 @@ class RegionalPressSourceSeederTest extends TestCase
                 ? PressHomepageCollector::class
                 : RegionalPressCollector::class;
             $this->assertSame($expectedCollector, $registry[$source->slug]);
-            if ($source->slug === 'itapua-noticias') {
-                $this->assertSame('Itapúa', $source->configuration_json['regional_department']);
-                $this->assertSame(['https://itapuanoticias.tv/'], $source->configuration_json['listing_urls']);
-            }
             if ($source->slug === 'tvs-digital') {
                 $this->assertSame('Itapúa', $source->configuration_json['regional_department']);
                 $this->assertContains('https://tvs.com.py/category/locales/', $source->configuration_json['listing_urls']);

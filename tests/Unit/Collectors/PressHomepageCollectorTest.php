@@ -3,6 +3,7 @@
 namespace Tests\Unit\Collectors;
 
 use App\Collectors\PressHomepageCollector;
+use App\Collectors\TerritorialPressCollector;
 use App\Enums\SourceType;
 use App\Models\Source;
 use Carbon\CarbonImmutable;
@@ -132,6 +133,115 @@ class PressHomepageCollectorTest extends TestCase
         $this->assertStringContainsString('Ubicación no informada', $candidate->metadata['location_text']);
         $this->assertSame(-25.2800459, $candidate->latitude);
         $this->assertSame(-57.6343814, $candidate->longitude);
+    }
+
+    public function test_it_keeps_a_recently_updated_health_report_and_maps_all_reported_departments(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        $source = Source::query()->create([
+            'name' => 'Ahendu',
+            'slug' => 'ahendu',
+            'type' => SourceType::Press,
+            'base_url' => 'https://ahendu.com.py/',
+            'domain' => 'ahendu.com.py',
+            'enabled' => true,
+            'polling_minutes' => 30,
+            'configuration_json' => [
+                'collector' => 'territorial_press',
+                'listing_urls' => ['https://ahendu.com.py/sociedad/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'summary_title_only' => true,
+                'max_age_hours' => 168,
+                'max_links' => 18,
+                'max_candidates' => 12,
+            ],
+        ]);
+        $url = 'https://ahendu.com.py/sociedad/dengue-paraguay-octubre-2026';
+        $title = 'Dengue: Paraguay suma diez semanas sin casos y crecen las sospechas en tres regiones';
+        Http::preventStrayRequests();
+        Http::fake([
+            'ahendu.com.py/sociedad/' => Http::response('<article><h2><a href="'.$url.'">'.$title.'</a></h2></article>'),
+            $url => Http::response('<html><head>'
+                .'<meta property="og:title" content="'.$title.'">'
+                .'<meta property="og:description" content="Central, San Pedro y Presidente Hayes notificaron más pacientes con síntomas compatibles.">'
+                .'<meta property="article:published_time" content="2026-10-06T12:40:00-03:00">'
+                .'<meta property="article:modified_time" content="2026-10-23T17:28:00-03:00">'
+                .'</head><body><main><article><p>El último reporte epidemiológico fue actualizado con los datos de las semanas 39 a 41.</p>'
+                .'<p>Central, San Pedro y Presidente Hayes notificaron más pacientes con síntomas compatibles durante las últimas semanas.</p></article></main></body></html>'),
+        ]);
+
+        $candidates = app(TerritorialPressCollector::class)->collect($source);
+
+        $healthPublic = $candidates->where('metadata.category_slug', 'health_public');
+        $healthVector = $candidates->where('metadata.category_slug', 'health_vector');
+        $expectedDepartments = ['Central', 'San Pedro', 'Presidente Hayes'];
+        $this->assertSame($expectedDepartments, $healthPublic->pluck('metadata.department')->values()->all());
+        $this->assertSame($expectedDepartments, $healthVector->pluck('metadata.department')->values()->all());
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->publishedAt?->toIso8601String() === '2026-10-23T17:28:00-03:00'
+            && $candidate->metadata['article_published_at'] === '2026-10-06T12:40:00-03:00'
+            && $candidate->metadata['article_updated_at'] === '2026-10-23T17:28:00-03:00'
+            && $candidate->metadata['freshness_basis'] === 'updated'
+            && $candidate->originalUrl === $url));
+    }
+
+    public function test_future_modified_metadata_cannot_make_an_old_story_look_current(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        config()->set('alertapy.sources.ultimahora', [
+            'listing_urls' => ['https://www.ultimahora.com/'],
+            'prefilter_requires_location' => false,
+            'max_age_hours' => 168,
+        ]);
+        $source = new Source([
+            'name' => 'Última Hora',
+            'slug' => 'ultimahora',
+            'type' => SourceType::Press,
+            'base_url' => 'https://www.ultimahora.com/',
+            'domain' => 'ultimahora.com',
+        ]);
+        $url = 'https://www.ultimahora.com/dengue-antiguo';
+        Http::preventStrayRequests();
+        Http::fake([
+            'www.ultimahora.com/' => Http::response('<h2><a href="'.$url.'">Dengue suma casos en Luque</a></h2>'),
+            $url => Http::response('<meta property="article:published_time" content="2026-10-06T12:00:00-03:00">'
+                .'<meta property="article:modified_time" content="2026-10-25T12:00:00-03:00">'),
+        ]);
+
+        $this->assertCount(0, app(PressHomepageCollector::class)->collect($source));
+    }
+
+    public function test_generic_press_uses_article_body_to_find_health_topics_missing_from_the_summary(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        $source = new Source([
+            'name' => 'Medio de noticias',
+            'slug' => 'medio-salud-test',
+            'type' => SourceType::Press,
+            'base_url' => 'https://noticias.test/',
+            'domain' => 'noticias.test',
+            'configuration_json' => [
+                'listing_urls' => ['https://noticias.test/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'max_age_hours' => 168,
+            ],
+        ]);
+        $url = 'https://noticias.test/jornada-caaguazu';
+        $title = 'Jornada comunitaria se realizó en Caaguazú';
+        Http::preventStrayRequests();
+        Http::fake([
+            'noticias.test/' => Http::response('<h2><a href="'.$url.'">'.$title.'</a></h2>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'">'
+                .'<meta property="og:description" content="La actividad llegó a familias de la zona.">'
+                .'<meta property="article:published_time" content="2026-10-24T12:00:00-03:00">'
+                .'<main><article><p>Equipos del Ministerio realizaron vacunación y atención médica en Caaguazú.</p></article></main>'),
+        ]);
+
+        $candidate = app(PressHomepageCollector::class)->collect($source)->sole();
+
+        $this->assertSame('health_public', $candidate->metadata['category_slug']);
+        $this->assertSame('Caaguazú', $candidate->metadata['department']);
     }
 
     public function test_thematic_listings_share_the_global_link_budget_and_duplicate_urls_are_fetched_once(): void

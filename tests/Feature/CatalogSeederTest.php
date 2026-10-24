@@ -32,6 +32,9 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'nanduti', 'enabled' => true, 'ingestion_type' => 'api']);
         $this->assertDatabaseHas('sources', ['slug' => 'latribuna', 'enabled' => true]);
         $this->assertSame(168, config('alertapy.sources.latribuna.max_age_hours'));
+        $laTribuna = Source::query()->where('slug', 'latribuna')->sole();
+        $this->assertSame('territorial_press', $laTribuna->configuration_json['collector']);
+        $this->assertSame(\App\Collectors\TerritorialPressCollector::class, app(SourceCommandRegistry::class)->scrapers()['latribuna']);
         $this->assertContains('https://www.latribuna.com.py/etiqueta/neembucu-2/', config('alertapy.sources.latribuna.listing_urls'));
         $this->assertContains('https://www.latribuna.com.py/etiqueta/paraguari-departamento/', config('alertapy.sources.latribuna.listing_urls'));
         foreach (['abc', 'ultimahora', 'lanacion', 'hoy', 'latribuna'] as $utilityPressSource) {
@@ -85,15 +88,24 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseHas('sources', ['slug' => 'diario-paraguayo', 'enabled' => true]);
         $paraguayEnVivo = Source::query()->where('slug', 'paraguay-en-vivo')->sole();
         $this->assertTrue($paraguayEnVivo->enabled);
-        $this->assertSame('press_homepage', $paraguayEnVivo->configuration_json['collector']);
-        $this->assertSame(['https://paraguayenvivo.com/'], $paraguayEnVivo->configuration_json['listing_urls']);
+        $this->assertSame('territorial_press', $paraguayEnVivo->configuration_json['collector']);
+        $this->assertSame([
+            'https://paraguayenvivo.com/',
+            'https://paraguayenvivo.com/departamento/alto-paraguay/',
+            'https://paraguayenvivo.com/departamento/neembucu/',
+            'https://paraguayenvivo.com/departamento/paraguari/',
+        ], $paraguayEnVivo->configuration_json['listing_urls']);
+        $this->assertSame(60, $paraguayEnVivo->polling_minutes);
+        $this->assertSame(8, $paraguayEnVivo->configuration_json['max_links']);
+        $this->assertSame(8, $paraguayEnVivo->configuration_json['max_candidates']);
+        $this->assertSame(\App\Collectors\TerritorialPressCollector::class, app(SourceCommandRegistry::class)->scrapers()['paraguay-en-vivo']);
         $this->assertFalse($paraguayEnVivo->configuration_json['prefilter_requires_location']);
         $this->assertTrue($paraguayEnVivo->configuration_json['location_search_article_body']);
         $this->assertSame(168, $paraguayEnVivo->configuration_json['max_age_hours']);
         $this->assertDatabaseHas('sources', ['slug' => 'paraguay24horas', 'enabled' => true]);
         $this->assertDatabaseHas('sources', ['slug' => 'el-surti', 'enabled' => true]);
         $elSurti = Source::query()->where('slug', 'el-surti')->sole();
-        $this->assertSame('press_homepage', $elSurti->configuration_json['collector']);
+        $this->assertSame('territorial_press', $elSurti->configuration_json['collector']);
         $this->assertSame(30, $elSurti->polling_minutes);
         $this->assertSame(['https://elsurti.com/'], $elSurti->configuration_json['listing_urls']);
         $this->assertFalse($elSurti->configuration_json['prefilter_requires_location']);
@@ -132,6 +144,7 @@ class CatalogSeederTest extends TestCase
         ]);
         $this->assertTrue($territorialPress->every(fn (Source $source): bool => $source->enabled
             && $source->polling_minutes === 30
+            && ($source->configuration_json['collector'] ?? null) === 'territorial_press'
             && ($source->configuration_json['location_search_article_body'] ?? null) === true
             && ($source->configuration_json['prefilter_requires_location'] ?? null) === false));
         $this->assertSame([], array_diff($additionalPress->pluck('slug')->all(), config('alertapy.cycle.priority_sources')));
@@ -181,5 +194,25 @@ class CatalogSeederTest extends TestCase
         $this->assertFalse($source->configuration_json['location_search_article_body']);
         $this->assertSame(16, Source::query()->count());
     }
+
+    public function test_additional_press_seeder_enables_territorial_collection_without_overwriting_custom_collectors(): void
+    {
+        $definitions = collect(AdditionalPressSourceSeeder::definitions())->keyBy('slug');
+        $ahendu = $definitions['ahendu'];
+        $ahendu['configuration_json'] = ['collector' => 'press_homepage', 'operator_note' => 'Keep this setting'];
+        Source::query()->create($ahendu);
+        $elSurti = $definitions['el-surti'];
+        $elSurti['configuration_json'] = ['collector' => 'custom_collector', 'operator_note' => 'Preserve custom setup'];
+        Source::query()->create($elSurti);
+
+        $this->seed(AdditionalPressSourceSeeder::class);
+
+        $updatedAhendu = Source::query()->where('slug', 'ahendu')->sole();
+        $this->assertSame('territorial_press', $updatedAhendu->configuration_json['collector']);
+        $this->assertTrue($updatedAhendu->configuration_json['location_search_article_body']);
+        $this->assertSame('Keep this setting', $updatedAhendu->configuration_json['operator_note']);
+        $this->assertSame('custom_collector', Source::query()->where('slug', 'el-surti')->sole()->configuration_json['collector']);
+    }
+
 }
 

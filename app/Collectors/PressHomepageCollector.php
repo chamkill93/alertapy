@@ -235,9 +235,9 @@ class PressHomepageCollector implements CollectorInterface
             // or another territorial event. Keep each supported layer visible.
             // Preserve the existing territorial category as the primary raw-item ID.
             // This lets a new health layer be attached to articles already seen as floods or outages.
+            $healthContext = trim($description.' '.mb_substr($articleText, 0, 2000));
             $categories = array_values(array_unique([
                 ...$this->classifier->classifyAll($title, $contextDescription),
-                $healthContext = trim($description.' '.mb_substr($articleText, 0, 2000));
                 ...$this->healthClassifier->classifyAll($title, $healthContext),
             ]));
         } elseif ($location !== null && $hasConfiguredCategory) {

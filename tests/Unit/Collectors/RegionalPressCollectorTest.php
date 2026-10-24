@@ -60,4 +60,45 @@ class RegionalPressCollectorTest extends TestCase
     }
 
 
+
+    public function test_regional_source_expands_incident_locations_reported_in_the_article_body(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-24 21:00:00 America/Asuncion');
+        $source = Source::query()->create([
+            'name' => 'Itapúa Noticias',
+            'slug' => 'itapua-noticias',
+            'type' => SourceType::Press,
+            'base_url' => 'https://itapuanoticias.tv/',
+            'domain' => 'itapuanoticias.tv',
+            'enabled' => true,
+            'polling_minutes' => 30,
+            'configuration_json' => [
+                'collector' => 'regional_press',
+                'regional_department' => 'Itapúa',
+                'listing_urls' => ['https://itapuanoticias.tv/'],
+                'prefilter_requires_location' => false,
+                'location_search_article_body' => true,
+                'summary_title_only' => true,
+            ],
+        ]);
+        $url = 'https://itapuanoticias.tv/temporal-sin-luz-en-itapua/';
+        $title = 'Temporal dejó a varias comunidades sin energía eléctrica en Itapúa';
+        Http::preventStrayRequests();
+        Http::fake([
+            'itapuanoticias.tv/' => Http::response('<article><h2><a href="'.$url.'">'.$title.'</a></h2></article>'),
+            $url => Http::response('<meta property="og:title" content="'.$title.'">'
+                .'<meta property="og:description" content="El temporal afectó a Coronel Bogado, General Delgado y San Juan del Paraná.">'
+                .'<meta property="article:published_time" content="2026-10-24T12:00:00-03:00">'
+                .'<main><article><p>El temporal afectó a Coronel Bogado, General Delgado y San Juan del Paraná.</p></article></main>'),
+        ]);
+
+        $candidates = app(RegionalPressCollector::class)->collect($source);
+        $expectedCities = ['Coronel Bogado', 'General Delgado', 'San Juan del Paraná'];
+
+        $this->assertSame($expectedCities, $candidates->where('metadata.category_slug', 'electricity')->pluck('metadata.city')->values()->all());
+        $this->assertSame($expectedCities, $candidates->where('metadata.category_slug', 'weather_flood')->pluck('metadata.city')->values()->all());
+        $this->assertTrue($candidates->every(fn ($candidate): bool => $candidate->metadata['department'] === 'Itapúa'
+            && $candidate->originalUrl === $url));
+    }
+
 }
